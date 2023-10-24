@@ -1,6 +1,7 @@
 import NextAuth from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import { firestore } from "../../../../firebase-config";
+
 export default async function auth(req, res) {
   return await NextAuth(req, res, {
     providers: [
