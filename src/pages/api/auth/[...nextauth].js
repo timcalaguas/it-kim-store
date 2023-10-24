@@ -7,18 +7,17 @@ export default async function auth(req, res) {
       GoogleProvider({
         clientId: process.env.GOOGLE_CLIENT_ID,
         clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-        authorization: {
-          params: {
-            prompt: "consent",
-            access_type: "offline",
-            response_type: "code",
-            userType: "user" || "admin" || "courier" || "vendor",
-          },
-        },
       }),
     ],
+    jwt: {
+      maxAge: 60 * 60 * 24 * 30,
+    },
     callbacks: {
+      async jwt({ token, user, account, profile, isNewUser }) {
+        return token;
+      },
       async session(session) {
+        console.log(session);
         const parsedUrl = new URL(req.cookies["next-auth.callback-url"]);
         const path = parsedUrl.pathname;
         const role = getRoleFromPath(path);
