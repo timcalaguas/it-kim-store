@@ -59,6 +59,7 @@ export default async function auth(req, res) {
         return session.session;
       },
     },
+    secret: process.env.NEXTAUTH_SECRET,
   });
 }
 
