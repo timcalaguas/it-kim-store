@@ -1,16 +1,9 @@
 import {
   Flex,
   Box,
-  FormControl,
-  FormLabel,
-  Input,
-  Checkbox,
   Stack,
   Button,
   Heading,
-  Text,
-  HStack,
-  Divider,
   useColorModeValue,
 } from "@chakra-ui/react";
 

@@ -1,19 +1,4 @@
-import {
-  Button,
-  Modal,
-  ModalOverlay,
-  ModalContent,
-  ModalHeader,
-  ModalFooter,
-  ModalBody,
-  ModalCloseButton,
-  FormControl,
-  Input,
-  FormLabel,
-  useDisclosure,
-  VStack,
-  useToast,
-} from "@chakra-ui/react";
+import { useDisclosure, useToast } from "@chakra-ui/react";
 import { useState } from "react";
 import { firestore } from "../../firebase-config";
 

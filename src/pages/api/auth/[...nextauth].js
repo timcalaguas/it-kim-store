@@ -18,7 +18,6 @@ export default async function auth(req, res) {
         return token;
       },
       async session(session) {
-        console.log(session);
         const parsedUrl = new URL(req.cookies["next-auth.callback-url"]);
         const path = parsedUrl.pathname;
         const role = getRoleFromPath(path);
