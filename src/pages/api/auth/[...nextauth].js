@@ -3,7 +3,7 @@ import GoogleProvider from "next-auth/providers/google";
 import { firestore } from "../../../../firebase-config";
 
 export default async function auth(req, res) {
-  return await NextAuth(req, res, {
+  await NextAuth(req, res, {
     providers: [
       GoogleProvider({
         clientId: process.env.GOOGLE_CLIENT_ID,
@@ -18,9 +18,6 @@ export default async function auth(req, res) {
       maxAge: 60 * 60 * 24 * 30,
     },
     callbacks: {
-      async jwt({ token, user, account, profile, isNewUser }) {
-        return token;
-      },
       async session(session) {
         const parsedUrl = new URL(req.cookies["next-auth.callback-url"]);
         const path = parsedUrl.pathname;

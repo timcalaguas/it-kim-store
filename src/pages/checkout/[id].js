@@ -80,53 +80,46 @@ export default function Checkout({ userSession }) {
     <>
       <Layout metaTitle={"IT Kim - Checkout"}>
         <Box
-          maxW={"720"}
-          marginInline={"auto"}
-          paddingTop={"120px"}
-          minH={"100vh"}
+          w={"100%"}
+          height={"100%"}
+          bg={"url(/wave.svg)"}
+          bgRepeat={"no-repeat"}
+          bgPos={"bottom"}
         >
           <Box
-            border={"1px"}
-            borderColor={"gray.100"}
-            padding={8}
-            borderRadius={"lg"}
-            boxShadow={"md"}
+            maxW={"720"}
+            marginInline={"auto"}
+            paddingTop={"120px"}
+            minH={"100vh"}
+            bg={"/wave.svg"}
           >
-            <Heading mb={"20px"}>Checkout</Heading>
-            {userSession != null ? (
-              <Stack>
-                {userSession && userSession.user.addresses.length > 0 ? (
-                  <FormControl mb={"16px"}>
-                    <HStack
-                      justifyContent={"space-between"}
-                      alignItems={"end"}
-                      mb={"12px"}
-                    >
-                      <Text>Address</Text>
-                      <Button
-                        variant={"primary"}
-                        size={"sm"}
-                        as={Link}
-                        href={"/customer/profile"}
-                      >
-                        Add address
-                      </Button>
-                    </HStack>
-                    <Select onChange={setSelectedAddress}>
-                      {userSession.user.addresses.map((address) => (
-                        <option value={address}>
-                          {address.address.no} {address.address.street},
-                          {address.address.barangay}, {address.address.city}
-                        </option>
-                      ))}
-                    </Select>
-                  </FormControl>
-                ) : (
-                  <HStack>
+            <Box
+              border={"1px"}
+              borderColor={"gray.100"}
+              padding={8}
+              borderRadius={"lg"}
+              boxShadow={"md"}
+            >
+              <Heading mb={"20px"}>Checkout</Heading>
+              <Box mb={"20px"}>
+                <Text display={"flex"} gap={"5px"}>
+                  <Text fontWeight={"600"}>Name:</Text> {userSession.user.name}
+                </Text>
+                <Text display={"flex"} gap={"5px"}>
+                  <Text fontWeight={"600"}>Email:</Text>{" "}
+                  {userSession.user.email}
+                </Text>
+              </Box>
+              {userSession != null ? (
+                <Stack>
+                  {userSession && userSession.user.addresses.length > 0 ? (
                     <FormControl mb={"16px"}>
-                      <FormLabel>Address</FormLabel>
-                      <HStack w={"100%"} justifyContent={"space-between"}>
-                        <Text>No Address Found</Text>
+                      <HStack
+                        justifyContent={"space-between"}
+                        alignItems={"end"}
+                        mb={"12px"}
+                      >
+                        <Text fontWeight={"600"}>Address</Text>
                         <Button
                           variant={"primary"}
                           size={"sm"}
@@ -136,40 +129,68 @@ export default function Checkout({ userSession }) {
                           Add address
                         </Button>
                       </HStack>
+                      <Select onChange={setSelectedAddress}>
+                        {userSession.user.addresses.map((address) => (
+                          <option value={address}>
+                            {address.address.no} {address.address.street},
+                            {address.address.barangay}, {address.address.city} -{" "}
+                            {address.contactNumber}
+                          </option>
+                        ))}
+                      </Select>
                     </FormControl>
-                  </HStack>
-                )}
-              </Stack>
-            ) : (
-              <Stack spacing={1} mb={"16px"}>
-                <Text fontWeight={"bold"}>Sign in to checkout</Text>
+                  ) : (
+                    <HStack>
+                      <FormControl mb={"16px"}>
+                        <FormLabel>Address</FormLabel>
+                        <HStack w={"100%"} justifyContent={"space-between"}>
+                          <Text>No Address Found</Text>
+                          <Button
+                            variant={"primary"}
+                            size={"sm"}
+                            as={Link}
+                            href={"/customer/profile"}
+                          >
+                            Add address
+                          </Button>
+                        </HStack>
+                      </FormControl>
+                    </HStack>
+                  )}
+                </Stack>
+              ) : (
+                <Stack spacing={1} mb={"16px"}>
+                  <Text fontWeight={"bold"}>Sign in to checkout</Text>
+                  <Button
+                    onClick={() => {
+                      signIn("google");
+                    }}
+                    leftIcon={<FcGoogle />}
+                  >
+                    Sign in with Google
+                  </Button>
+                </Stack>
+              )}
+
+              {cart.map(
+                (vendor) =>
+                  vendor.vendorUID === vendorUID && (
+                    <Items items={vendor.items} />
+                  )
+              )}
+
+              <HStack justifyContent={"end"}>
                 <Button
-                  onClick={() => {
-                    signIn("google");
-                  }}
-                  leftIcon={<FcGoogle />}
+                  variant={"primary"}
+                  rightIcon={<IoBagCheckOutline />}
+                  disabled={!userSession}
+                  onClick={checkout}
+                  loading={loading}
                 >
-                  Sign in with Google
+                  Checkout
                 </Button>
-              </Stack>
-            )}
-
-            {cart.map(
-              (vendor) =>
-                vendor.vendorUID === vendorUID && <Items items={vendor.items} />
-            )}
-
-            <HStack justifyContent={"end"}>
-              <Button
-                variant={"primary"}
-                rightIcon={<IoBagCheckOutline />}
-                disabled={!userSession}
-                onClick={checkout}
-                loading={loading}
-              >
-                Checkout
-              </Button>
-            </HStack>
+              </HStack>
+            </Box>
           </Box>
         </Box>
       </Layout>
