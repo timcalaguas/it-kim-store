@@ -13,6 +13,7 @@ export default async function auth(req, res) {
     pages: {
       signIn: "/auth/login",
     },
+    debug: true,
     jwt: {
       maxAge: 60 * 60 * 24 * 30,
     },
