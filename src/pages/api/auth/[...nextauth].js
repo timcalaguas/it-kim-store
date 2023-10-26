@@ -10,6 +10,9 @@ export default async function auth(req, res) {
         clientSecret: process.env.GOOGLE_CLIENT_SECRET,
       }),
     ],
+    pages: {
+      signIn: "/auth/login",
+    },
     jwt: {
       maxAge: 60 * 60 * 24 * 30,
     },
