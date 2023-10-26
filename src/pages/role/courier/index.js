@@ -16,12 +16,12 @@ const LinkItems = [
   { name: "Orders", icon: FiTrendingUp, link: "/role/courier/orders" },
 ];
 
-const Courier = () => {
+const Courier = ({ userSession }) => {
   return (
     <AdminLayout
       metaTitle={"IT Kim - Courier"}
       pageName="Courier"
-      user={{}}
+      user={userSession}
       LinkItems={LinkItems}
     >
       <Box>
@@ -86,3 +86,33 @@ const Courier = () => {
 };
 
 export default Courier;
+
+export async function getServerSideProps(context) {
+  const userSession = await getSession(context);
+
+  if (!userSession) {
+    return {
+      redirect: {
+        permanent: false,
+        destination: "/role/vendor/auth/login",
+      },
+      props: { providers: [] },
+    };
+  }
+
+  const response = await firestore
+    .collection("users")
+    .where("email", "==", userSession.user.email)
+    .limit(1)
+    .get();
+
+  const userDoc = !response.empty ? response.docs[0].data() : {};
+  userSession.user.addresses = userDoc.addresses ? userDoc.addresses : [];
+  userSession.user.docId = response.docs[0].id;
+  userSession.user.storeName = userDoc.storeName ? userDoc.storeName : "";
+  userSession.user.storeLogo = userDoc.storeLogo ? userDoc.storeLogo : "";
+  userSession.user.status = userDoc.status ? userDoc.status : "";
+  return {
+    props: { userSession },
+  };
+}
