@@ -9,7 +9,6 @@ import {
 
 import { FcGoogle } from "react-icons/fc";
 import { MdDeliveryDining } from "react-icons/md";
-import setCookie from "@/hooks/setCookie";
 import { signIn } from "next-auth/react";
 
 export default function SimpleCard() {
@@ -56,7 +55,6 @@ export default function SimpleCard() {
               color={"black"}
               leftIcon={<FcGoogle />}
               onClick={() => {
-                setCookie("userType", "courier");
                 signIn("google");
               }}
             >

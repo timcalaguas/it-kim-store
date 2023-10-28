@@ -1,5 +1,5 @@
 import AdminLayout from "@/components/AdminLayout";
-import { firestore } from "../../../../../../firebase-config";
+import { firestore } from "../../../../../firebase-config";
 import { getSession } from "next-auth/react";
 import { FiHome, FiTrendingUp, FiCompass, FiStar } from "react-icons/fi";
 import {
