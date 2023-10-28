@@ -22,12 +22,12 @@ import { AiOutlineShoppingCart, AiOutlineLogin } from "react-icons/ai";
 import { useCartStore } from "@/hooks/stores/cartStore";
 import { useEffect, useRef } from "react";
 import Cart from "./Cart";
-import { signIn, signOut, useSession } from "next-auth/react";
-import { useRouter } from "next/router";
-const Navbar = () => {
-  const { data: session } = useSession();
+import AuthManager from "@/hooks/auth/AuthManager";
+
+const Navbar = ({ user }) => {
+  const { logout } = AuthManager();
+
   const { cart } = useCartStore();
-  const router = useRouter();
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -88,20 +88,20 @@ const Navbar = () => {
             >
               Cart - {numberOfCartItems}
             </Button>
-            {session ? (
+            {user ? (
               <Popover placement="bottom-end">
                 <PopoverTrigger>
                   <Avatar
                     cursor={"pointer"}
                     size={"sm"}
-                    name={session?.user?.name}
-                    src={session?.user?.picture}
+                    name={user.name}
+                    src={user.picture}
                   />
                 </PopoverTrigger>
                 <PopoverContent maxW={"180px"}>
                   <PopoverHeader fontWeight="semibold">
                     <Text fontWeight={"bold"} textAlign={"right"}>
-                      {session?.user?.name}
+                      {user.name}
                     </Text>
                   </PopoverHeader>
                   <PopoverArrow />
@@ -109,7 +109,7 @@ const Navbar = () => {
                     <VStack alignItems={"flex-end"}>
                       <Link href="/customer/profile">Profile</Link>
                       <Link href="/customer/orders">Orders</Link>
-                      <Link onClick={() => signOut()}>Logout</Link>
+                      <Link onClick={() => logout("customer")}>Logout</Link>
                     </VStack>
                   </PopoverBody>
                 </PopoverContent>

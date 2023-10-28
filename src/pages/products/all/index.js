@@ -1,8 +1,6 @@
 import Layout from "@/components/Layout";
 import ProductList from "@/components/ProductList";
 
-import { firestore } from "../../../../firebase-config";
-
 import {
   Box,
   HStack,
@@ -11,10 +9,14 @@ import {
   InputGroup,
   InputLeftElement,
 } from "@chakra-ui/react";
+
 import { AiOutlineSearch } from "react-icons/ai";
 import { useState, useEffect } from "react";
 
-const Products = ({ productDocs }) => {
+import getAllProducts from "@/hooks/products/getAllProducts";
+import { withSessionSsr } from "@/lib/withSession";
+
+const Products = ({ productDocs, user }) => {
   const [search, setSearch] = useState("");
   const [products, setProducts] = useState(productDocs);
 
@@ -31,7 +33,7 @@ const Products = ({ productDocs }) => {
 
   return (
     <>
-      <Layout metaTitle={`IT Kim - Products`}>
+      <Layout metaTitle={`IT Kim - Products`} user={user}>
         <Box
           minH={"100vh"}
           backgroundImage={"url('/wave.svg')"}
@@ -73,19 +75,13 @@ const Products = ({ productDocs }) => {
 
 export default Products;
 
-export async function getServerSideProps(context) {
-  const productsRef = firestore.collection("products");
+export const getServerSideProps = withSessionSsr(async (context) => {
+  const { req } = context;
+  const user = req.session.user ? req.session.user : null;
 
-  const response = await productsRef.get();
-  const productDocs = !response.empty
-    ? response.docs.map((doc) => {
-        const returnDoc = doc.data();
-        returnDoc.id = doc.id;
+  const productDocs = await getAllProducts();
 
-        return returnDoc;
-      })
-    : [];
   return {
-    props: { productDocs },
+    props: { productDocs, user },
   };
-}
+});

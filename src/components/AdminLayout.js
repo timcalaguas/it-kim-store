@@ -41,6 +41,7 @@ import {
   FiChevronDown,
 } from "react-icons/fi";
 import { useRouter } from "next/router";
+import { signOut } from "next-auth/react";
 
 const SidebarContent = ({ onClose, title, LinkItems, ...rest }) => {
   return (
@@ -74,8 +75,10 @@ const NavItem = ({ icon, children, link, ...rest }) => {
   var words = pathName.split("/");
 
   words.splice(4, 3);
+  console.log(words);
 
   var mergedString = words.join("/");
+  console.log(mergedString, link);
 
   return (
     <Box
@@ -115,7 +118,7 @@ const NavItem = ({ icon, children, link, ...rest }) => {
   );
 };
 
-const MobileNav = ({ onOpen, title, user, signOut, ...rest }) => {
+const MobileNav = ({ onOpen, title, user, ...rest }) => {
   return (
     <Flex
       ml={{ base: 0, md: 60 }}
@@ -230,12 +233,7 @@ const AdminLayout = ({ metaTitle, pageName, user, LinkItems, children }) => {
               />
             </DrawerContent>
           </Drawer>
-          <MobileNav
-            onOpen={onOpen}
-            title={pageName}
-            user={user}
-            // signOut={signOut}
-          />
+          <MobileNav onOpen={onOpen} title={pageName} user={user} />
           <Box ml={{ base: 0, md: 60 }} p={{ base: 8, md: 10 }}>
             <Breadcrumb mb={"50px"}>
               {words.map((word, index) => (

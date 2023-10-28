@@ -1,52 +1,57 @@
 import Layout from "@/components/Layout";
-import { firestore } from "../../../firebase-config";
-import { Box, Heading } from "@chakra-ui/react";
 import ProductList from "@/components/ProductList";
-const Vendor = ({ productDocs }) => {
+import getVendorsProducts from "@/hooks/products/getVendorProducts";
+
+import { withSessionSsr } from "@/lib/withSession";
+
+import { Box, Heading } from "@chakra-ui/react";
+
+const Vendor = ({ productDocs, user }) => {
   const vendorName = productDocs.length > 0 ? productDocs[0].vendor : "";
 
   return (
-    <>
-      <Layout metaTitle={`IT Kim - ${vendorName}`}>
+    <Layout metaTitle={`IT Kim - ${vendorName}`} user={user}>
+      <Box
+        minH={"100vh"}
+        backgroundImage={"url('/wave.svg')"}
+        backgroundRepeat={"no-repeat"}
+        backgroundPosition={"bottom"}
+      >
         <Box
-          minH={"100vh"}
-          backgroundImage={"url('/wave.svg')"}
-          backgroundRepeat={"no-repeat"}
-          backgroundPosition={"bottom"}
+          maxW={"1440px"}
+          paddingInline={"32px"}
+          marginInline={"auto"}
+          paddingTop={"120px"}
         >
-          <Box
-            maxW={"1440px"}
-            paddingInline={"32px"}
-            marginInline={"auto"}
-            paddingTop={"120px"}
-          >
-            <Heading>{vendorName}'s Products </Heading>
+          <Heading>{vendorName}'s Products </Heading>
+          {productDocs.length > 0 ? (
             <ProductList products={productDocs} />
-          </Box>
+          ) : (
+            <Box
+              w={"100%"}
+              height={"50vh"}
+              display={"grid"}
+              placeItems={"center"}
+            >
+              <Heading fontSize={"md"}>No Products yet</Heading>
+            </Box>
+          )}
         </Box>
-      </Layout>
-    </>
+      </Box>
+    </Layout>
   );
 };
 
 export default Vendor;
 
-export async function getServerSideProps(context) {
+export const getServerSideProps = withSessionSsr(async (context) => {
+  const { req } = context;
+  const user = req.session.user ? req.session.user : null;
+
   const id = context.params.id;
-  const productsRef = firestore.collection("products");
+  const productDocs = await getVendorsProducts(id);
 
-  const response = await productsRef.where("vendorUID", "==", id).get();
-  console.log(response.empty);
-  const productDocs = !response.empty
-    ? response.docs.map((doc) => {
-        const returnDoc = doc.data();
-        returnDoc.id = doc.id;
-
-        return returnDoc;
-      })
-    : [];
-  console.log(productDocs);
   return {
-    props: { productDocs },
+    props: { productDocs, user },
   };
-}
+});

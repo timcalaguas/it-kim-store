@@ -2,7 +2,6 @@ import { Box, Heading, Text, Flex } from "@chakra-ui/react";
 import VendorCard from "./VendorCard";
 
 const VendorList = ({ vendors }) => {
-  console.log(vendors);
   return (
     <>
       <Box borderTopRadius={"50px"} w={"100%"}>

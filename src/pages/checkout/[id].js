@@ -13,9 +13,6 @@ import {
   Select,
   FormControl,
   FormLabel,
-  FormErrorMessage,
-  FormHelperText,
-  VStack,
   Stack,
   Link,
   useToast,
@@ -25,19 +22,29 @@ import { getSession } from "next-auth/react";
 import { firestore } from "../../../firebase-config";
 import { FcGoogle } from "react-icons/fc";
 import { signIn } from "next-auth/react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { withSessionSsr } from "@/lib/withSession";
+import AuthManager from "@/hooks/auth/AuthManager";
 
 export default function Checkout({ userSession }) {
   const router = useRouter();
   const vendorUID = router.query.id;
 
+  const { loginWithGoogle } = AuthManager();
+
   const toast = useToast();
 
   const [loading, setLoading] = useState(false);
   const [selectedAddress, setSelectedAddress] = useState(
-    userSession ? userSession.user.addresses[0] : {}
+    userSession ? userSession.addresses[0] : {}
   );
   const { cart, removeItemsByVendorId } = useCartStore();
+
+  const changeAddress = (index) => {
+    setSelectedAddress(userSession.addresses[index]);
+  };
+  const selectedCart = cart.filter((vendor) => vendor.vendorUID === vendorUID);
+  console.log(selectedCart[0]?.items);
 
   const checkout = async () => {
     try {
@@ -45,21 +52,19 @@ export default function Checkout({ userSession }) {
       const selectedCart = cart.filter(
         (vendor) => vendor.vendorUID === vendorUID
       );
-      console.log(selectedCart[0], selectedAddress);
 
       const orderData = {
         vendorId: selectedCart[0].vendorUID,
         vendor: selectedCart[0].vendor,
         items: selectedCart[0].items,
         address: selectedAddress,
-        customerId: userSession.user.docId,
-        customerName: userSession.user.name,
+        customerId: userSession.docId,
+        customerName: userSession.name,
         status: "order-placed",
       };
 
       const order = await firestore.collection("orders").add(orderData);
 
-      console.log(order);
       if (order) {
         removeItemsByVendorId(vendorUID);
         // Success
@@ -75,6 +80,36 @@ export default function Checkout({ userSession }) {
       console.error(error);
     }
   };
+
+  const [productTotals, setProductTotal] = useState({ subtotal: 0, total: 0 });
+
+  useEffect(() => {
+    if (cart) {
+      const selectedCart = cart.filter(
+        (vendor) => vendor.vendorUID === vendorUID
+      );
+      const totals = calculateTotal(selectedCart[0]?.items);
+
+      setProductTotal(totals);
+    }
+  }, [cart]);
+
+  function calculateTotal(items) {
+    let total = 20;
+    let subtotal = 0;
+
+    for (const item of items) {
+      if (item.discountedPrice !== "" && item.discountedPrice !== null) {
+        subtotal += parseInt(item.discountedPrice);
+      } else {
+        subtotal += parseInt(item.price);
+      }
+    }
+
+    total = total + subtotal;
+
+    return { subtotal, total };
+  }
 
   return (
     <>
@@ -102,24 +137,34 @@ export default function Checkout({ userSession }) {
             >
               <Heading mb={"20px"}>Checkout</Heading>
               <Box mb={"20px"}>
-                <Text display={"flex"} gap={"5px"}>
-                  <Text fontWeight={"600"}>Name:</Text> {userSession.user.name}
-                </Text>
-                <Text display={"flex"} gap={"5px"}>
-                  <Text fontWeight={"600"}>Email:</Text>{" "}
-                  {userSession.user.email}
-                </Text>
+                <Box display={"flex"} gap={"5px"}>
+                  <Text fontWeight={"600"}>Name:</Text> {userSession.name}
+                </Box>
+                <Box display={"flex"} gap={"5px"}>
+                  <Text fontWeight={"600"}>Email:</Text> {userSession.email}
+                </Box>
+                <Box display={"flex"} gap={"5px"}>
+                  <Text fontWeight={"600"}>Address:</Text>{" "}
+                  {selectedAddress?.address.no}{" "}
+                  {selectedAddress?.address.street}{" "}
+                  {selectedAddress?.address.barangay}{" "}
+                  {selectedAddress?.address.city}
+                </Box>
+                <Box display={"flex"} gap={"5px"}>
+                  <Text fontWeight={"600"}>Contact Number:</Text>{" "}
+                  {selectedAddress?.contactNumber}
+                </Box>
               </Box>
               {userSession != null ? (
                 <Stack>
-                  {userSession && userSession.user.addresses.length > 0 ? (
+                  {userSession && userSession.addresses.length > 0 ? (
                     <FormControl mb={"16px"}>
                       <HStack
                         justifyContent={"space-between"}
                         alignItems={"end"}
                         mb={"12px"}
                       >
-                        <Text fontWeight={"600"}>Address</Text>
+                        <Text fontWeight={"600"}>Select Address</Text>
                         <Button
                           variant={"primary"}
                           size={"sm"}
@@ -129,9 +174,9 @@ export default function Checkout({ userSession }) {
                           Add address
                         </Button>
                       </HStack>
-                      <Select onChange={setSelectedAddress}>
-                        {userSession.user.addresses.map((address) => (
-                          <option value={address}>
+                      <Select onChange={(e) => changeAddress(e.target.value)}>
+                        {userSession.addresses.map((address, index) => (
+                          <option value={index}>
                             {address.address.no} {address.address.street},
                             {address.address.barangay}, {address.address.city} -{" "}
                             {address.contactNumber}
@@ -162,9 +207,7 @@ export default function Checkout({ userSession }) {
                 <Stack spacing={1} mb={"16px"}>
                   <Text fontWeight={"bold"}>Sign in to checkout</Text>
                   <Button
-                    onClick={() => {
-                      signIn("google");
-                    }}
+                    onClick={() => loginWithGoogle("customer")}
                     leftIcon={<FcGoogle />}
                   >
                     Sign in with Google
@@ -172,12 +215,13 @@ export default function Checkout({ userSession }) {
                 </Stack>
               )}
 
-              {cart.map(
-                (vendor) =>
+              <Box>
+                {cart.map((vendor) => {
                   vendor.vendorUID === vendorUID && (
                     <Items items={vendor.items} />
-                  )
-              )}
+                  );
+                })}
+              </Box>
 
               <HStack justifyContent={"end"}>
                 <Button
@@ -187,7 +231,7 @@ export default function Checkout({ userSession }) {
                   onClick={checkout}
                   loading={loading}
                 >
-                  Checkout
+                  Place order
                 </Button>
               </HStack>
             </Box>
@@ -199,6 +243,7 @@ export default function Checkout({ userSession }) {
 }
 
 const Items = ({ items }) => {
+  console.log(items);
   return (
     <Flex w={"100%"} flexDirection={"column"}>
       {items.length > 0 &&
@@ -209,6 +254,7 @@ const Items = ({ items }) => {
             justifyContent={"space-between"}
             w={"100%"}
             flexWrap={"wrap"}
+            key={index}
           >
             <HStack gap={4} w={"50%"}>
               <Image src={product.image} boxSize={"50px"} borderRadius={"lg"} />
@@ -244,35 +290,19 @@ const Items = ({ items }) => {
   );
 };
 
-export async function getServerSideProps(context) {
-  const userSession = await getSession(context);
-  const id = context.query.id;
+export const getServerSideProps = withSessionSsr(async ({ req, res }) => {
+  const userSession = req.session.user;
 
-  if (userSession) {
-    const response = await firestore
-      .collection("users")
-      .where("email", "==", userSession.user.email)
-      .limit(1)
-      .get();
-
-    const userDoc = !response.empty ? response.docs[0].data() : {};
-    userSession.user.addresses = userDoc.addresses ? userDoc.addresses : [];
-    userSession.user.docId = response.docs[0].id;
-
-    return {
-      //   redirect: {
-      //     permanent: true,
-      //     destination: `/checkout/${id}`,
-      //   },
-      props: { userSession },
-    };
-  } else {
+  if (!userSession) {
     return {
       redirect: {
         permanent: false,
         destination: "/",
       },
-      props: { providers: [] },
     };
   }
-}
+
+  return {
+    props: { userSession },
+  };
+});

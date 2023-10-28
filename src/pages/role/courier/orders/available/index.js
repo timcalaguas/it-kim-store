@@ -22,6 +22,13 @@ import {
   Heading,
   HStack,
   Image,
+  Link,
+  AlertDialog,
+  AlertDialogBody,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogContent,
+  AlertDialogOverlay,
   Modal,
   ModalBody,
   ModalCloseButton,
@@ -132,6 +139,18 @@ const Orders = ({ orderDocs, userSession }) => {
                         >
                           View Details
                         </Button>
+                        <>
+                          <Button
+                            leftIcon={<AiFillCheckCircle />}
+                            colorScheme="blue"
+                            variant="outline"
+                            isLoading={processLoading}
+                            size={"sm"}
+                            onClick={() => processOrder(order, "accept")}
+                          >
+                            Accept
+                          </Button>
+                        </>
                       </Stack>
                     </Td>
                   </Tr>
@@ -242,7 +261,9 @@ export async function getServerSideProps(context) {
       })
     : [];
 
-  const filteredArray = orderDocs.filter((obj) => obj.status === "delivered");
+  const filteredArray = orderDocs.filter(
+    (obj) => obj.status === "order-accepted"
+  );
 
   orderDocs = filteredArray;
 

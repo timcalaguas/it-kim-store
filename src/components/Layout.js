@@ -2,7 +2,7 @@ import Footer from "./Footer";
 import Navbar from "./Navbar";
 import Head from "next/head";
 
-const Layout = ({ metaTitle, children }) => {
+const Layout = ({ metaTitle, user, children }) => {
   return (
     <>
       <Head>
@@ -11,7 +11,7 @@ const Layout = ({ metaTitle, children }) => {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <Navbar />
+      <Navbar user={user} />
       <main>{children}</main>
       <Footer />
     </>

@@ -16,22 +16,10 @@ import {
 import { FcGoogle } from "react-icons/fc";
 import Head from "next/head";
 
-import { useSession, signIn, getSession } from "next-auth/react";
-import { useEffect } from "react";
-import { useRouter } from "next/router";
-
-import setCookie from "@/hooks/setCookie";
+import AuthManager from "@/hooks/auth/AuthManager";
 
 export default function Login() {
-  const { data: session } = useSession();
-  const router = useRouter();
-
-  useEffect(() => {
-    if (session && session.user.role == "customer") {
-      router.push("/");
-    }
-  }, [session]);
-
+  const { loginWithGoogle } = AuthManager();
   return (
     <>
       <Head>
@@ -50,10 +38,7 @@ export default function Login() {
 
             <Stack spacing={6}>
               <Button
-                onClick={() => {
-                  setCookie("userType", "customer");
-                  signIn("google");
-                }}
+                onClick={() => loginWithGoogle("customer")}
                 leftIcon={<FcGoogle />}
               >
                 Sign in with Google
@@ -73,22 +58,4 @@ export default function Login() {
       </Stack>
     </>
   );
-}
-
-export async function getServerSideProps(context) {
-  const session = await getSession(context);
-
-  if (session) {
-    return {
-      redirect: {
-        permanent: false,
-        destination: "/",
-      },
-      props: { providers: [] },
-    };
-  }
-
-  return {
-    props: { providers: [] },
-  };
 }

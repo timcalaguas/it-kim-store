@@ -32,13 +32,17 @@ import {
 import { AiOutlineShoppingCart } from "react-icons/ai";
 import { useCartStore } from "@/hooks/stores/cartStore";
 import FeaturedProducts from "@/components/FeaturedProducts";
+import getSingleProduct from "@/hooks/products/getSingleProduct";
+import { withSessionSsr } from "@/lib/withSession";
 
-const ProductDetails = ({ product, products }) => {
+const ProductDetails = ({ products, product, user }) => {
   const { addToCart } = useCartStore();
+
+  console.log(product, products);
 
   return (
     <>
-      <Layout metaTitle={`IT Kim - ${product.productName}`}>
+      <Layout metaTitle={`IT Kim - ${product.productName}`} user={user}>
         <Container
           maxW={"7xl"}
           minHeight={"100vh"}
@@ -98,15 +102,13 @@ const ProductDetails = ({ product, products }) => {
                   />
                 }
               >
-                <VStack spacing={{ base: 4, sm: 6 }}>
-                  <Text
-                    color={useColorModeValue("gray.500", "gray.400")}
-                    fontSize={"2xl"}
-                    fontWeight={"300"}
-                  >
-                    {product.description}
-                  </Text>
-                </VStack>
+                <Text
+                  color={useColorModeValue("gray.500", "gray.400")}
+                  fontSize={"2xl"}
+                  fontWeight={"300"}
+                >
+                  {product.description}
+                </Text>
               </Stack>
 
               <Button
@@ -130,7 +132,9 @@ const ProductDetails = ({ product, products }) => {
             </Stack>
           </SimpleGrid>
         </Container>
-        <FeaturedProducts products={products} fromVendor={products[0].vendor} />
+        {products.length > 0 && (
+          <FeaturedProducts products={products} fromVendor={product.vendor} />
+        )}
       </Layout>
     </>
   );
@@ -138,39 +142,14 @@ const ProductDetails = ({ product, products }) => {
 
 export default ProductDetails;
 
-export async function getServerSideProps(context) {
+export const getServerSideProps = withSessionSsr(async (context) => {
+  const { req } = context;
+  const user = req.session.user ? req.session.user : null;
+
   const id = context.params.id;
-  let product = [];
-  const productSnapshot = await getDoc(doc(firestore, "products", id));
+  const { products, product } = await getSingleProduct(id);
 
-  if (productSnapshot.exists) {
-    product = productSnapshot.data();
-
-    const moreProductResponse = await getDocs(
-      query(
-        collection(firestore, "products"),
-        where("vendorUID", "==", product.vendorUID),
-        limit(3)
-      )
-    );
-
-    const products = !moreProductResponse.empty
-      ? moreProductResponse.docs
-          .map((doc) => {
-            const returnDoc = doc.data();
-            returnDoc.id = doc.id;
-
-            return returnDoc;
-          })
-          .filter((product) => product.id != id)
-      : [];
-
-    return {
-      props: { product, products },
-    };
-  } else {
-    return {
-      props: { product, products },
-    };
-  }
-}
+  return {
+    props: { product, products, user },
+  };
+});
