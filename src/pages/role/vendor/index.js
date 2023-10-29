@@ -76,7 +76,7 @@ const Dashboard = ({ user, productCount, orderCount }) => {
 
   useEffect(() => {
     setValue("storeName", user.storeName);
-    if (user.addresses.length > 0) {
+    if (user.addresses?.length > 0) {
       setValue("no", user.addresses[0].address.no);
       setValue("street", user.addresses[0].address.street);
       setValue("barangay", user.addresses[0].address.barangay);
@@ -150,7 +150,7 @@ const Dashboard = ({ user, productCount, orderCount }) => {
       user={user}
       LinkItems={LinkItems}
     >
-      {(user.storeName == "" || user.addresses.length == 0) && (
+      {(user.storeName == "" || user.addresses?.length == 0) && (
         <Alert status="warning" mb={"20px"}>
           <AlertIcon />
           <HStack
@@ -199,7 +199,7 @@ const Dashboard = ({ user, productCount, orderCount }) => {
               <Box mb={"12px"}>
                 <Text fontWeight={"bold"}>Store Address:</Text>
                 <Text>
-                  {user.addresses.length > 0
+                  {user.addresses?.length > 0
                     ? `${user.addresses[0].address.no} ${user.addresses[0].address.street} ${user.addresses[0].address.barangay} ${user.addresses[0].address.city}`
                     : ""}
                 </Text>
@@ -207,7 +207,7 @@ const Dashboard = ({ user, productCount, orderCount }) => {
               <Box mb={"12px"}>
                 <Text fontWeight={"bold"}>Store Contact No.:</Text>
                 <Text>
-                  {user.addresses.length > 0
+                  {user.addresses?.length > 0
                     ? user.addresses[0].contactNumber
                     : ""}
                 </Text>
@@ -416,6 +416,13 @@ export const getServerSideProps = withSessionSsr(async ({ req, res }) => {
       },
     };
   }
+
+  if (user.role != "vendor") {
+    return {
+      notFound: true,
+    };
+  }
+
 
   const { productCount, orderCount } = await geVendorDashboardCount(user.docId);
 

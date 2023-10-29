@@ -138,12 +138,18 @@ export default Dashboard;
 export const getServerSideProps = withSessionSsr(async ({ req, res }) => {
   const user = req.session.user;
 
-  if (!user || user.role != "admin") {
+  if (!user) {
     return {
       redirect: {
         permanent: false,
         destination: "/role/admin/auth/login",
       },
+    };
+  }
+
+  if (user.role != "admin") {
+    return {
+      notFound: true,
     };
   }
 

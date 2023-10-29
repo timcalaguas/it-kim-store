@@ -239,6 +239,7 @@ const Vendors = ({ vendorDocs, user }) => {
           </AlertDialogContent>
         </AlertDialogOverlay>
       </AlertDialog>
+
       <Modal isOpen={itemIsOpen} onClose={itemOnClose}>
         <ModalOverlay />
         <ModalContent>
@@ -257,12 +258,12 @@ const Vendors = ({ vendorDocs, user }) => {
               </Text>
               <Text mb={"12px"}>
                 <Text fontWeight={"500"}>Store Address:</Text>{" "}
-                {selectedItem.addresses &&
+                {selectedItem.addresses?.length > 0 &&
                   `${selectedItem.addresses[0].address.no} ${selectedItem.addresses[0].address.street} ${selectedItem.addresses[0].address.barangay} ${selectedItem.addresses[0].address.city}`}
               </Text>
               <Text mb={"12px"}>
                 <Text fontWeight={"500"}>Contact Number:</Text>{" "}
-                {selectedItem.addresses &&
+                {selectedItem.addresses?.length > 0 &&
                   selectedItem.addresses[0].contactNumber}{" "}
               </Text>
             </VStack>
