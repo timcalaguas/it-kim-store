@@ -44,6 +44,9 @@ import {
 } from "@chakra-ui/react";
 import { useEffect, useState, useRef } from "react";
 import moment from "moment/moment";
+import getVendorOrders from "@/hooks/vendors/getVendorOrders";
+import { withSessionSsr } from "@/lib/withSession";
+import axios from "axios";
 
 const LinkItems = [
   { name: "Dashboard", icon: FiHome, link: "/role/vendor" },
@@ -51,15 +54,16 @@ const LinkItems = [
   { name: "Orders", icon: FiCompass, link: "/role/vendor/orders" },
 ];
 
-const Orders = ({ orderDocs, userSession }) => {
+const Orders = ({ orderDocs, user }) => {
   const toast = useToast();
 
   const [orders, setOrders] = useState(orderDocs);
-  const [selectedId, setSelectedId] = useState("");
+  const [process, setProcess] = useState("");
   const [selectedItem, setSelectedItem] = useState([]);
   const [processLoading, setProcessLoading] = useState(false);
 
   const { isOpen, onOpen, onClose } = useDisclosure();
+
   const {
     isOpen: itemIsOpen,
     onOpen: itemOnOpen,
@@ -67,8 +71,10 @@ const Orders = ({ orderDocs, userSession }) => {
   } = useDisclosure();
   const cancelRef = useRef();
 
-  const openDeleteDialog = (id) => {
-    setSelectedId(id);
+  const openDeleteDialog = (order, process) => {
+    setSelectedItem(order);
+
+    setProcess(process);
     onOpen();
   };
 
@@ -77,19 +83,43 @@ const Orders = ({ orderDocs, userSession }) => {
     itemOnOpen();
   };
 
-  const processOrder = async (order, method) => {
+  const processOrder = async () => {
     setProcessLoading(true);
     const indexOfObjectToUpdate = orders.findIndex(
-      (obj) => obj.id === order.id
+      (obj) => obj.id === selectedItem.id
     );
-    let status = method == "accept" ? "order-accepted" : "order-declined";
+
+    // const body = {
+    //   to: "tmthy011@gmail.com",
+    //   subject: "asdsada",
+    //   body: "adadadas",
+    // };
+
+    // if (process == "decline") {
+    //   const response = await axios.post("/api/send-mail", body);
+
+    //   console.log(response);
+    // }
+
+    let status = process == "accept" ? "order-accepted" : "order-declined";
     const processResponse = await firestore
       .collection("orders")
-      .doc(order.id)
+      .doc(selectedItem.id)
       .update({ status: status });
-    order.status = status;
+    selectedItem.status = status;
     setProcessLoading(false);
-    order[indexOfObjectToUpdate] = order;
+    onClose();
+    orders[indexOfObjectToUpdate] = selectedItem;
+    toast({
+      title: process == "accept" ? "Order Accepted" : "Order Declined",
+      description:
+        process == "accept"
+          ? "The order is now accepted."
+          : "The order is now declined.",
+      status: "success",
+      duration: 9000,
+      isClosable: true,
+    });
   };
 
   return (
@@ -97,7 +127,7 @@ const Orders = ({ orderDocs, userSession }) => {
       <AdminLayout
         metaTitle={"Vendor - Orders"}
         pageName={"IT Kim - Vendor"}
-        user={userSession}
+        user={user}
         LinkItems={LinkItems}
       >
         <HStack alignItems={"center"} justifyContent={"space-between"} mb={6}>
@@ -146,9 +176,8 @@ const Orders = ({ orderDocs, userSession }) => {
                               leftIcon={<AiFillCheckCircle />}
                               colorScheme="blue"
                               variant="outline"
-                              isLoading={processLoading}
                               size={"sm"}
-                              onClick={() => processOrder(order, "accept")}
+                              onClick={() => openDeleteDialog(order, "accept")}
                             >
                               Accept
                             </Button>
@@ -157,8 +186,7 @@ const Orders = ({ orderDocs, userSession }) => {
                               colorScheme="red"
                               size={"sm"}
                               variant="outline"
-                              onClick={() => processOrder(order, "decline")}
-                              isLoading={processLoading}
+                              onClick={() => openDeleteDialog(order, "decline")}
                             >
                               Decline
                             </Button>
@@ -182,6 +210,39 @@ const Orders = ({ orderDocs, userSession }) => {
           )}
         </TableContainer>
       </AdminLayout>
+      <AlertDialog
+        isOpen={isOpen}
+        leastDestructiveRef={cancelRef}
+        onClose={onClose}
+      >
+        <AlertDialogOverlay>
+          <AlertDialogContent>
+            <AlertDialogHeader fontSize="lg" fontWeight="bold">
+              {process == "accept" ? "Accept Order" : "Decline Order"}
+            </AlertDialogHeader>
+
+            <AlertDialogBody>
+              {process == "accept"
+                ? "Are you sure you want to accept this order? After accepting this order will be available to all couriers."
+                : "Are you sure you want to decline this order? After declining the order will be cancelled and the customer will be notified."}
+            </AlertDialogBody>
+
+            <AlertDialogFooter>
+              <Button ref={cancelRef} onClick={onClose}>
+                Cancel
+              </Button>
+              <Button
+                colorScheme={process == "accept" ? "blue" : "red"}
+                onClick={() => processOrder()}
+                ml={3}
+                isLoading={processLoading}
+              >
+                {process == "accept" ? "Accept" : "Decline"}
+              </Button>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialogOverlay>
+      </AlertDialog>
 
       <Modal isOpen={itemIsOpen} onClose={itemOnClose}>
         <ModalOverlay />
@@ -239,48 +300,21 @@ const Orders = ({ orderDocs, userSession }) => {
 
 export default Orders;
 
-export async function getServerSideProps(context) {
-  const userSession = await getSession(context);
+export const getServerSideProps = withSessionSsr(async ({ req, res }) => {
+  const user = req.session.user ? req.session.user : null;
 
-  if (!userSession) {
+  if (!user) {
     return {
       redirect: {
         permanent: false,
-        destination: "/",
+        destination: "/role/vendor/auth/login",
       },
-      props: { providers: [] },
     };
   }
 
-  const response = await firestore
-    .collection("users")
-    .where("email", "==", userSession.user.email)
-    .limit(1)
-    .get();
-
-  const userDoc = !response.empty ? response.docs[0].data() : {};
-  userSession.user.addresses = userDoc.addresses ? userDoc.addresses : [];
-  userSession.user.docId = response.docs[0].id;
-  userSession.user.status = userDoc.status ? userDoc.status : "";
-
-  const orderResponse = await firestore.collection("orders").get();
-
-  let orderDocs = !orderResponse.empty
-    ? orderResponse.docs.map((doc) => {
-        const returnDoc = doc.data();
-        returnDoc.id = doc.id;
-
-        return returnDoc;
-      })
-    : [];
-
-  const filteredArray = orderDocs.filter(
-    (obj) => obj.vendorUID === userSession.user.docId
-  );
-
-  orderDocs = filteredArray;
+  const orderDocs = await getVendorOrders(user.docId);
 
   return {
-    props: { orderDocs, userSession },
+    props: { orderDocs, user },
   };
-}
+});

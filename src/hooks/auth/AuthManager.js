@@ -36,6 +36,8 @@ const AuthManager = () => {
         role: role,
       });
 
+      console.log(response);
+
       if (response.status == 200) {
         if (role === "admin") redirect = "/role/admin/";
         if (role === "courier") redirect = "/role/courier/";

@@ -36,8 +36,16 @@ import {
   Divider,
   Avatar,
   VStack,
+  AlertDialog,
+  AlertDialogBody,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogContent,
+  AlertDialogOverlay,
 } from "@chakra-ui/react";
 import { useEffect, useState, useRef } from "react";
+import getUsers from "@/hooks/getUsers";
+import { withSessionSsr } from "@/lib/withSession";
 
 const LinkItems = [
   { name: "Dashboard", icon: FiHome, link: "/role/admin" },
@@ -45,13 +53,16 @@ const LinkItems = [
   { name: "Couriers", icon: FiCompass, link: "/role/admin/couriers" },
 ];
 
-const Couriers = ({ courierDocs, userSession }) => {
+const Couriers = ({ courierDocs, user }) => {
   const toast = useToast();
 
   const [couriers, setCouriers] = useState(courierDocs);
   const [selectedId, setSelectedId] = useState("");
+  const [process, setProcess] = useState("accept");
   const [selectedItem, setSelectedItem] = useState([]);
   const [processLoading, setProcessLoading] = useState(false);
+
+  const { isOpen, onOpen, onClose } = useDisclosure();
 
   const {
     isOpen: itemIsOpen,
@@ -60,25 +71,43 @@ const Couriers = ({ courierDocs, userSession }) => {
   } = useDisclosure();
   const cancelRef = useRef();
 
+  const openProcessDialog = (vendor, process) => {
+    setSelectedItem(vendor);
+
+    setProcess(process);
+    onOpen();
+  };
+
   const openModal = (courier) => {
     setSelectedItem(courier);
     itemOnOpen();
   };
 
-  const processVendor = async (courier, method) => {
+  const processCourier = async () => {
     setProcessLoading(true);
-    setSelectedId(courier.id);
     const indexOfObjectToUpdate = couriers.findIndex(
-      (obj) => obj.id === courier.id
+      (obj) => obj.id === selectedItem.id
     );
-    let status = method == "accept" ? "approved" : "blocked";
+    let status = process == "accept" ? "approved" : "blocked";
     const processResponse = await firestore
       .collection("users")
-      .doc(courier.id)
+      .doc(selectedItem.id)
       .update({ status: status });
-    courier.status = status;
+    selectedItem.status = status;
     setProcessLoading(false);
-    courier[indexOfObjectToUpdate] = courier;
+    couriers[indexOfObjectToUpdate] = selectedItem;
+
+    toast({
+      title: process == "accept" ? "Approved" : "Blocked",
+      description:
+        process == "accept"
+          ? "The courier is now approved."
+          : "The courier is now blocked.",
+      status: "success",
+      duration: 9000,
+      isClosable: true,
+    });
+    onClose();
   };
 
   return (
@@ -86,7 +115,7 @@ const Couriers = ({ courierDocs, userSession }) => {
       <AdminLayout
         metaTitle={"Vendor - Couriers"}
         pageName={"IT Kim - Admin"}
-        user={userSession}
+        user={user}
         LinkItems={LinkItems}
       >
         <HStack alignItems={"center"} justifyContent={"space-between"} mb={6}>
@@ -138,14 +167,10 @@ const Couriers = ({ courierDocs, userSession }) => {
                               leftIcon={<AiFillCheckCircle />}
                               colorScheme="blue"
                               variant="outline"
-                              isLoading={
-                                processLoading && selectedId == courier.id
-                              }
-                              disabled={
-                                processLoading && selectedId != courier.id
-                              }
                               size={"sm"}
-                              onClick={() => processVendor(courier, "accept")}
+                              onClick={() =>
+                                openProcessDialog(courier, "accept")
+                              }
                             >
                               Approve
                             </Button>
@@ -157,12 +182,8 @@ const Couriers = ({ courierDocs, userSession }) => {
                             colorScheme="red"
                             size={"sm"}
                             variant="outline"
-                            onClick={() => processVendor(courier, "decline")}
-                            isLoading={
-                              processLoading && selectedId == courier.id
-                            }
-                            disabled={
-                              processLoading && selectedId != courier.id
+                            onClick={() =>
+                              openProcessDialog(courier, "decline")
                             }
                           >
                             Block
@@ -186,7 +207,39 @@ const Couriers = ({ courierDocs, userSession }) => {
           )}
         </TableContainer>
       </AdminLayout>
+      <AlertDialog
+        isOpen={isOpen}
+        leastDestructiveRef={cancelRef}
+        onClose={onClose}
+      >
+        <AlertDialogOverlay>
+          <AlertDialogContent>
+            <AlertDialogHeader fontSize="lg" fontWeight="bold">
+              {process == "accept" ? "Approve Courier" : "Block Courier"}
+            </AlertDialogHeader>
 
+            <AlertDialogBody>
+              {process == "accept"
+                ? "Are you sure you want to approve this courier? This will allow the courier to accept and deliver orders."
+                : "Are you sure you want to block this courier? They will no longer be allowed to use the their store."}
+            </AlertDialogBody>
+
+            <AlertDialogFooter>
+              <Button ref={cancelRef} onClick={onClose}>
+                Cancel
+              </Button>
+              <Button
+                colorScheme={process == "accept" ? "blue" : "red"}
+                onClick={() => processCourier()}
+                ml={3}
+                isLoading={processLoading}
+              >
+                {process == "accept" ? "Approve" : "Block"}
+              </Button>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialogOverlay>
+      </AlertDialog>
       <Modal isOpen={itemIsOpen} onClose={itemOnClose}>
         <ModalOverlay />
         <ModalContent>
@@ -223,45 +276,27 @@ const Couriers = ({ courierDocs, userSession }) => {
 
 export default Couriers;
 
-export async function getServerSideProps(context) {
-  const userSession = await getSession(context);
+export const getServerSideProps = withSessionSsr(async ({ req, res }) => {
+  const user = req.session.user;
 
-  if (!userSession) {
+  if (!user) {
     return {
       redirect: {
         permanent: false,
-        destination: "/",
+        destination: "/role/admin/auth/login",
       },
-      props: { providers: [] },
     };
   }
 
-  const response = await firestore
-    .collection("users")
-    .where("email", "==", userSession.user.email)
-    .limit(1)
-    .get();
+  if (user.role != "admin") {
+    return {
+      notFound: true,
+    };
+  }
 
-  const userDoc = !response.empty ? response.docs[0].data() : {};
-  userSession.user.addresses = userDoc.addresses ? userDoc.addresses : [];
-  userSession.user.docId = response.docs[0].id;
-  userSession.user.status = userDoc.status ? userDoc.status : "";
-
-  const courierResponse = await firestore
-    .collection("users")
-    .where("role", "==", "courier")
-    .get();
-
-  let courierDocs = !courierResponse.empty
-    ? courierResponse.docs.map((doc) => {
-        const returnDoc = doc.data();
-        returnDoc.id = doc.id;
-
-        return returnDoc;
-      })
-    : [];
+  const courierDocs = await getUsers("courier");
 
   return {
-    props: { courierDocs, userSession },
+    props: { courierDocs, user },
   };
-}
+});

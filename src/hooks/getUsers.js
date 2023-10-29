@@ -1,13 +1,13 @@
 import { firestore } from "../../firebase-config";
 
-const getVendors = async (limit, query) => {
+const getUsers = async (role) => {
   try {
     const response = await firestore
       .collection("users")
-      .where("role", "==", "vendor")
+      .where("role", "==", role)
       .get();
 
-    const vendorDocs = !response.empty
+    const userDocs = !response.empty
       ? response.docs.map((doc) => {
           const returnDoc = doc.data();
           returnDoc.id = doc.id;
@@ -16,11 +16,11 @@ const getVendors = async (limit, query) => {
         })
       : [];
 
-    return vendorDocs;
+    return userDocs;
   } catch (error) {
     console.log(error);
     return [];
   }
 };
 
-export default getVendors;
+export default getUsers;

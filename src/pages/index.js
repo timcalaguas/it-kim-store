@@ -5,7 +5,7 @@ import Layout from "@/components/Layout";
 
 import { withSessionSsr } from "@/lib/withSession";
 import getProducts from "@/hooks/getProducts";
-import getVendors from "@/hooks/getVendors";
+import getUsers from "@/hooks/getUsers";
 
 export default function Home({ products, vendors, user }) {
   return (
@@ -18,11 +18,12 @@ export default function Home({ products, vendors, user }) {
     </>
   );
 }
+
 export const getServerSideProps = withSessionSsr(async ({ req, res }) => {
   const user = req.session.user ? req.session.user : null;
 
   const products = await getProducts(3);
-  const vendors = await getVendors();
+  const vendors = await getUsers("vendor");
 
   return {
     props: { products, vendors, user },

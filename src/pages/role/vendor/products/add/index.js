@@ -20,6 +20,7 @@ import {
 } from "@chakra-ui/react";
 import { useForm } from "react-hook-form";
 import { useState } from "react";
+import { withSessionSsr } from "@/lib/withSession";
 
 const LinkItems = [
   { name: "Dashboard", icon: FiHome, link: "/role/vendor" },
@@ -27,7 +28,7 @@ const LinkItems = [
   { name: "Orders", icon: FiCompass, link: "/role/vendor/orders" },
 ];
 
-const AddProduct = ({ userSession }) => {
+const AddProduct = ({ user }) => {
   const storageRef = storage.ref();
   const toast = useToast();
 
@@ -53,6 +54,8 @@ const AddProduct = ({ userSession }) => {
       const downloadURL = await imageRef.getDownloadURL();
 
       values.image = downloadURL;
+      values.rating = [];
+      values.averageStarRating = null;
 
       const response = await firestore
         .collection("products")
@@ -88,7 +91,7 @@ const AddProduct = ({ userSession }) => {
       <AdminLayout
         metaTitle={"Vendor - Add Product"}
         pageName={"IT Kim - Vendor"}
-        user={userSession}
+        user={user}
         LinkItems={LinkItems}
       >
         <HStack alignItems={"center"} justifyContent={"space-between"} mb={6}>
@@ -225,12 +228,9 @@ const AddProduct = ({ userSession }) => {
                     type="hidden"
                     id="vendorUID"
                     name="vendorUID"
-                    value={userSession.user.docId}
+                    value={user.docId}
                     {...register("vendorUID", {})}
                   />
-                  <FormErrorMessage>
-                    {errors.vendorUID && errors.image.vendorUID}
-                  </FormErrorMessage>
                 </FormControl>
                 <Button
                   mt={4}
@@ -251,30 +251,19 @@ const AddProduct = ({ userSession }) => {
 
 export default AddProduct;
 
-export async function getServerSideProps(context) {
-  const userSession = await getSession(context);
+export const getServerSideProps = withSessionSsr(async ({ req, res }) => {
+  const user = req.session.user ? req.session.user : null;
 
-  if (!userSession) {
+  if (!user) {
     return {
       redirect: {
         permanent: false,
         destination: "/role/vendor/auth/login",
       },
-      props: { providers: [] },
     };
   }
 
-  const response = await firestore
-    .collection("users")
-    .where("email", "==", userSession.user.email)
-    .limit(1)
-    .get();
-
-  const userDoc = !response.empty ? response.docs[0].data() : {};
-  userSession.user.addresses = userDoc.addresses ? userDoc.addresses : [];
-  userSession.user.docId = response.docs[0].id;
-
   return {
-    props: { userSession },
+    props: { user },
   };
-}
+});

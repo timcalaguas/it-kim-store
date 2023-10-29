@@ -19,6 +19,7 @@ import {
   HStack,
   Image,
   Link,
+  Text,
   AlertDialog,
   AlertDialogBody,
   AlertDialogFooter,
@@ -31,6 +32,9 @@ import {
   useToast,
 } from "@chakra-ui/react";
 import { useEffect, useState, useRef } from "react";
+import { withSessionSsr } from "@/lib/withSession";
+import getVendorsProducts from "@/hooks/products/getVendorProducts";
+import { AiFillStar } from "react-icons/ai";
 
 const LinkItems = [
   { name: "Dashboard", icon: FiHome, link: "/role/vendor" },
@@ -38,7 +42,7 @@ const LinkItems = [
   { name: "Orders", icon: FiCompass, link: "/role/vendor/orders" },
 ];
 
-const Products = ({ productDocs, userSession }) => {
+const Products = ({ productDocs, user }) => {
   const toast = useToast();
 
   const [products, setProducts] = useState(productDocs);
@@ -80,12 +84,12 @@ const Products = ({ productDocs, userSession }) => {
       <AdminLayout
         metaTitle={"Vendor - Products"}
         pageName={"IT Kim - Vendor"}
-        user={userSession}
+        user={user}
         LinkItems={LinkItems}
       >
         <HStack alignItems={"center"} justifyContent={"space-between"} mb={6}>
           <Heading>List of Products</Heading>
-          {userSession.user.status != "approved" ? (
+          {user.status != "approved" ? (
             <Button
               leftIcon={<IoIosAddCircle />}
               colorScheme="blue"
@@ -126,12 +130,13 @@ const Products = ({ productDocs, userSession }) => {
                   <Th>Price</Th>
                   <Th>Discounted Price</Th>
                   <Th>Quantity</Th>
+                  <Th>Rating</Th>
                   <Th>Actions</Th>
                 </Tr>
               </Thead>
               <Tbody>
                 {products.map((product) => (
-                  <Tr>
+                  <Tr key={product.id}>
                     <Td>
                       <HStack spacing={4}>
                         <Image
@@ -146,6 +151,16 @@ const Products = ({ productDocs, userSession }) => {
                     <Td>{product.price}</Td>
                     <Td>{product.discountedPrice}</Td>
                     <Td>{product.quantity}</Td>
+                    <Td>
+                      {product.averageStarRating == null ? (
+                        <HStack>
+                          <Text>1</Text>
+                          <AiFillStar fill="gold" />
+                        </HStack>
+                      ) : (
+                        "No Rating yet"
+                      )}
+                    </Td>
                     <Td>
                       <Stack direction="row" spacing={2}>
                         <Link href={`/role/vendor/products/edit/${product.id}`}>
@@ -222,48 +237,21 @@ const Products = ({ productDocs, userSession }) => {
 
 export default Products;
 
-export async function getServerSideProps(context) {
-  const userSession = await getSession(context);
+export const getServerSideProps = withSessionSsr(async ({ req, res }) => {
+  const user = req.session.user ? req.session.user : null;
 
-  if (!userSession) {
+  if (!user) {
     return {
       redirect: {
         permanent: false,
-        destination: "/",
+        destination: "/role/vendor/auth/login",
       },
-      props: { providers: [] },
     };
   }
 
-  const response = await firestore
-    .collection("users")
-    .where("email", "==", userSession.user.email)
-    .limit(1)
-    .get();
-
-  const userDoc = !response.empty ? response.docs[0].data() : {};
-  userSession.user.addresses = userDoc.addresses ? userDoc.addresses : [];
-  userSession.user.docId = response.docs[0].id;
-  userSession.user.status = userDoc.status ? userDoc.status : "";
-
-  const productResponse = await firestore.collection("products").get();
-
-  let productDocs = !productResponse.empty
-    ? productResponse.docs.map((doc) => {
-        const returnDoc = doc.data();
-        returnDoc.id = doc.id;
-
-        return returnDoc;
-      })
-    : [];
-
-  const filteredArray = productDocs.filter(
-    (obj) => obj.vendorUID === userSession.user.docId
-  );
-
-  productDocs = filteredArray;
+  const productDocs = await getVendorsProducts(user.docId);
 
   return {
-    props: { productDocs, userSession },
+    props: { productDocs, user },
   };
-}
+});

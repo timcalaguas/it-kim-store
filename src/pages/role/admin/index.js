@@ -9,7 +9,6 @@ import {
   Image,
   Stack,
   Box,
-  Link,
   HStack,
   VStack,
   Avatar,
@@ -19,10 +18,11 @@ import {
   useDisclosure,
   Text,
 } from "@chakra-ui/react";
-import { getSession } from "next-auth/react";
 import { AiFillShop } from "react-icons/ai";
 import { MdDeliveryDining } from "react-icons/md";
-import { firestore } from "../../../../firebase-config";
+import { withSessionSsr } from "@/lib/withSession";
+import getAdminDashboardCount from "@/hooks/admin/getAdminDashboardCounts";
+import Link from "next/link";
 
 const LinkItems = [
   { name: "Dashboard", icon: FiHome, link: "/role/admin" },
@@ -30,35 +30,31 @@ const LinkItems = [
   { name: "Couriers", icon: FiCompass, link: "/role/admin/couriers" },
 ];
 
-const Dashboard = ({ userSession }) => {
+const Dashboard = ({ user, vendorCount, courierCount }) => {
   const { isOpen, onOpen, onClose } = useDisclosure();
   return (
     <>
       <AdminLayout
         metaTitle={"Admin - Dashboard"}
         pageName={"IT Kim - Admin"}
-        user={userSession}
+        user={user}
         LinkItems={LinkItems}
       >
         <Card mb={"24px"}>
           <CardBody position={"relative"} overflow={"hidden"}>
             <HStack gap={"24px"} flexWrap={"wrap"}>
               <VStack marginInline={{ base: "auto", md: "0" }}>
-                <Avatar
-                  src={userSession.user.picture}
-                  name={userSession.user.name}
-                  boxSize={"200px"}
-                />
+                <Avatar src={user.picture} name={user.name} boxSize={"200px"} />
               </VStack>
               <Box>
                 <Box mb={"12px"}>
                   <Text fontWeight={"bold"}>Name:</Text>
-                  <Text>{userSession.user.name}</Text>
+                  <Text>{user.name}</Text>
                 </Box>
 
                 <Box mb={"12px"}>
                   <Text fontWeight={"bold"}>Email:</Text>
-                  <Text>{userSession.user.email}</Text>
+                  <Text>{user.email}</Text>
                 </Box>
               </Box>
             </HStack>
@@ -93,7 +89,7 @@ const Dashboard = ({ userSession }) => {
                 </Box>
                 <Box padding={"16px"}>
                   <Heading color={"#3082CF"}>VENDORS</Heading>
-                  <Heading size={"4xl"}>5</Heading>
+                  <Heading size={"4xl"}>{vendorCount}</Heading>
                 </Box>
               </Stack>
             </CardBody>
@@ -126,7 +122,7 @@ const Dashboard = ({ userSession }) => {
                 </Box>
                 <Box padding={"16px"}>
                   <Heading color={"#3082CF"}>COURIERS</Heading>
-                  <Heading size={"4xl"}>5</Heading>
+                  <Heading size={"4xl"}>{courierCount}</Heading>
                 </Box>
               </Stack>
             </CardBody>
@@ -139,32 +135,21 @@ const Dashboard = ({ userSession }) => {
 
 export default Dashboard;
 
-export async function getServerSideProps(context) {
-  const userSession = await getSession(context);
+export const getServerSideProps = withSessionSsr(async ({ req, res }) => {
+  const user = req.session.user;
 
-  if (!userSession) {
+  if (!user || user.role != "admin") {
     return {
       redirect: {
         permanent: false,
-        destination: "/role/vendor/auth/login",
+        destination: "/role/admin/auth/login",
       },
-      props: { providers: [] },
     };
   }
 
-  const response = await firestore
-    .collection("users")
-    .where("email", "==", userSession.user.email)
-    .limit(1)
-    .get();
+  const { vendorCount, courierCount } = await getAdminDashboardCount();
 
-  const userDoc = !response.empty ? response.docs[0].data() : {};
-  userSession.user.addresses = userDoc.addresses ? userDoc.addresses : [];
-  userSession.user.docId = response.docs[0].id;
-  userSession.user.storeName = userDoc.storeName ? userDoc.storeName : "";
-  userSession.user.storeLogo = userDoc.storeLogo ? userDoc.storeLogo : "";
-  userSession.user.status = userDoc.status ? userDoc.status : "";
   return {
-    props: { userSession },
+    props: { user, vendorCount, courierCount },
   };
-}
+});

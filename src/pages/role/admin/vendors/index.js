@@ -36,9 +36,17 @@ import {
   Divider,
   Avatar,
   VStack,
+  AlertDialog,
+  AlertDialogBody,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogContent,
+  AlertDialogOverlay,
 } from "@chakra-ui/react";
 import { useEffect, useState, useRef } from "react";
 import moment from "moment/moment";
+import { withSessionSsr } from "@/lib/withSession";
+import getUsers from "@/hooks/getUsers";
 
 const LinkItems = [
   { name: "Dashboard", icon: FiHome, link: "/role/admin" },
@@ -46,13 +54,16 @@ const LinkItems = [
   { name: "Couriers", icon: FiCompass, link: "/role/admin/couriers" },
 ];
 
-const Vendors = ({ vendorDocs, userSession }) => {
+const Vendors = ({ vendorDocs, user }) => {
   const toast = useToast();
 
   const [vendors, setVendors] = useState(vendorDocs);
   const [selectedId, setSelectedId] = useState("");
+  const [process, setProcess] = useState("accept");
   const [selectedItem, setSelectedItem] = useState([]);
   const [processLoading, setProcessLoading] = useState(false);
+
+  const { isOpen, onOpen, onClose } = useDisclosure();
 
   const {
     isOpen: itemIsOpen,
@@ -61,25 +72,43 @@ const Vendors = ({ vendorDocs, userSession }) => {
   } = useDisclosure();
   const cancelRef = useRef();
 
+  const openProcessDialog = (vendor, process) => {
+    setSelectedItem(vendor);
+
+    setProcess(process);
+    onOpen();
+  };
+
   const openModal = (vendor) => {
     setSelectedItem(vendor);
     itemOnOpen();
   };
 
-  const processVendor = async (vendor, method) => {
+  const processVendor = async () => {
     setProcessLoading(true);
-    setSelectedId(vendor.id);
     const indexOfObjectToUpdate = vendors.findIndex(
-      (obj) => obj.id === vendor.id
+      (obj) => obj.id === selectedItem.id
     );
-    let status = method == "accept" ? "approved" : "blocked";
+    let status = process == "accept" ? "approved" : "blocked";
     const processResponse = await firestore
       .collection("users")
-      .doc(vendor.id)
+      .doc(selectedItem.id)
       .update({ status: status });
-    vendor.status = status;
+    selectedItem.status = status;
     setProcessLoading(false);
-    vendor[indexOfObjectToUpdate] = vendor;
+    vendors[indexOfObjectToUpdate] = selectedItem;
+
+    toast({
+      title: process == "accept" ? "Approved" : "Blocked",
+      description:
+        process == "accept"
+          ? "The vendor is now approved."
+          : "The vendor is now blocked.",
+      status: "success",
+      duration: 9000,
+      isClosable: true,
+    });
+    onClose();
   };
 
   return (
@@ -87,7 +116,7 @@ const Vendors = ({ vendorDocs, userSession }) => {
       <AdminLayout
         metaTitle={"Vendor - Vendors"}
         pageName={"IT Kim - Admin"}
-        user={userSession}
+        user={user}
         LinkItems={LinkItems}
       >
         <HStack alignItems={"center"} justifyContent={"space-between"} mb={6}>
@@ -139,14 +168,10 @@ const Vendors = ({ vendorDocs, userSession }) => {
                               leftIcon={<AiFillCheckCircle />}
                               colorScheme="blue"
                               variant="outline"
-                              isLoading={
-                                processLoading && selectedId == vendor.id
-                              }
-                              disabled={
-                                processLoading && selectedId != vendor.id
-                              }
                               size={"sm"}
-                              onClick={() => processVendor(vendor, "accept")}
+                              onClick={() =>
+                                openProcessDialog(vendor, "accept")
+                              }
                             >
                               Approve
                             </Button>
@@ -158,11 +183,7 @@ const Vendors = ({ vendorDocs, userSession }) => {
                             colorScheme="red"
                             size={"sm"}
                             variant="outline"
-                            onClick={() => processVendor(vendor, "decline")}
-                            isLoading={
-                              processLoading && selectedId == vendor.id
-                            }
-                            disabled={processLoading && selectedId != vendor.id}
+                            onClick={() => openProcessDialog(vendor, "decline")}
                           >
                             Block
                           </Button>
@@ -185,7 +206,39 @@ const Vendors = ({ vendorDocs, userSession }) => {
           )}
         </TableContainer>
       </AdminLayout>
+      <AlertDialog
+        isOpen={isOpen}
+        leastDestructiveRef={cancelRef}
+        onClose={onClose}
+      >
+        <AlertDialogOverlay>
+          <AlertDialogContent>
+            <AlertDialogHeader fontSize="lg" fontWeight="bold">
+              {process == "accept" ? "Approve Vendor" : "Block Vendor"}
+            </AlertDialogHeader>
 
+            <AlertDialogBody>
+              {process == "accept"
+                ? "Are you sure you want to approve this vendor? This will allow the vendor to publish their products."
+                : "Are you sure you want to block this vendor? They will no longer be allowed to use the their store."}
+            </AlertDialogBody>
+
+            <AlertDialogFooter>
+              <Button ref={cancelRef} onClick={onClose}>
+                Cancel
+              </Button>
+              <Button
+                colorScheme={process == "accept" ? "blue" : "red"}
+                onClick={() => processVendor()}
+                ml={3}
+                isLoading={processLoading}
+              >
+                {process == "accept" ? "Approve" : "Block"}
+              </Button>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialogOverlay>
+      </AlertDialog>
       <Modal isOpen={itemIsOpen} onClose={itemOnClose}>
         <ModalOverlay />
         <ModalContent>
@@ -222,45 +275,27 @@ const Vendors = ({ vendorDocs, userSession }) => {
 
 export default Vendors;
 
-export async function getServerSideProps(context) {
-  const userSession = await getSession(context);
+export const getServerSideProps = withSessionSsr(async ({ req, res }) => {
+  const user = req.session.user;
 
-  if (!userSession) {
+  if (!user) {
     return {
       redirect: {
         permanent: false,
-        destination: "/",
+        destination: "/role/admin/auth/login",
       },
-      props: { providers: [] },
     };
   }
 
-  const response = await firestore
-    .collection("users")
-    .where("email", "==", userSession.user.email)
-    .limit(1)
-    .get();
+  if (user.role != "admin") {
+    return {
+      notFound: true,
+    };
+  }
 
-  const userDoc = !response.empty ? response.docs[0].data() : {};
-  userSession.user.addresses = userDoc.addresses ? userDoc.addresses : [];
-  userSession.user.docId = response.docs[0].id;
-  userSession.user.status = userDoc.status ? userDoc.status : "";
-
-  const vendorResponse = await firestore
-    .collection("users")
-    .where("role", "==", "vendor")
-    .get();
-
-  let vendorDocs = !vendorResponse.empty
-    ? vendorResponse.docs.map((doc) => {
-        const returnDoc = doc.data();
-        returnDoc.id = doc.id;
-
-        return returnDoc;
-      })
-    : [];
+  const vendorDocs = await getUsers("vendor");
 
   return {
-    props: { vendorDocs, userSession },
+    props: { vendorDocs, user },
   };
-}
+});

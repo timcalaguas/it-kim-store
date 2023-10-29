@@ -9,9 +9,11 @@ import {
 
 import { FcGoogle } from "react-icons/fc";
 import { MdDeliveryDining } from "react-icons/md";
-import { signIn } from "next-auth/react";
+import AuthManager from "@/hooks/auth/AuthManager";
 
 export default function SimpleCard() {
+  const { loginWithGoogle } = AuthManager();
+
   return (
     <Flex
       minH={"100vh"}
@@ -54,9 +56,7 @@ export default function SimpleCard() {
             <Button
               color={"black"}
               leftIcon={<FcGoogle />}
-              onClick={() => {
-                signIn("google");
-              }}
+              onClick={() => loginWithGoogle("courier")}
             >
               Sign in with Google
             </Button>

@@ -20,7 +20,8 @@ import {
 import { useForm } from "react-hook-form";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
-import { getSession } from "next-auth/react";
+import { withSessionSsr } from "@/lib/withSession";
+import getSingleProduct from "@/hooks/products/getSingleProduct";
 
 const LinkItems = [
   { name: "Dashboard", icon: FiHome, link: "/role/vendor" },
@@ -28,7 +29,7 @@ const LinkItems = [
   { name: "Orders", icon: FiCompass, link: "/role/vendor/orders" },
 ];
 
-const EditProduct = ({ product, userSession }) => {
+const EditProduct = ({ product, user }) => {
   const storageRef = storage.ref();
   const toast = useToast();
   const router = useRouter();
@@ -44,6 +45,8 @@ const EditProduct = ({ product, userSession }) => {
 
   const [productImage, setProductImage] = useState(null);
   const [previewImage, setPreviewImage] = useState(null);
+
+  console.log(product);
 
   useEffect(() => {
     setValue("productName", product.productName);
@@ -104,7 +107,7 @@ const EditProduct = ({ product, userSession }) => {
       <AdminLayout
         metaTitle={"Vendor - Edit Product"}
         pageName={"IT Kim - Vendor"}
-        user={userSession}
+        user={user}
         LinkItems={LinkItems}
       >
         <HStack alignItems={"center"} justifyContent={"space-between"} mb={6}>
@@ -252,7 +255,7 @@ const EditProduct = ({ product, userSession }) => {
                     type="hidden"
                     id="vendorUID"
                     name="vendorUID"
-                    value={userSession.user.docId}
+                    value={user.docId}
                     {...register("vendorUID", {})}
                   />
                   <FormErrorMessage>
@@ -278,35 +281,22 @@ const EditProduct = ({ product, userSession }) => {
 
 export default EditProduct;
 
-export async function getServerSideProps(context) {
-  const userSession = await getSession(context);
-  const { id } = context.query;
+export const getServerSideProps = withSessionSsr(async (context) => {
+  const { req } = context;
+  const user = req.session.user ? req.session.user : null;
 
-  if (!userSession) {
+  if (!user) {
     return {
       redirect: {
         permanent: false,
-        destination: "/",
+        destination: "/role/vendor/auth/login",
       },
-      props: { providers: [] },
     };
   }
 
-  const response = await firestore
-    .collection("users")
-    .where("email", "==", userSession.user.email)
-    .limit(1)
-    .get();
-
-  const userDoc = !response.empty ? response.docs[0].data() : {};
-  userSession.user.addresses = userDoc.addresses ? userDoc.addresses : [];
-  userSession.user.docId = response.docs[0].id;
-
-  const productResponse = await firestore.collection("products").doc(id).get();
-
-  const product = productResponse.data();
+  const { product } = await getSingleProduct(context.query.id);
 
   return {
-    props: { product, userSession },
+    props: { product, user },
   };
-}
+});

@@ -15,9 +15,9 @@ import {
   PopoverContent,
   PopoverHeader,
   PopoverCloseButton,
-  Link,
   VStack,
 } from "@chakra-ui/react";
+import Link from "next/link";
 import { AiOutlineShoppingCart, AiOutlineLogin } from "react-icons/ai";
 import { useCartStore } from "@/hooks/stores/cartStore";
 import { useEffect, useRef } from "react";
@@ -109,7 +109,7 @@ const Navbar = ({ user }) => {
                     <VStack alignItems={"flex-end"}>
                       <Link href="/customer/profile">Profile</Link>
                       <Link href="/customer/orders">Orders</Link>
-                      <Link onClick={() => logout("customer")}>Logout</Link>
+                      <Box onClick={() => logout("customer")}>Logout</Box>
                     </VStack>
                   </PopoverBody>
                 </PopoverContent>

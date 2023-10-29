@@ -41,7 +41,8 @@ import {
   FiChevronDown,
 } from "react-icons/fi";
 import { useRouter } from "next/router";
-import { signOut } from "next-auth/react";
+import AuthManager from "@/hooks/auth/AuthManager";
+import Link from "next/link";
 
 const SidebarContent = ({ onClose, title, LinkItems, ...rest }) => {
   return (
@@ -56,7 +57,7 @@ const SidebarContent = ({ onClose, title, LinkItems, ...rest }) => {
       {...rest}
     >
       <Flex h="20" alignItems="center" mx="8" justifyContent="space-between">
-        <Text fontSize="xl" fontFamily="monospace" fontWeight="bold">
+        <Text fontSize="lg" fontFamily="monospace" fontWeight="bold">
           {title}
         </Text>
         <CloseButton display={{ base: "flex", md: "none" }} onClick={onClose} />
@@ -75,14 +76,12 @@ const NavItem = ({ icon, children, link, ...rest }) => {
   var words = pathName.split("/");
 
   words.splice(4, 3);
-  console.log(words);
 
   var mergedString = words.join("/");
-  console.log(mergedString, link);
 
   return (
     <Box
-      as="a"
+      as={Link}
       href={link}
       style={{ textDecoration: "none" }}
       _focus={{ boxShadow: "none" }}
@@ -119,6 +118,7 @@ const NavItem = ({ icon, children, link, ...rest }) => {
 };
 
 const MobileNav = ({ onOpen, title, user, ...rest }) => {
+  const { logout } = AuthManager();
   return (
     <Flex
       ml={{ base: 0, md: 60 }}
@@ -157,14 +157,14 @@ const MobileNav = ({ onOpen, title, user, ...rest }) => {
               _focus={{ boxShadow: "none" }}
             >
               <HStack>
-                <Avatar size={"sm"} src={user.user.picture} />
+                <Avatar size={"sm"} src={user.picture} />
                 <VStack
                   display={{ base: "none", md: "flex" }}
                   alignItems="flex-start"
                   spacing="1px"
                   ml="2"
                 >
-                  <Text fontSize="sm">{user.user.name}</Text>
+                  <Text fontSize="sm">{user.name}</Text>
                 </VStack>
                 <Box display={{ base: "none", md: "flex" }}>
                   <FiChevronDown />
@@ -175,7 +175,7 @@ const MobileNav = ({ onOpen, title, user, ...rest }) => {
               bg={useColorModeValue("white", "gray.900")}
               borderColor={useColorModeValue("gray.200", "gray.700")}
             >
-              <MenuItem onClick={() => signOut()}>Sign out</MenuItem>
+              <MenuItem onClick={() => logout(user.role)}>Sign out</MenuItem>
             </MenuList>
           </Menu>
         </Flex>

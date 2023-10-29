@@ -16,7 +16,6 @@ import {
   Button,
   TagLabel,
   useDisclosure,
-  Link,
   Alert,
   AlertIcon,
   Modal,
@@ -27,31 +26,31 @@ import {
   ModalOverlay,
 } from "@chakra-ui/react";
 import { FiHome, FiTrendingUp, FiCompass, FiStar } from "react-icons/fi";
-import { getSession } from "next-auth/react";
-import { firestore } from "../../../../firebase-config";
+import { withSessionSsr } from "@/lib/withSession";
+import Link from "next/link";
 import {
   BsCartCheckFill,
   BsFillCartCheckFill,
   BsFillCartFill,
 } from "react-icons/bs";
+import getCourierDashboardCount from "@/hooks/courier/getCourierDashboardCount";
 
 const LinkItems = [
   { name: "Dashboard", icon: FiHome, link: "/role/courier" },
   { name: "Orders", icon: FiTrendingUp, link: "/role/courier/orders" },
 ];
 
-const Courier = ({ userSession }) => {
+const Courier = ({ user, availableOrderCount, finishedOrderCount }) => {
   const { isOpen, onOpen, onClose } = useDisclosure();
   return (
     <AdminLayout
       metaTitle={"IT Kim - Courier"}
-      pageName="Courier"
-      user={userSession}
+      pageName="IT- Kim - Courier"
+      user={user}
       LinkItems={LinkItems}
     >
       <Box>
-        {(userSession.user.storeName == "" ||
-          userSession.user.addresses.length == 0) && (
+        {(user.storeName == "" || user.addresses == null) && (
           <Alert status="warning" mb={"20px"}>
             <AlertIcon />
             <HStack
@@ -72,21 +71,19 @@ const Courier = ({ userSession }) => {
             <HStack gap={"24px"} flexWrap={"wrap"}>
               <VStack marginInline={{ base: "auto", md: "0" }}>
                 <Avatar
-                  src={userSession.user.storeLogo}
-                  name={userSession.user.storeName}
+                  src={user.storeLogo}
+                  name={user.storeName}
                   boxSize={"200px"}
                 />
                 <Tag
                   size="lg"
-                  colorScheme={
-                    userSession.user.status === "approved" ? "green" : "orange"
-                  }
+                  colorScheme={user.status === "approved" ? "green" : "orange"}
                   borderRadius="full"
                   marginBlock={"12px"}
                 >
-                  {userSession.user.status === "approved" ? (
+                  {user.status === "approved" ? (
                     <TagLabel textTransform={"uppercase"}>
-                      {userSession.user.status}
+                      {user.status}
                     </TagLabel>
                   ) : (
                     <TagLabel textTransform={"uppercase"}>Pending</TagLabel>
@@ -99,28 +96,28 @@ const Courier = ({ userSession }) => {
               <Box>
                 <Box mb={"12px"}>
                   <Text fontWeight={"bold"}>Name:</Text>
-                  <Text>{userSession.user.name}</Text>
+                  <Text>{user.name}</Text>
                 </Box>
                 <Box mb={"12px"}>
                   <Text fontWeight={"bold"}>Address:</Text>
                   <Text>
-                    {userSession.user.addresses.length > 0
-                      ? `${userSession.user.addresses[0].address.no} ${userSession.user.addresses[0].address.street} ${userSession.user.addresses[0].address.barangay} ${userSession.user.addresses[0].address.city}`
+                    {user.addresses?.length > 0
+                      ? `${user.addresses[0].address.no} ${user.addresses[0].address.street} ${user.addresses[0].address.barangay} ${user.addresses[0].address.city}`
                       : ""}
                   </Text>
                 </Box>
                 <Box mb={"12px"}>
                   <Text fontWeight={"bold"}>Contact No.:</Text>
                   <Text>
-                    {userSession.user.addresses.length > 0
-                      ? userSession.user.addresses[0].contactNumber
+                    {user.addresses?.length > 0
+                      ? user.addresses[0].contactNumber
                       : ""}
                   </Text>
                 </Box>
 
                 <Box mb={"12px"}>
                   <Text fontWeight={"bold"}>Email:</Text>
-                  <Text>{userSession.user.email}</Text>
+                  <Text>{user.email}</Text>
                 </Box>
               </Box>
             </HStack>
@@ -202,7 +199,7 @@ const Courier = ({ userSession }) => {
                 </Box>
                 <Box padding={"16px"}>
                   <Heading color={"#3082CF"}>AVAILABLE ORDERS</Heading>
-                  <Heading size={"4xl"}>5</Heading>
+                  <Heading size={"4xl"}>{availableOrderCount}</Heading>
                 </Box>
               </Stack>
             </CardBody>
@@ -235,7 +232,7 @@ const Courier = ({ userSession }) => {
                 </Box>
                 <Box padding={"16px"}>
                   <Heading color={"#3082CF"}>FINISHED ORDERS</Heading>
-                  <Heading size={"4xl"}>5</Heading>
+                  <Heading size={"4xl"}>{finishedOrderCount}</Heading>
                 </Box>
               </Stack>
             </CardBody>
@@ -355,32 +352,28 @@ const Courier = ({ userSession }) => {
 
 export default Courier;
 
-export async function getServerSideProps(context) {
-  const userSession = await getSession(context);
+export const getServerSideProps = withSessionSsr(async ({ req, res }) => {
+  const user = req.session.user;
 
-  if (!userSession) {
+  if (!user) {
     return {
       redirect: {
         permanent: false,
-        destination: "/role/vendor/auth/login",
+        destination: "/role/courier/auth/login",
       },
-      props: { providers: [] },
     };
   }
 
-  const response = await firestore
-    .collection("users")
-    .where("email", "==", userSession.user.email)
-    .limit(1)
-    .get();
+  if (user.role != "courier") {
+    return {
+      notFound: true,
+    };
+  }
 
-  const userDoc = !response.empty ? response.docs[0].data() : {};
-  userSession.user.addresses = userDoc.addresses ? userDoc.addresses : [];
-  userSession.user.docId = response.docs[0].id;
-  userSession.user.storeName = userDoc.storeName ? userDoc.storeName : "";
-  userSession.user.storeLogo = userDoc.storeLogo ? userDoc.storeLogo : "";
-  userSession.user.status = userDoc.status ? userDoc.status : "";
+  const { availableOrderCount, finishedOrderCount } =
+    await getCourierDashboardCount();
+
   return {
-    props: { userSession },
+    props: { user, availableOrderCount, finishedOrderCount },
   };
-}
+});

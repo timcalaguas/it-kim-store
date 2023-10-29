@@ -1,0 +1,20 @@
+import { firestore } from "../../../firebase-config";
+
+const geVendorDashboardCount = async (id) => {
+  const products = await firestore
+    .collection("products")
+    .where("vendorUID", "==", id)
+    .get();
+
+  const orders = await firestore
+    .collection("orders")
+    .where("vendorId", "==", id)
+    .get();
+
+  const productCount = products.size;
+  const orderCount = orders.size;
+
+  return { productCount, orderCount };
+};
+
+export default geVendorDashboardCount;
