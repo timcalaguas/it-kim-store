@@ -25,6 +25,7 @@ import {
   CardHeader,
   Image,
   Breadcrumb,
+  Button,
   BreadcrumbItem,
   BreadcrumbLink,
 } from "@chakra-ui/react";
@@ -43,6 +44,8 @@ import {
 import { useRouter } from "next/router";
 import AuthManager from "@/hooks/auth/AuthManager";
 import Link from "next/link";
+
+import { BiSolidError } from "react-icons/bi";
 
 const SidebarContent = ({ onClose, title, LinkItems, ...rest }) => {
   return (
@@ -186,7 +189,7 @@ const MobileNav = ({ onOpen, title, user, ...rest }) => {
 
 const AdminLayout = ({ metaTitle, pageName, user, LinkItems, children }) => {
   const { isOpen, onOpen, onClose } = useDisclosure();
-
+  const { logout } = AuthManager();
   const router = useRouter();
 
   const pathName = router.pathname;
@@ -253,7 +256,41 @@ const AdminLayout = ({ metaTitle, pageName, user, LinkItems, children }) => {
                 </BreadcrumbItem>
               ))}
             </Breadcrumb>
-            <Box>{children}</Box>
+            {user.status != "blocked" ? (
+              <Box>{children}</Box>
+            ) : (
+              <Box
+                width={"100%"}
+                height={"50vh"}
+                display={"grid"}
+                p={"16px"}
+                placeItems={"center"}
+              >
+                <Box
+                  maxW={"720px"}
+                  textAlign={"center"}
+                  padding={"24px"}
+                  border={"1px"}
+                  borderColor={"gray.300"}
+                  borderRadius={"16px"}
+                  minH={"250px"}
+                  display={"flex"}
+                  flexDirection={"column"}
+                  justifyContent={"center"}
+                  alignItems={"center"}
+                  gap={"24px"}
+                  bg={"white"}
+                >
+                  <BiSolidError fontSize={"50px"} fill="red" />
+                  <Heading fontSize={"2xl"}>
+                    Your account has been suspended due to non-compliance with
+                    our regulations. For more information or to appeal, please
+                    contact our support team.
+                  </Heading>
+                  <Button onClick={() => logout("vendor")}>Sign out</Button>
+                </Box>
+              </Box>
+            )}
           </Box>
         </Box>
       )}
