@@ -32,6 +32,8 @@ async function createSessionRoute(req, res) {
           .doc(user.uid)
           .set(newUser);
 
+        newUser.docId = user.uid;
+
         req.session.user = newUser;
 
         await req.session.save();

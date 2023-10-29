@@ -406,7 +406,7 @@ const Dashboard = ({ user, productCount, orderCount }) => {
 export default Dashboard;
 
 export const getServerSideProps = withSessionSsr(async ({ req, res }) => {
-  const user = req.session.user;
+  const user = req.session.user ? req.session.user : null;
 
   if (!user) {
     return {
