@@ -256,7 +256,9 @@ const AdminLayout = ({ metaTitle, pageName, user, LinkItems, children }) => {
                 </BreadcrumbItem>
               ))}
             </Breadcrumb>
-            {user.status != "blocked" ? (
+            {user.status == undefined ||
+            user.status == null ||
+            user.status != "blocked" ? (
               <Box>{children}</Box>
             ) : (
               <Box
