@@ -43,6 +43,7 @@ import { BsFillCartCheckFill } from "react-icons/bs";
 import { withSessionSsr } from "@/lib/withSession";
 import geVendorDashboardCount from "@/hooks/vendors/getVendorDashboardCount";
 import Link from "next/link";
+import axios from "axios";
 
 const LinkItems = [
   { name: "Dashboard", icon: FiHome, link: "/role/vendor" },
@@ -50,7 +51,7 @@ const LinkItems = [
   { name: "Orders", icon: FiCompass, link: "/role/vendor/orders" },
 ];
 
-const Dashboard = ({ user, productCount, orderCount }) => {
+const Dashboard = ({ userSession, productCount, orderCount }) => {
   const storageRef = storage.ref();
   const { isOpen, onOpen, onClose } = useDisclosure();
   const toast = useToast();
@@ -63,13 +64,15 @@ const Dashboard = ({ user, productCount, orderCount }) => {
     formState: { errors, isSubmitting },
   } = useForm();
 
+  const [user, setUser] = useState(userSession);
+
   const [storeLogo, setStoreLogo] = useState("");
   const [previewImage, setPreviewImage] = useState("");
 
   const selectedFile = watch("storeLogo");
 
   useEffect(() => {
-    if (selectedFile) {
+    if (selectedFile?.length > 0) {
       setPreviewImage(selectedFile[0]);
     }
   }, [selectedFile]);
@@ -101,14 +104,20 @@ const Dashboard = ({ user, productCount, orderCount }) => {
         },
       ];
 
-      const productImageName = values.storeLogo[0]?.name;
+      let downloadURL;
 
-      const imageRef = storageRef.child(`images/${productImageName}`);
-      const file = values.storeLogo[0];
+      if (values.storeLogo.length > 0) {
+        const productImageName = values.storeLogo[0]?.name;
 
-      const snapshot = await imageRef.put(file);
+        const imageRef = storageRef.child(`images/${productImageName}`);
+        const file = values.storeLogo[0];
 
-      const downloadURL = await imageRef.getDownloadURL();
+        const snapshot = await imageRef.put(file);
+
+        downloadURL = await imageRef.getDownloadURL();
+      } else {
+        downloadURL = user.storeLogo;
+      }
 
       const newUser = {
         addresses: addresses,
@@ -118,6 +127,7 @@ const Dashboard = ({ user, productCount, orderCount }) => {
         role: user.role,
         email: user.email,
         picture: user.picture,
+        status: user.status,
       };
 
       const response = await firestore
@@ -127,7 +137,14 @@ const Dashboard = ({ user, productCount, orderCount }) => {
           ...newUser,
         });
 
-      if (!isSubmitting) {
+      const updateSession = await axios.post("/api/auth", {
+        user: user,
+        role: user.role,
+      });
+
+      console.log(updateSession);
+
+      if (!isSubmitting && updateSession.status == 200) {
         toast({
           title: "User Profile updated.",
           description: "Your user profile is successfully updated.",
@@ -135,7 +152,7 @@ const Dashboard = ({ user, productCount, orderCount }) => {
           duration: 9000,
           isClosable: true,
         });
-        reset();
+        setUser(newUser);
         onClose();
       }
     } catch (error) {
@@ -312,20 +329,26 @@ const Dashboard = ({ user, productCount, orderCount }) => {
                   flexWrap={"wrap"}
                   mb="12px"
                 >
-                  {storeLogo == "" ? (
+                  {previewImage != "" ? (
                     <Image
                       id="preview"
                       src={
-                        previewImage == ""
-                          ? "https://placehold.co/400x400"
-                          : URL.createObjectURL(selectedFile[0])
+                        selectedFile?.length > 0
+                          ? URL.createObjectURL(selectedFile[0])
+                          : "https://placehold.co/400x400"
                       }
+                      boxSize={{ base: "100%", sm: "200px" }}
+                    />
+                  ) : storeLogo != "" ? (
+                    <Image
+                      id="preview"
+                      src={storeLogo}
                       boxSize={{ base: "100%", sm: "200px" }}
                     />
                   ) : (
                     <Image
                       id="preview"
-                      src={storeLogo}
+                      src={"https://placehold.co/400x400"}
                       boxSize={{ base: "100%", sm: "200px" }}
                     />
                   )}
@@ -416,9 +439,9 @@ const Dashboard = ({ user, productCount, orderCount }) => {
 export default Dashboard;
 
 export const getServerSideProps = withSessionSsr(async ({ req, res }) => {
-  const user = req.session.user ? req.session.user : null;
+  const userSession = req.session.user ? req.session.user : null;
 
-  if (!user) {
+  if (!userSession) {
     return {
       redirect: {
         permanent: false,
@@ -427,15 +450,17 @@ export const getServerSideProps = withSessionSsr(async ({ req, res }) => {
     };
   }
 
-  if (user.role != "vendor") {
+  if (userSession.role != "vendor") {
     return {
       notFound: true,
     };
   }
 
-  const { productCount, orderCount } = await geVendorDashboardCount(user.docId);
+  const { productCount, orderCount } = await geVendorDashboardCount(
+    userSession.docId
+  );
 
   return {
-    props: { user, productCount, orderCount },
+    props: { userSession, productCount, orderCount },
   };
 });
