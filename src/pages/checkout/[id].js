@@ -25,6 +25,7 @@ import { signIn } from "next-auth/react";
 import { useEffect, useState } from "react";
 import { withSessionSsr } from "@/lib/withSession";
 import AuthManager from "@/hooks/auth/AuthManager";
+import moment from "moment";
 
 export default function Checkout({ userSession }) {
   const router = useRouter();
@@ -43,8 +44,8 @@ export default function Checkout({ userSession }) {
   const changeAddress = (index) => {
     setSelectedAddress(userSession.addresses[index]);
   };
+
   const selectedCart = cart.filter((vendor) => vendor.vendorUID === vendorUID);
-  console.log(selectedCart[0]?.items);
 
   const checkout = async () => {
     try {
@@ -61,6 +62,7 @@ export default function Checkout({ userSession }) {
         customerId: userSession.docId,
         customerName: userSession.name,
         status: "order-placed",
+        date: moment(new Date()).format("MM-DD-YYYY"),
       };
 
       const order = await firestore.collection("orders").add(orderData);
@@ -85,12 +87,11 @@ export default function Checkout({ userSession }) {
 
   useEffect(() => {
     if (cart) {
-      const selectedCart = cart.filter(
-        (vendor) => vendor.vendorUID === vendorUID
-      );
-      const totals = calculateTotal(selectedCart[0]?.items);
+      if (selectedCart > 0) {
+        const totals = calculateTotal(selectedCart[0].items);
 
-      setProductTotal(totals);
+        setProductTotal(totals);
+      }
     }
   }, [cart]);
 
@@ -216,10 +217,8 @@ export default function Checkout({ userSession }) {
               )}
 
               <Box>
-                {cart.map((vendor) => {
-                  vendor.vendorUID === vendorUID && (
-                    <Items items={vendor.items} />
-                  );
+                {selectedCart.map((vendor) => {
+                  return <Items items={vendor.items} />;
                 })}
               </Box>
 
@@ -229,7 +228,7 @@ export default function Checkout({ userSession }) {
                   rightIcon={<IoBagCheckOutline />}
                   disabled={!userSession}
                   onClick={checkout}
-                  loading={loading}
+                  isLoading={loading}
                 >
                   Place order
                 </Button>

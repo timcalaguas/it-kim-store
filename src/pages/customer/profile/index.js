@@ -19,15 +19,15 @@ import {
   FormLabel,
   useDisclosure,
   useToast,
+  Avatar,
 } from "@chakra-ui/react";
 import { IoLocationSharp } from "react-icons/io5";
 import { AiFillEdit, AiFillDelete } from "react-icons/ai";
 import Layout from "@/components/Layout";
-import { getSession } from "next-auth/react";
-import { firestore } from "../../../../firebase-config";
 import AddressModal from "@/components/AddressModal";
+import { withSessionSsr } from "@/lib/withSession";
 
-const Profile = ({ userSession }) => {
+const Profile = ({ user }) => {
   const {
     isOpen,
     onOpen,
@@ -35,14 +35,26 @@ const Profile = ({ userSession }) => {
     setType,
     addAddress,
     editAddress,
+    setAddressIndex,
     newAddress,
     setNewAddress,
+    deleteAddress,
     loading,
     type,
   } = AddressModal();
 
+  const setAddress = (address) => {
+    setNewAddress({
+      no: address.address.no,
+      street: address.address.street,
+      barangay: address.address.barangay,
+      city: address.address.city,
+      contact: address.contactNumber,
+    });
+  };
+
   return (
-    <Layout metaTitle={"IT Kim - Profile"}>
+    <Layout metaTitle={"IT Kim - Profile"} user={user}>
       <Box
         maxW={"1440px"}
         marginInline={"auto"}
@@ -65,18 +77,18 @@ const Profile = ({ userSession }) => {
         >
           <Heading>Profile</Heading>
           <HStack gap={"24px"} flexWrap={"wrap"}>
-            <Image
-              src={userSession?.user?.picture}
-              alt={userSession?.user?.name}
+            <Avatar
+              src={user?.picture}
+              name={user?.name}
               borderRadius={"full"}
               boxSize={"120px"}
             />
             <Box flexWrap={"wrap"}>
               <Heading fontSize={"2xl"} textTransform={"uppercase"}>
-                {userSession?.user?.name}
+                {user?.name}
               </Heading>
-              <Text>{userSession.user.email}</Text>
-              <Text>{userSession.user.contactNumber}</Text>
+              <Text>{user.email}</Text>
+              <Text>{user.contactNumber}</Text>
             </Box>
           </HStack>
           <Divider />
@@ -95,8 +107,8 @@ const Profile = ({ userSession }) => {
               </Button>
             </HStack>
             <VStack w={"100%"}>
-              {userSession.user.addresses.length > 0 ? (
-                userSession.user.addresses.map((address) => (
+              {user.addresses.length > 0 ? (
+                user.addresses.map((address, index) => (
                   <HStack
                     width={"100%"}
                     border={"1px"}
@@ -114,20 +126,26 @@ const Profile = ({ userSession }) => {
                       </Box>
                       <HStack>
                         <Button
+                          colorScheme="blue"
                           onClick={() => {
                             onOpen();
                             setType("edit");
+                            setAddress(address);
+                            setAddressIndex(index);
                           }}
                         >
                           <AiFillEdit />
                         </Button>
-                        <Button>
-                          <AiFillDelete
-                            onClick={() => {
-                              onOpen();
-                              setType("delete");
-                            }}
-                          />
+                        <Button
+                          colorScheme="red"
+                          onClick={() => {
+                            onOpen();
+                            setType("delete");
+                            setAddress(address);
+                            setAddressIndex(index);
+                          }}
+                        >
+                          <AiFillDelete />
                         </Button>
                       </HStack>
                     </HStack>
@@ -143,69 +161,81 @@ const Profile = ({ userSession }) => {
       <Modal isOpen={isOpen} onClose={onClose}>
         <ModalOverlay />
         <ModalContent>
-          <ModalHeader>Add new Address</ModalHeader>
+          <ModalHeader>
+            {type == "add"
+              ? `Add new `
+              : type == "edit"
+              ? "Update "
+              : "Delete "}
+            Address
+          </ModalHeader>
           <ModalCloseButton />
+
           <ModalBody>
-            <VStack>
-              <FormControl>
-                <FormLabel>Contact Number</FormLabel>
-                <Input
-                  type="number"
-                  value={newAddress.contact}
-                  onChange={(e) =>
-                    setNewAddress({ ...newAddress, contact: e.target.value })
-                  }
-                />
-              </FormControl>
-              <FormControl>
-                <FormLabel>House No. / Blk No. / Lot No.</FormLabel>
-                <Input
-                  type="text"
-                  value={newAddress.no}
-                  onChange={(e) =>
-                    setNewAddress({ ...newAddress, no: e.target.value })
-                  }
-                />
-              </FormControl>
-              <FormControl>
-                <FormLabel>Street</FormLabel>
-                <Input
-                  type="text"
-                  value={newAddress.street}
-                  onChange={(e) =>
-                    setNewAddress({ ...newAddress, street: e.target.value })
-                  }
-                />
-              </FormControl>
-              <FormControl>
-                <FormLabel>Barangay</FormLabel>
-                <Input
-                  type="text"
-                  value={newAddress.barangay}
-                  onChange={(e) =>
-                    setNewAddress({ ...newAddress, barangay: e.target.value })
-                  }
-                />
-              </FormControl>
-              <FormControl>
-                <FormLabel>City</FormLabel>
-                <Input
-                  type="text"
-                  value={newAddress.city}
-                  onChange={(e) =>
-                    setNewAddress({ ...newAddress, city: e.target.value })
-                  }
-                />
-              </FormControl>
-            </VStack>
+            {type != "delete" ? (
+              <VStack>
+                <FormControl>
+                  <FormLabel>Contact Number</FormLabel>
+                  <Input
+                    type="number"
+                    value={newAddress.contact}
+                    onChange={(e) =>
+                      setNewAddress({ ...newAddress, contact: e.target.value })
+                    }
+                  />
+                </FormControl>
+                <FormControl>
+                  <FormLabel>House No. / Blk No. / Lot No.</FormLabel>
+                  <Input
+                    type="text"
+                    value={newAddress.no}
+                    onChange={(e) =>
+                      setNewAddress({ ...newAddress, no: e.target.value })
+                    }
+                  />
+                </FormControl>
+                <FormControl>
+                  <FormLabel>Street</FormLabel>
+                  <Input
+                    type="text"
+                    value={newAddress.street}
+                    onChange={(e) =>
+                      setNewAddress({ ...newAddress, street: e.target.value })
+                    }
+                  />
+                </FormControl>
+                <FormControl>
+                  <FormLabel>Barangay</FormLabel>
+                  <Input
+                    type="text"
+                    value={newAddress.barangay}
+                    onChange={(e) =>
+                      setNewAddress({ ...newAddress, barangay: e.target.value })
+                    }
+                  />
+                </FormControl>
+                <FormControl>
+                  <FormLabel>City</FormLabel>
+                  <Input
+                    type="text"
+                    value={newAddress.city}
+                    onChange={(e) =>
+                      setNewAddress({ ...newAddress, city: e.target.value })
+                    }
+                  />
+                </FormControl>
+              </VStack>
+            ) : (
+              <Text>Are you sure you want to delete this address?</Text>
+            )}
           </ModalBody>
 
           <ModalFooter>
             {type == "add" && (
               <Button
                 variant="primary"
-                onClick={() => addAddress(userSession)}
-                _loading={loading}
+                onClick={() => addAddress(user)}
+                isLoading={loading}
               >
                 Add
               </Button>
@@ -213,14 +243,18 @@ const Profile = ({ userSession }) => {
             {type == "edit" && (
               <Button
                 variant="primary"
-                onClick={editAddress}
-                _loading={loading}
+                onClick={() => editAddress(user)}
+                isLoading={loading}
               >
                 Update
               </Button>
             )}
             {type == "delete" && (
-              <Button colorScheme="red" onClick={addAddress} _loading={loading}>
+              <Button
+                colorScheme="red"
+                onClick={() => deleteAddress(user)}
+                isLoading={loading}
+              >
                 Delete
               </Button>
             )}
@@ -233,10 +267,10 @@ const Profile = ({ userSession }) => {
 
 export default Profile;
 
-export async function getServerSideProps(context) {
-  const userSession = await getSession(context);
+export const getServerSideProps = withSessionSsr(async ({ req, res }) => {
+  const user = req.session.user ? req.session.user : null;
 
-  if (!userSession) {
+  if (!user) {
     return {
       redirect: {
         permanent: false,
@@ -246,17 +280,13 @@ export async function getServerSideProps(context) {
     };
   }
 
-  const response = await firestore
-    .collection("users")
-    .where("email", "==", userSession.user.email)
-    .limit(1)
-    .get();
-
-  const userDoc = !response.empty ? response.docs[0].data() : {};
-  userSession.user.addresses = userDoc.addresses ? userDoc.addresses : [];
-  userSession.user.docId = response.docs[0].id;
+  if (user.role != "customer") {
+    return {
+      notFound: true,
+    };
+  }
 
   return {
-    props: { userSession },
+    props: { user },
   };
-}
+});

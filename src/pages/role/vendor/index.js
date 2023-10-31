@@ -142,8 +142,6 @@ const Dashboard = ({ userSession, productCount, orderCount }) => {
         role: user.role,
       });
 
-      console.log(updateSession);
-
       if (!isSubmitting && updateSession.status == 200) {
         toast({
           title: "User Profile updated.",

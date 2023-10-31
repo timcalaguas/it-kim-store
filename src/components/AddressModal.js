@@ -1,6 +1,7 @@
 import { useDisclosure, useToast } from "@chakra-ui/react";
 import { useState } from "react";
 import { firestore } from "../../firebase-config";
+import axios from "axios";
 
 const AddressModal = () => {
   const toast = useToast();
@@ -46,59 +47,69 @@ const AddressModal = () => {
           addresses: updatedAddresses,
         });
 
-        // Success
-        toast({
-          title: "Address added.",
-          description: "We've added your new address for you.",
-          status: "success",
-          duration: 5000,
-          isClosable: true,
+        user.addresses = updatedAddresses;
+
+        const updateSession = await axios.post("/api/auth", {
+          user: user,
+          role: user.role,
         });
-        setLoading(false);
-        setNewAddress({
-          no: "",
-          street: "",
-          barangay: "",
-          city: "",
-          contact: "",
-        });
-        onClose();
+
+        if (updateSession.status == 200) {
+          // Success
+          toast({
+            title: "Address added.",
+            description: "We've added your new address for you.",
+            status: "success",
+            duration: 5000,
+            isClosable: true,
+          });
+          setLoading(false);
+          setNewAddress({
+            no: "",
+            street: "",
+            barangay: "",
+            city: "",
+            contact: "",
+          });
+          onClose();
+        }
       }
     } catch (error) {
       console.error(error);
     }
   };
 
-  const editAddress = async (userSession, index) => {
+  const editAddress = async (user) => {
     try {
       setLoading(true);
-      const userGet = await firestore
-        .collection("users")
-        .doc(userSession.user.docId)
-        .get();
 
-      if (userGet.exists) {
-        const nAddress = {
-          address: {
-            no: newAddress.no,
-            street: newAddress.street,
-            barangay: newAddress.barangay,
-            city: newAddress.city,
-          },
-          contactNumber: newAddress.contact,
-        };
+      const nAddress = {
+        address: {
+          no: newAddress.no,
+          street: newAddress.street,
+          barangay: newAddress.barangay,
+          city: newAddress.city,
+        },
+        contactNumber: newAddress.contact,
+      };
 
-        const currentAddresses = userGet.data().addresses;
-        currentAddresses[index] = nAddress;
-        const updatedAddresses = currentAddresses;
-        const docRef = firestore
-          .collection("users")
-          .doc(userSession.user.docId);
+      const currentAddresses = user.addresses;
+      currentAddresses[addressIndex] = nAddress;
+      const updatedAddresses = currentAddresses;
+      const docRef = firestore.collection("users").doc(user.docId);
 
-        const response = await docRef.update({
-          addresses: updatedAddresses,
-        });
+      const response = await docRef.update({
+        addresses: updatedAddresses,
+      });
 
+      user.addresses = updatedAddresses;
+
+      const updateSession = await axios.post("/api/auth", {
+        user: user,
+        role: user.role,
+      });
+
+      if (updateSession.status == 200) {
         // Success
         toast({
           title: "Address edited.",
@@ -122,6 +133,44 @@ const AddressModal = () => {
     }
   };
 
+  const deleteAddress = async (user) => {
+    try {
+      setLoading(true);
+
+      const currentAddresses = user.addresses;
+      currentAddresses.splice(addressIndex, 1);
+      const updatedAddresses = currentAddresses;
+      const docRef = firestore.collection("users").doc(user.docId);
+
+      const response = await docRef.update({
+        addresses: updatedAddresses,
+      });
+
+      user.addresses = updatedAddresses;
+
+      const updateSession = await axios.post("/api/auth", {
+        user: user,
+        role: user.role,
+      });
+
+      if (updateSession.status == 200) {
+        // Success
+        toast({
+          title: "Address deleted.",
+          description: "We've deleted your new address for you.",
+          status: "success",
+          duration: 5000,
+          isClosable: true,
+        });
+        setLoading(false);
+
+        onClose();
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   return {
     isOpen,
     onOpen,
@@ -130,6 +179,8 @@ const AddressModal = () => {
     setNewAddress,
     addAddress,
     editAddress,
+    setAddressIndex,
+    deleteAddress,
     newAddress,
     loading,
     type,

@@ -16,15 +16,19 @@ import {
   AccordionItem,
   AccordionPanel,
   Image,
+  Button,
 } from "@chakra-ui/react";
 import { BsBagFill, BsBagCheckFill } from "react-icons/bs";
 import { BiSolidTruck } from "react-icons/bi";
-import { getSession } from "next-auth/react";
-import { firestore } from "../../../../firebase-config";
+import getOrders from "@/hooks/customer/getOrders";
+import { withSessionSsr } from "@/lib/withSession";
+import RateProductModal from "@/components/RateProductModal";
 
-const Orders = ({ userSession, result }) => {
+const Orders = ({ user, result }) => {
+  const { RateModal, openRatingModal, setSelectedProduct } = RateProductModal();
+
   return (
-    <Layout metaTitle={"IT Kim - Orders"}>
+    <Layout metaTitle={"IT Kim - Orders"} user={user}>
       <Box
         maxW={"1440px"}
         marginInline={"auto"}
@@ -33,27 +37,37 @@ const Orders = ({ userSession, result }) => {
         display={"flex"}
         justifyContent={"center"}
       >
-        <Box maxWidth={"1000px"} padding={"32px"} w={"100%"} minH={"500px"}>
+        <Box
+          maxWidth={"1000px"}
+          paddingBlock={"32px"}
+          paddingInline={{ base: "16px", md: "32px" }}
+          w={"100%"}
+          minH={"500px"}
+        >
           <Heading mb={"24px"}>Orders</Heading>
           <Tabs isFitted variant="soft-rounded" colorScheme="orange">
-            <TabList mb="1em">
+            <TabList
+              mb="1em"
+              display={"flex"}
+              flexDir={{ base: "column", md: "row" }}
+            >
               <Tab>
-                <VStack minH={"50px"}>
+                <HStack minH={"30px"}>
                   <BsBagFill fontSize={"25px"} />
                   <Text>Order Placed</Text>
-                </VStack>
+                </HStack>
               </Tab>
               <Tab>
-                <VStack minH={"50px"}>
+                <HStack minH={"30px"}>
                   <BiSolidTruck fontSize={"25px"} />
                   <Text>In Transit</Text>
-                </VStack>
+                </HStack>
               </Tab>
               <Tab>
-                <VStack minH={"50px"}>
+                <HStack minH={"30px"}>
                   <BsBagCheckFill fontSize={"25px"} />
                   <Text>Order Received</Text>
-                </VStack>
+                </HStack>
               </Tab>
             </TabList>
             <TabPanels>
@@ -72,7 +86,7 @@ const Orders = ({ userSession, result }) => {
                                 textAlign="left"
                                 fontWeight={"700"}
                               >
-                                Order {order.id}
+                                Order {order.id.slice(0, 4)}
                               </Box>
                               <AccordionIcon />
                             </AccordionButton>
@@ -101,17 +115,30 @@ const Orders = ({ userSession, result }) => {
                                       >
                                         <Image
                                           src={item.image}
-                                          boxSize={"50px"}
+                                          boxSize={"65px"}
                                           borderRadius={"lg"}
                                         />
-                                        <Box>
+                                        <VStack alignItems={"start"}>
                                           <Text
                                             fontSize={"md"}
                                             fontWeight={"medium"}
                                           >
                                             {item.productName}
                                           </Text>
-                                        </Box>
+                                          <Button
+                                            size={"sm"}
+                                            variant={"link"}
+                                            _hover={{
+                                              background: "transparent",
+                                              textDecor: "underline",
+                                            }}
+                                            onClick={() => {
+                                              openRatingModal(item);
+                                            }}
+                                          >
+                                            Rate Product
+                                          </Button>
+                                        </VStack>
                                       </HStack>
                                       <Text fontSize={"md"}>
                                         {item.quantity} x {item.discountedPrice}
@@ -120,15 +147,23 @@ const Orders = ({ userSession, result }) => {
                                   );
                                 })}
 
-                                <HStack
+                                <VStack
+                                  mt={"12px"}
                                   flexWrap={"wrap"}
                                   w={"100%"}
                                   justifyContent={"end"}
+                                  alignItems={"end"}
                                 >
+                                  <Text fontSize={"md"} fontWeight={"600"}>
+                                    SubTotal: {total}
+                                  </Text>
+                                  <Text fontSize={"md"} fontWeight={"600"}>
+                                    Shipping fee: {total}
+                                  </Text>
                                   <Text fontSize={"md"} fontWeight={"600"}>
                                     Total: {total}
                                   </Text>
-                                </HStack>
+                                </VStack>
                               </VStack>
                             </Box>
                           </AccordionPanel>
@@ -153,7 +188,7 @@ const Orders = ({ userSession, result }) => {
                                 textAlign="left"
                                 fontWeight={"700"}
                               >
-                                Order {order.id}
+                                Order {order.id.slice(0, 4)}
                               </Box>
                               <AccordionIcon />
                             </AccordionButton>
@@ -201,15 +236,23 @@ const Orders = ({ userSession, result }) => {
                                   );
                                 })}
 
-                                <HStack
+                                <VStack
+                                  mt={"12px"}
                                   flexWrap={"wrap"}
                                   w={"100%"}
                                   justifyContent={"end"}
+                                  alignItems={"end"}
                                 >
+                                  <Text fontSize={"md"} fontWeight={"600"}>
+                                    SubTotal: {total}
+                                  </Text>
+                                  <Text fontSize={"md"} fontWeight={"600"}>
+                                    Shipping fee: {total}
+                                  </Text>
                                   <Text fontSize={"md"} fontWeight={"600"}>
                                     Total: {total}
                                   </Text>
-                                </HStack>
+                                </VStack>
                               </VStack>
                             </Box>
                           </AccordionPanel>
@@ -234,7 +277,7 @@ const Orders = ({ userSession, result }) => {
                                 textAlign="left"
                                 fontWeight={"700"}
                               >
-                                Order {order.id}
+                                Order {order.id.slice(0, 4)}
                               </Box>
                               <AccordionIcon />
                             </AccordionButton>
@@ -282,15 +325,23 @@ const Orders = ({ userSession, result }) => {
                                   );
                                 })}
 
-                                <HStack
+                                <VStack
+                                  mt={"12px"}
                                   flexWrap={"wrap"}
                                   w={"100%"}
                                   justifyContent={"end"}
+                                  alignItems={"end"}
                                 >
+                                  <Text fontSize={"md"} fontWeight={"600"}>
+                                    SubTotal: {total}
+                                  </Text>
+                                  <Text fontSize={"md"} fontWeight={"600"}>
+                                    Shipping fee: {total}
+                                  </Text>
                                   <Text fontSize={"md"} fontWeight={"600"}>
                                     Total: {total}
                                   </Text>
-                                </HStack>
+                                </VStack>
                               </VStack>
                             </Box>
                           </AccordionPanel>
@@ -304,70 +355,34 @@ const Orders = ({ userSession, result }) => {
           </Tabs>
         </Box>
       </Box>
+      <RateModal />
     </Layout>
   );
 };
 
 export default Orders;
 
-export async function getServerSideProps(context) {
-  const userSession = await getSession(context);
+export const getServerSideProps = withSessionSsr(async ({ req, res }) => {
+  const user = req.session.user ? req.session.user : null;
 
-  if (!userSession) {
+  if (!user) {
     return {
       redirect: {
         permanent: false,
         destination: "/",
       },
-      props: { providers: [] },
     };
   }
 
-  const response = await firestore
-    .collection("users")
-    .where("email", "==", userSession.user.email)
-    .limit(1)
-    .get();
+  if (user.role != "customer") {
+    return {
+      notFound: true,
+    };
+  }
 
-  userSession.user.docId = response.docs[0].id;
-
-  const orderResponse = await firestore
-    .collection("orders")
-    .where("customerId", "==", userSession.user.docId)
-    .get();
-
-  const orders = !orderResponse.empty
-    ? orderResponse.docs.map((order) => {
-        const orderDoc = order.data();
-        orderDoc.id = order.id;
-
-        return orderDoc;
-      })
-    : [];
-
-  const result = {
-    orderPlaced: [],
-    inTransit: [],
-    completed: [],
-  };
-  const groupedOrders = orders.map((order) => {
-    const status = order.status;
-
-    if (status) {
-      console.log(status);
-      if (status == "order-placed") {
-        result.orderPlaced.push(order);
-      } else if (status == "in-transit") {
-        result.inTransit.push(order);
-      } else if (status == "completed") {
-        result.orderPlaced.push(order);
-      }
-    }
-  });
-
-  console.log(result);
+  const result = await getOrders(user.docId);
 
   return {
-    props: { userSession, result },
+    props: { user, result },
   };
-}
+});
