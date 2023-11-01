@@ -1,75 +1,115 @@
-import {
-  Modal,
-  ModalOverlay,
-  ModalContent,
-  ModalHeader,
-  ModalFooter,
-  ModalBody,
-  ModalCloseButton,
-  useDisclosure,
-  Button,
-  FormControl,
-  Input,
-  FormLabel,
-  Textarea,
-} from "@chakra-ui/react";
+import { useToast } from "@chakra-ui/react";
 import { useState } from "react";
-import StarRatingInput from "./StarRatingInput";
+import { firestore } from "../../firebase-config";
 
-const RateProductModal = () => {
-  const { isOpen, onOpen, onClose } = useDisclosure();
+const RateProductModal = (user) => {
+  const toast = useToast();
+
+  const [modalOpen, setModalOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const [selectedProduct, setSelectedProduct] = useState();
 
-  const [rating, setRating] = useState(0);
+  const [starRating, setRating] = useState(0);
+  const [comment, setComment] = useState("");
+  const [orderId, setOrderId] = useState();
 
   const handleRatingChange = (newRating) => {
     setRating(newRating);
   };
 
-  const openRatingModal = (item) => {
-    onOpen();
+  const openRatingModal = (item, orderId) => {
+    setModalOpen(true);
     setRating(0);
     setSelectedProduct(item);
+    setOrderId(orderId);
   };
 
-  const RateModal = () => {
-    return (
-      <Modal isOpen={isOpen} onClose={onClose}>
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>
-            Rate {isOpen ? selectedProduct.productName : ""}
-          </ModalHeader>
-          <ModalCloseButton />
-          <ModalBody
-            display={"flex"}
-            flexDirection={"column"}
-            alignItems={"start"}
-            gap={"24px"}
-          >
-            <FormControl>
-              <FormLabel>Rating</FormLabel>
-              <StarRatingInput
-                rating={rating}
-                onRatingChange={handleRatingChange}
-              />
-            </FormControl>
-            <FormControl>
-              <FormLabel>Comment</FormLabel>
-              <Textarea />
-            </FormControl>
-          </ModalBody>
+  const rateProduct = async () => {
+    try {
+      setLoading(true);
+      const newRating = {
+        stars: starRating,
+        comment: comment,
+        user: {
+          name: user.name,
+          email: user.email,
+        },
+      };
 
-          <ModalFooter>
-            <Button variant="primary">Rate</Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
-    );
+      const product = await firestore
+        .collection("products")
+        .doc(selectedProduct.id)
+        .get();
+
+      if (product.exists) {
+        const { rating } = product.data();
+
+        rating.push(newRating);
+
+        const totalStarRating = rating.reduce(
+          (sum, review) => sum + review.stars,
+          0
+        );
+        const newAverageStarRating = totalStarRating / rating.length;
+
+        const response = await firestore
+          .collection("products")
+          .doc(selectedProduct.id)
+          .update({
+            averageStarRating: newAverageStarRating,
+            rating: rating,
+          });
+
+        const orderResponse = await firestore
+          .collection("orders")
+          .doc(orderId)
+          .get();
+
+        if (orderResponse.exists) {
+          const order = orderResponse.data();
+          const items = order.items;
+          const foundObjectIndex = items.findIndex(
+            (obj) => obj.id == selectedProduct.id
+          );
+          const updatedObject = { ...items[foundObjectIndex], rated: true };
+          items[foundObjectIndex] = updatedObject;
+
+          const response = await firestore
+            .collection("orders")
+            .doc(orderId)
+            .update({
+              items: items,
+            });
+
+          toast({
+            title: "Rating submitted.",
+            description: "We've added your rating for this product.",
+            status: "success",
+            duration: 5000,
+            isClosable: true,
+          });
+          setModalOpen(false);
+          setLoading(false);
+        }
+      }
+    } catch (error) {
+      console.log(error);
+    }
   };
 
-  return { RateModal, openRatingModal, setSelectedProduct };
+  return {
+    modalOpen,
+    loading,
+    handleRatingChange,
+    openRatingModal,
+    setSelectedProduct,
+    rateProduct,
+    selectedProduct,
+    starRating,
+    comment,
+    setComment,
+  };
 };
 
 export default RateProductModal;

@@ -31,10 +31,9 @@ const getOrders = async (userId) => {
       const status = order.status;
 
       if (status) {
-        console.log(status);
-        if (status == "order-placed") {
+        if (status == "order-placed" || status == "order-declined") {
           result.orderPlaced.push(order);
-        } else if (status == "in-transit") {
+        } else if (status == "in-transit" || status == "courier-accepted") {
           result.inTransit.push(order);
         } else if (status == "completed") {
           result.completed.push(order);

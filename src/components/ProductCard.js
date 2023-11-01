@@ -17,6 +17,7 @@ import {
   AiFillStar,
 } from "react-icons/ai";
 import { useCartStore } from "@/hooks/stores/cartStore";
+import StarRating from "./StarRating";
 const ProductCard = ({ product }) => {
   const { addToCart } = useCartStore();
 
@@ -87,13 +88,9 @@ const ProductCard = ({ product }) => {
             <Heading fontSize={"2xl"} fontFamily={"body"} fontWeight={500}>
               {product.productName}
             </Heading>
-            <HStack>
-              <AiFillStar fill="gold" />
-              <AiFillStar fill="gold" />
-              <AiFillStar fill="gold" />
-              <AiFillStar fill="gold" />
-              <AiFillStar fill="gold" />
-            </HStack>
+            <Box minH={5}>
+              <StarRating rating={product.rating} />
+            </Box>
             <Stack direction={"row"} align={"center"}>
               <Text fontWeight={800} fontSize={"xl"}>
                 ₱{product.discountedPrice}

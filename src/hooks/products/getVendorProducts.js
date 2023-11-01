@@ -6,7 +6,11 @@ const getVendorsProducts = async (id) => {
   const response = await productsRef.where("vendorUID", "==", id).get();
   const vendor = await firestore.collection("users").doc(id).get();
 
-  const vendorName = vendor.data().storeName;
+  const vendorName =
+    vendor.data().storeName != ""
+      ? vendor.data().storeName
+      : vendor.data().name;
+
   const productDocs = !response.empty
     ? response.docs.map((doc) => {
         const returnDoc = doc.data();
@@ -16,7 +20,7 @@ const getVendorsProducts = async (id) => {
       })
     : [];
 
-  return productDocs;
+  return { productDocs, vendorName };
 };
 
 export default getVendorsProducts;

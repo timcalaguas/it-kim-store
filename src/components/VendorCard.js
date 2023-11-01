@@ -1,4 +1,4 @@
-import { Box, Image, Text, Link, VStack } from "@chakra-ui/react";
+import { Box, Image, Text, Link, VStack, Avatar } from "@chakra-ui/react";
 
 const VendorCard = ({ vendor }) => {
   return (
@@ -10,10 +10,11 @@ const VendorCard = ({ vendor }) => {
         borderRadius={"md"}
         padding={"24px"}
       >
-        <Image
+        <Avatar
+          name={vendor.storeName != "" ? vendor.storeName : vendor.name}
           src={vendor.storeLogo}
           borderRadius={"full"}
-          w={"220px"}
+          boxSize={"220px"}
           border={"1px solid black"}
         />
         <Text
@@ -23,7 +24,7 @@ const VendorCard = ({ vendor }) => {
           textTransform={"uppercase"}
           fontSize={"xl"}
         >
-          {vendor.storeName}
+          {vendor.storeName != "" ? vendor.storeName : vendor.name}
         </Text>
       </VStack>
     </Link>

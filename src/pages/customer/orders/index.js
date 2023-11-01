@@ -17,15 +17,38 @@ import {
   AccordionPanel,
   Image,
   Button,
+  Tag,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalFooter,
+  ModalBody,
+  ModalCloseButton,
+  FormControl,
+  FormLabel,
+  Textarea,
 } from "@chakra-ui/react";
 import { BsBagFill, BsBagCheckFill } from "react-icons/bs";
 import { BiSolidTruck } from "react-icons/bi";
 import getOrders from "@/hooks/customer/getOrders";
 import { withSessionSsr } from "@/lib/withSession";
 import RateProductModal from "@/components/RateProductModal";
+import StarRatingInput from "@/components/StarRatingInput";
 
 const Orders = ({ user, result }) => {
-  const { RateModal, openRatingModal, setSelectedProduct } = RateProductModal();
+  const {
+    modalOpen,
+    loading,
+    handleRatingChange,
+    openRatingModal,
+    setSelectedProduct,
+    rateProduct,
+    selectedProduct,
+    starRating,
+    comment,
+    setComment,
+  } = RateProductModal(user);
 
   return (
     <Layout metaTitle={"IT Kim - Orders"} user={user}>
@@ -86,6 +109,17 @@ const Orders = ({ user, result }) => {
                                 textAlign="left"
                                 fontWeight={"700"}
                               >
+                                <Tag
+                                  textTransform={"uppercase"}
+                                  mr={"8px"}
+                                  colorScheme={
+                                    order.status == "order-declined"
+                                      ? "red"
+                                      : "blue"
+                                  }
+                                >
+                                  {order.status.replace("-", " ")}
+                                </Tag>
                                 Order {order.id.slice(0, 4)}
                               </Box>
                               <AccordionIcon />
@@ -93,10 +127,13 @@ const Orders = ({ user, result }) => {
                           </h2>
                           <AccordionPanel pb={4}>
                             <Box>
-                              <Box mb={"16px"}>
+                              <HStack
+                                mb={"16px"}
+                                justifyContent={"space-between"}
+                                alignItems={"center"}
+                              >
                                 <Text fontWeight={"500"}>{order.vendor}</Text>
-                                <Text></Text>
-                              </Box>
+                              </HStack>
                               <VStack alignItems={"start"} gap={"10px"}>
                                 {order.items.map((item) => {
                                   total =
@@ -125,19 +162,6 @@ const Orders = ({ user, result }) => {
                                           >
                                             {item.productName}
                                           </Text>
-                                          <Button
-                                            size={"sm"}
-                                            variant={"link"}
-                                            _hover={{
-                                              background: "transparent",
-                                              textDecor: "underline",
-                                            }}
-                                            onClick={() => {
-                                              openRatingModal(item);
-                                            }}
-                                          >
-                                            Rate Product
-                                          </Button>
                                         </VStack>
                                       </HStack>
                                       <Text fontSize={"md"}>
@@ -188,6 +212,17 @@ const Orders = ({ user, result }) => {
                                 textAlign="left"
                                 fontWeight={"700"}
                               >
+                                <Tag
+                                  textTransform={"uppercase"}
+                                  mr={"8px"}
+                                  colorScheme={
+                                    order.status == "in-transit"
+                                      ? "green"
+                                      : "blue"
+                                  }
+                                >
+                                  {order.status.replace("-", " ")}
+                                </Tag>
                                 Order {order.id.slice(0, 4)}
                               </Box>
                               <AccordionIcon />
@@ -195,10 +230,13 @@ const Orders = ({ user, result }) => {
                           </h2>
                           <AccordionPanel pb={4}>
                             <Box>
-                              <Box mb={"16px"}>
+                              <HStack
+                                mb={"16px"}
+                                justifyContent={"space-between"}
+                                alignItems={"center"}
+                              >
                                 <Text fontWeight={"500"}>{order.vendor}</Text>
-                                <Text></Text>
-                              </Box>
+                              </HStack>
                               <VStack alignItems={"start"} gap={"10px"}>
                                 {order.items.map((item) => {
                                   total =
@@ -217,17 +255,17 @@ const Orders = ({ user, result }) => {
                                       >
                                         <Image
                                           src={item.image}
-                                          boxSize={"50px"}
+                                          boxSize={"65px"}
                                           borderRadius={"lg"}
                                         />
-                                        <Box>
+                                        <VStack alignItems={"start"}>
                                           <Text
                                             fontSize={"md"}
                                             fontWeight={"medium"}
                                           >
                                             {item.productName}
                                           </Text>
-                                        </Box>
+                                        </VStack>
                                       </HStack>
                                       <Text fontSize={"md"}>
                                         {item.quantity} x {item.discountedPrice}
@@ -277,6 +315,17 @@ const Orders = ({ user, result }) => {
                                 textAlign="left"
                                 fontWeight={"700"}
                               >
+                                <Tag
+                                  textTransform={"uppercase"}
+                                  mr={"8px"}
+                                  colorScheme={
+                                    order.status == "completed"
+                                      ? "green"
+                                      : "blue"
+                                  }
+                                >
+                                  {order.status.replace("-", " ")}
+                                </Tag>
                                 Order {order.id.slice(0, 4)}
                               </Box>
                               <AccordionIcon />
@@ -284,10 +333,13 @@ const Orders = ({ user, result }) => {
                           </h2>
                           <AccordionPanel pb={4}>
                             <Box>
-                              <Box mb={"16px"}>
+                              <HStack
+                                mb={"16px"}
+                                justifyContent={"space-between"}
+                                alignItems={"center"}
+                              >
                                 <Text fontWeight={"500"}>{order.vendor}</Text>
-                                <Text></Text>
-                              </Box>
+                              </HStack>
                               <VStack alignItems={"start"} gap={"10px"}>
                                 {order.items.map((item) => {
                                   total =
@@ -306,17 +358,36 @@ const Orders = ({ user, result }) => {
                                       >
                                         <Image
                                           src={item.image}
-                                          boxSize={"50px"}
+                                          boxSize={"65px"}
                                           borderRadius={"lg"}
                                         />
-                                        <Box>
+                                        <VStack alignItems={"start"}>
                                           <Text
                                             fontSize={"md"}
                                             fontWeight={"medium"}
                                           >
                                             {item.productName}
                                           </Text>
-                                        </Box>
+                                          {item.rated == false ||
+                                            (item.rated == undefined && (
+                                              <Button
+                                                size={"sm"}
+                                                variant={"link"}
+                                                _hover={{
+                                                  background: "transparent",
+                                                  textDecor: "underline",
+                                                }}
+                                                onClick={() => {
+                                                  openRatingModal(
+                                                    item,
+                                                    order.id
+                                                  );
+                                                }}
+                                              >
+                                                Rate Product
+                                              </Button>
+                                            ))}
+                                        </VStack>
                                       </HStack>
                                       <Text fontSize={"md"}>
                                         {item.quantity} x {item.discountedPrice}
@@ -355,7 +426,42 @@ const Orders = ({ user, result }) => {
           </Tabs>
         </Box>
       </Box>
-      <RateModal />
+      <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)}>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>
+            Rate {modalOpen ? selectedProduct.productName : ""}
+          </ModalHeader>
+          <ModalCloseButton />
+          <ModalBody
+            display={"flex"}
+            flexDirection={"column"}
+            alignItems={"start"}
+            gap={"24px"}
+          >
+            <FormControl>
+              <FormLabel>Rating</FormLabel>
+              <StarRatingInput
+                rating={starRating}
+                onRatingChange={handleRatingChange}
+              />
+            </FormControl>
+            <FormControl>
+              <FormLabel>Comment</FormLabel>
+              <Textarea
+                onChange={(e) => setComment(e.target.value)}
+                value={comment}
+              />
+            </FormControl>
+          </ModalBody>
+
+          <ModalFooter>
+            <Button variant="primary" onClick={rateProduct} isLoading={loading}>
+              Rate
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
     </Layout>
   );
 };

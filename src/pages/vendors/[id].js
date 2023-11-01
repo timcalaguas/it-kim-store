@@ -6,9 +6,7 @@ import { withSessionSsr } from "@/lib/withSession";
 
 import { Box, Heading } from "@chakra-ui/react";
 
-const Vendor = ({ productDocs, user }) => {
-  const vendorName = productDocs.length > 0 ? productDocs[0].vendor : "";
-
+const Vendor = ({ productDocs, user, vendorName }) => {
   return (
     <Layout metaTitle={`IT Kim - ${vendorName}`} user={user}>
       <Box
@@ -33,7 +31,7 @@ const Vendor = ({ productDocs, user }) => {
               display={"grid"}
               placeItems={"center"}
             >
-              <Heading fontSize={"md"}>No Products yet</Heading>
+              <Heading>No Products yet</Heading>
             </Box>
           )}
         </Box>
@@ -49,9 +47,9 @@ export const getServerSideProps = withSessionSsr(async (context) => {
   const user = req.session.user ? req.session.user : null;
 
   const id = context.params.id;
-  const productDocs = await getVendorsProducts(id);
+  const { vendorName, productDocs } = await getVendorsProducts(id);
 
   return {
-    props: { productDocs, user },
+    props: { productDocs, user, vendorName },
   };
 });

@@ -34,6 +34,8 @@ import { useCartStore } from "@/hooks/stores/cartStore";
 import FeaturedProducts from "@/components/FeaturedProducts";
 import getSingleProduct from "@/hooks/products/getSingleProduct";
 import { withSessionSsr } from "@/lib/withSession";
+import ProductRatings from "@/components/ProductRatings";
+import StarRating from "@/components/StarRating";
 
 const ProductDetails = ({ products, product, user }) => {
   const { addToCart } = useCartStore();
@@ -71,25 +73,41 @@ const ProductDetails = ({ products, product, user }) => {
                   lineHeight={1.1}
                   fontWeight={600}
                   fontSize={{ base: "2xl", sm: "4xl", lg: "5xl" }}
+                  mb={"12px"}
                 >
                   {product.productName}
                 </Heading>
-                <HStack>
-                  <Text
-                    color={useColorModeValue("gray.900", "gray.400")}
-                    fontWeight={300}
-                    fontSize={"2xl"}
-                  >
-                    ₱{product.discountedPrice}
-                  </Text>
-                  <Text
-                    color={useColorModeValue("red.200", "red.400")}
-                    fontWeight={300}
-                    fontSize={"2xl"}
-                    textDecoration={"line-through"}
-                  >
-                    ₱{product.price}
-                  </Text>
+                <StarRating rating={product.averageStarRating} />
+                <HStack mt={"12px"}>
+                  {product.discountedPrice != "" &&
+                  product.discountedPrice != undefined &&
+                  product.discountedPrice != null ? (
+                    <>
+                      <Text
+                        color={useColorModeValue("gray.900", "gray.400")}
+                        fontWeight={300}
+                        fontSize={"2xl"}
+                      >
+                        ₱{product.discountedPrice}
+                      </Text>
+                      <Text
+                        color={useColorModeValue("red.200", "red.400")}
+                        fontWeight={300}
+                        fontSize={"2xl"}
+                        textDecoration={"line-through"}
+                      >
+                        ₱{product.price}
+                      </Text>{" "}
+                    </>
+                  ) : (
+                    <Text
+                      color={useColorModeValue("gray.900", "gray.400")}
+                      fontWeight={300}
+                      fontSize={"2xl"}
+                    >
+                      ₱{product.price}
+                    </Text>
+                  )}
                 </HStack>
               </Box>
 
@@ -132,6 +150,9 @@ const ProductDetails = ({ products, product, user }) => {
             </Stack>
           </SimpleGrid>
         </Container>
+        {product.rating.length > 0 && (
+          <ProductRatings ratings={product.rating} />
+        )}
         {products.length > 0 && (
           <FeaturedProducts products={products} fromVendor={product.vendor} />
         )}
@@ -148,6 +169,8 @@ export const getServerSideProps = withSessionSsr(async (context) => {
 
   const id = context.params.id;
   const { products, product } = await getSingleProduct(id);
+
+  console.log(product);
 
   return {
     props: { product, products, user },
