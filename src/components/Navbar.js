@@ -32,8 +32,12 @@ const Navbar = ({ user }) => {
   useEffect(() => {
     if (typeof window !== "undefined") {
       const cartData = JSON.parse(localStorage.getItem("cart"));
+      const total = JSON.parse(localStorage.getItem("total"));
+      const subtotal = JSON.parse(localStorage.getItem("subtotal"));
       if (cartData) {
         useCartStore.setState({ cart: cartData });
+        useCartStore.setState({ total: total });
+        useCartStore.setState({ subtotal: subtotal });
       }
     }
   }, []);

@@ -179,13 +179,13 @@ const Orders = ({ user, result }) => {
                                   alignItems={"end"}
                                 >
                                   <Text fontSize={"md"} fontWeight={"600"}>
-                                    SubTotal: {total}
+                                    SubTotal: {order.subtotal}
                                   </Text>
                                   <Text fontSize={"md"} fontWeight={"600"}>
-                                    Shipping fee: {total}
+                                    Shipping fee: 30
                                   </Text>
                                   <Text fontSize={"md"} fontWeight={"600"}>
-                                    Total: {total}
+                                    Total: {order.total}
                                   </Text>
                                 </VStack>
                               </VStack>
@@ -282,13 +282,13 @@ const Orders = ({ user, result }) => {
                                   alignItems={"end"}
                                 >
                                   <Text fontSize={"md"} fontWeight={"600"}>
-                                    SubTotal: {total}
+                                    SubTotal: {order.subtotal}
                                   </Text>
                                   <Text fontSize={"md"} fontWeight={"600"}>
-                                    Shipping fee: {total}
+                                    Shipping fee: 30
                                   </Text>
                                   <Text fontSize={"md"} fontWeight={"600"}>
-                                    Total: {total}
+                                    Total: {order.total}
                                   </Text>
                                 </VStack>
                               </VStack>
@@ -404,13 +404,13 @@ const Orders = ({ user, result }) => {
                                   alignItems={"end"}
                                 >
                                   <Text fontSize={"md"} fontWeight={"600"}>
-                                    SubTotal: {total}
+                                    SubTotal: {order.subtotal}
                                   </Text>
                                   <Text fontSize={"md"} fontWeight={"600"}>
-                                    Shipping fee: {total}
+                                    Shipping fee: 30
                                   </Text>
                                   <Text fontSize={"md"} fontWeight={"600"}>
-                                    Total: {total}
+                                    Total: {order.total}
                                   </Text>
                                 </VStack>
                               </VStack>

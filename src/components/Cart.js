@@ -20,6 +20,7 @@ import {
 import { useCartStore } from "@/hooks/stores/cartStore";
 import { IoBagCheckOutline } from "react-icons/io5";
 import { useRouter } from "next/router";
+import { FaTrash } from "react-icons/fa";
 
 const Cart = ({ cart, isOpen, onClose, btnRef }) => {
   const { updateQuantity } = useCartStore();
@@ -94,6 +95,7 @@ const Cart = ({ cart, isOpen, onClose, btnRef }) => {
                                 +
                               </Button>
                               <Input
+                                w={"10ch"}
                                 size={"sm"}
                                 value={product.quantity}
                                 onChange={(e) =>
@@ -110,6 +112,12 @@ const Cart = ({ cart, isOpen, onClose, btnRef }) => {
                                 }
                               >
                                 -
+                              </Button>
+                              <Button
+                                size={"sm"}
+                                onClick={() => updateQuantity(product.id, 0)}
+                              >
+                                <FaTrash />
                               </Button>
                             </HStack>
                           </HStack>

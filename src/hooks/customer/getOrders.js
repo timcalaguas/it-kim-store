@@ -9,7 +9,7 @@ const getOrders = async (userId) => {
   try {
     const orderResponse = await firestore
       .collection("orders")
-      .where("customerId", "==", userId)
+      .where("customer.id", "==", userId)
       .get();
 
     const orders = !orderResponse.empty

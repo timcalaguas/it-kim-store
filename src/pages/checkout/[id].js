@@ -16,6 +16,7 @@ import {
   Stack,
   Link,
   useToast,
+  VStack,
 } from "@chakra-ui/react";
 import { IoBagCheckOutline } from "react-icons/io5";
 import { getSession } from "next-auth/react";
@@ -26,6 +27,7 @@ import { useEffect, useState } from "react";
 import { withSessionSsr } from "@/lib/withSession";
 import AuthManager from "@/hooks/auth/AuthManager";
 import moment from "moment";
+import { FaTrash, FaPlus, FaMinus } from "react-icons/fa";
 
 export default function Checkout({ userSession }) {
   const router = useRouter();
@@ -39,7 +41,8 @@ export default function Checkout({ userSession }) {
   const [selectedAddress, setSelectedAddress] = useState(
     userSession ? userSession.addresses[0] : {}
   );
-  const { cart, removeItemsByVendorId } = useCartStore();
+
+  const { cart, removeItemsByVendorId, calculateSubtotal } = useCartStore();
 
   const changeAddress = (index) => {
     setSelectedAddress(userSession.addresses[index]);
@@ -58,10 +61,16 @@ export default function Checkout({ userSession }) {
         vendorId: selectedCart[0].vendorUID,
         vendor: selectedCart[0].vendor,
         items: selectedCart[0].items,
-        address: selectedAddress,
-        customerId: userSession.docId,
-        customerName: userSession.name,
+        customer: {
+          id: userSession.docId,
+          name: userSession.name,
+          email: userSession.email,
+          address: selectedAddress,
+          picture: userSession.picture,
+        },
         status: "order-placed",
+        total: calculateSubtotal(vendorUID) + 30,
+        subtotal: calculateSubtotal(vendorUID),
         date: moment(new Date()).format("MM-DD-YYYY"),
       };
 
@@ -77,44 +86,16 @@ export default function Checkout({ userSession }) {
           isClosable: true,
         });
         setLoading(false);
+        router.push("/");
       }
     } catch (error) {
       console.error(error);
     }
   };
 
-  const [productTotals, setProductTotal] = useState({ subtotal: 0, total: 0 });
-
-  useEffect(() => {
-    if (cart) {
-      if (selectedCart > 0) {
-        const totals = calculateTotal(selectedCart[0].items);
-
-        setProductTotal(totals);
-      }
-    }
-  }, [cart]);
-
-  function calculateTotal(items) {
-    let total = 20;
-    let subtotal = 0;
-
-    for (const item of items) {
-      if (item.discountedPrice !== "" && item.discountedPrice !== null) {
-        subtotal += parseInt(item.discountedPrice);
-      } else {
-        subtotal += parseInt(item.price);
-      }
-    }
-
-    total = total + subtotal;
-
-    return { subtotal, total };
-  }
-
   return (
     <>
-      <Layout metaTitle={"IT Kim - Checkout"}>
+      <Layout metaTitle={"IT Kim - Checkout"} user={userSession}>
         <Box
           w={"100%"}
           height={"100%"}
@@ -135,6 +116,7 @@ export default function Checkout({ userSession }) {
               padding={8}
               borderRadius={"lg"}
               boxShadow={"md"}
+              bg={"white"}
             >
               <Heading mb={"20px"}>Checkout</Heading>
               <Box mb={"20px"}>
@@ -221,6 +203,15 @@ export default function Checkout({ userSession }) {
                   return <Items items={vendor.items} />;
                 })}
               </Box>
+              <VStack
+                fontWeight={"600"}
+                alignItems={"end"}
+                paddingBlock={"12px"}
+              >
+                <Text>Subtotal: {calculateSubtotal(vendorUID)}</Text>
+                <Text>Shipping fee: 30</Text>
+                <Text>Total: {calculateSubtotal(vendorUID) + 30}</Text>
+              </VStack>
 
               <HStack justifyContent={"end"}>
                 <Button
@@ -242,7 +233,7 @@ export default function Checkout({ userSession }) {
 }
 
 const Items = ({ items }) => {
-  console.log(items);
+  const { updateQuantity, removeItemsByVendorId } = useCartStore();
   return (
     <Flex w={"100%"} flexDirection={"column"}>
       {items.length > 0 &&
@@ -261,17 +252,23 @@ const Items = ({ items }) => {
                 <Text fontSize={"md"} fontWeight={"medium"}>
                   {product.productName}
                 </Text>
-                <Text fontSize={"md"}>{product.discountedPrice}</Text>
+                <Text fontSize={"md"}>
+                  {product.discountedPrice !== ""
+                    ? parseInt(product.discountedPrice)
+                    : parseInt(product.price)}
+                </Text>
               </Box>
             </HStack>
-            <HStack w={"40%"}>
+            <HStack>
               <Button
                 size={"sm"}
                 onClick={() => updateQuantity(product.id, product.quantity + 1)}
+                fontWeight={"extrabold"}
               >
-                +
+                <FaPlus />
               </Button>
               <Input
+                w={"7ch"}
                 size={"sm"}
                 value={product.quantity}
                 onChange={(e) => updateQuantity(product.id, e.target.value)}
@@ -279,8 +276,17 @@ const Items = ({ items }) => {
               <Button
                 size={"sm"}
                 onClick={() => updateQuantity(product.id, product.quantity - 1)}
+                fontWeight={"extrabold"}
               >
-                -
+                <FaMinus />
+              </Button>
+              <Button
+                variant={"outline"}
+                size={"sm"}
+                onClick={() => updateQuantity(product.id, 0)}
+                fontWeight={"extrabold"}
+              >
+                <FaTrash />
               </Button>
             </HStack>
           </HStack>

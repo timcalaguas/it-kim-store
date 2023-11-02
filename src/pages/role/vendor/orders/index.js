@@ -89,17 +89,17 @@ const Orders = ({ orderDocs, user }) => {
       (obj) => obj.id === selectedItem.id
     );
 
-    // const body = {
-    //   to: "tmthy011@gmail.com",
-    //   subject: "asdsada",
-    //   body: "adadadas",
-    // };
+    const body = {
+      to: "tmthy011@gmail.com",
+      subject: "asdsada",
+      body: "adadadas",
+    };
 
-    // if (process == "decline") {
-    //   const response = await axios.post("/api/send-mail", body);
+    if (process == "decline") {
+      const response = await axios.post("/api/send-mail", body);
 
-    //   console.log(response);
-    // }
+      console.log(response);
+    }
 
     let status = process == "accept" ? "order-accepted" : "order-declined";
     const processResponse = await firestore

@@ -44,6 +44,10 @@ import {
 } from "@chakra-ui/react";
 import { useEffect, useState, useRef } from "react";
 import moment from "moment/moment";
+import { withSessionSsr } from "@/lib/withSession";
+import getAvailableOrders from "@/hooks/courier/getAvailableOrders";
+import axios from "axios";
+import getBodyForEmail from "@/hooks/getBodyForEmail";
 
 const LinkItems = [
   { name: "Dashboard", icon: FiHome, link: "/role/courier" },
@@ -77,18 +81,41 @@ const Orders = ({ orderDocs, userSession }) => {
   };
 
   const processOrder = async (order, method) => {
-    setProcessLoading(true);
-    const indexOfObjectToUpdate = orders.findIndex(
-      (obj) => obj.id === order.id
-    );
-    let status = method == "accept" ? "courier-accepted" : "order-declined";
-    const processResponse = await firestore
-      .collection("orders")
-      .doc(order.id)
-      .update({ status: status });
-    order.status = status;
-    setProcessLoading(false);
-    order[indexOfObjectToUpdate] = order;
+    try {
+      const courier = {
+        name: userSession.name,
+        picture: userSession.picture,
+        email: userSession.email,
+        phone: "",
+      };
+
+      setProcessLoading(true);
+      const indexOfObjectToUpdate = orders.findIndex(
+        (obj) => obj.id === order.id
+      );
+
+      const bodyForEmail = await getBodyForEmail(
+        "courier-accepted",
+        userSession,
+        "timcalaguas@gmail.com"
+      );
+
+      const response = await axios.post("/api/send-mail", bodyForEmail);
+
+      console.log(response);
+
+      let status = method == "accept" ? "in-transit" : "order-declined";
+
+      const processResponse = await firestore
+        .collection("orders")
+        .doc(order.id)
+        .update({ status: status, courier: courier });
+      order.status = status;
+      setProcessLoading(false);
+      orders.splice(indexOfObjectToUpdate, 1);
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   return (
@@ -226,48 +253,27 @@ const Orders = ({ orderDocs, userSession }) => {
 
 export default Orders;
 
-export async function getServerSideProps(context) {
-  const userSession = await getSession(context);
+export const getServerSideProps = withSessionSsr(async ({ req, res }) => {
+  const userSession = req.session.user;
 
   if (!userSession) {
     return {
       redirect: {
         permanent: false,
-        destination: "/",
+        destination: "/role/courier/auth/login",
       },
-      props: { providers: [] },
     };
   }
 
-  const response = await firestore
-    .collection("users")
-    .where("email", "==", userSession.user.email)
-    .limit(1)
-    .get();
+  if (userSession.role != "courier") {
+    return {
+      notFound: true,
+    };
+  }
 
-  const userDoc = !response.empty ? response.docs[0].data() : {};
-  userSession.user.addresses = userDoc.addresses ? userDoc.addresses : [];
-  userSession.user.docId = response.docs[0].id;
-  userSession.user.status = userDoc.status ? userDoc.status : "";
-
-  const orderResponse = await firestore.collection("orders").get();
-
-  let orderDocs = !orderResponse.empty
-    ? orderResponse.docs.map((doc) => {
-        const returnDoc = doc.data();
-        returnDoc.id = doc.id;
-
-        return returnDoc;
-      })
-    : [];
-
-  const filteredArray = orderDocs.filter(
-    (obj) => obj.status === "order-accepted"
-  );
-
-  orderDocs = filteredArray;
+  const orderDocs = await getAvailableOrders();
 
   return {
     props: { orderDocs, userSession },
   };
-}
+});

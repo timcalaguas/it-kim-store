@@ -1,9 +1,12 @@
 module.exports = {
-  host: "smtp.gmail.com",
-  port: 465,
-  secure: true,
+  host: "smtp-relay.brevo.com",
+  port: 587,
+  secureConnection: false,
   auth: {
-    user: "timcalaguas@gmail.com",
-    pass: "batganonlods?",
+    user: "itkim.store@gmail.com",
+    pass: "gWbYIdnXkrsxcJpN",
+  },
+  tls: {
+    ciphers: "SSLv3",
   },
 };

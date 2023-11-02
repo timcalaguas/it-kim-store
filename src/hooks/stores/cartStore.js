@@ -3,6 +3,21 @@ import { create } from "zustand";
 export const useCartStore = create((set, get) => ({
   cart: [],
 
+  calculateSubtotal: (vendorUID) => {
+    const vendor = get().cart.find((vendor) => vendor.vendorUID === vendorUID);
+    if (!vendor) return 0;
+
+    const subtotal = vendor.items.reduce((acc, item) => {
+      const price =
+        item.discountedPrice != ""
+          ? parseInt(item.discountedPrice)
+          : parseInt(item.price);
+      return acc + price * item.quantity;
+    }, 0);
+
+    return subtotal;
+  },
+
   addToCart: (product) => {
     set((state) => {
       const existingVendor = state.cart.find(
@@ -30,6 +45,7 @@ export const useCartStore = create((set, get) => ({
               : vendor
           );
 
+          // Update localStorage with the new cart state and vendor totals
           localStorage.setItem("cart", JSON.stringify(updatedCart));
           return { cart: updatedCart };
         } else {
@@ -64,6 +80,7 @@ export const useCartStore = create((set, get) => ({
             items: [{ ...product, quantity: 1 }],
           },
         ];
+
         localStorage.setItem("cart", JSON.stringify(updatedCart));
         return { cart: updatedCart };
       }
@@ -76,6 +93,7 @@ export const useCartStore = create((set, get) => ({
         ...vendor,
         items: vendor.items.filter((item) => item.id !== productId),
       }));
+
       localStorage.setItem("cart", JSON.stringify(updatedCart));
       return { cart: updatedCart };
     });
@@ -84,6 +102,7 @@ export const useCartStore = create((set, get) => ({
   clearCart: () => {
     set(() => {
       localStorage.removeItem("cart");
+
       return { cart: [] };
     });
   },
@@ -118,7 +137,6 @@ export const useCartStore = create((set, get) => ({
 
       // Update localStorage with the new cart state
       localStorage.setItem("cart", JSON.stringify(updatedCart));
-
       return {
         cart: updatedCart,
       };
