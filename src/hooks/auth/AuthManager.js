@@ -16,7 +16,7 @@ const AuthManager = () => {
         if (role === "courier") redirect = "/role/courier/auth/login";
         if (role === "vendor") redirect = "/role/vendor/auth/login";
 
-        return router.push(redirect);
+        router.push(redirect);
       }
     } catch (error) {
       console.log(error);

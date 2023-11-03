@@ -18,13 +18,10 @@ const AddressModal = () => {
     contact: "",
   });
 
-  const addAddress = async (userSession) => {
+  const addAddress = async (user) => {
     try {
       setLoading(true);
-      const userGet = await firestore
-        .collection("users")
-        .doc(userSession.user.docId)
-        .get();
+      const userGet = await firestore.collection("users").doc(user.docId).get();
 
       if (userGet.exists) {
         const nAddress = {
@@ -39,9 +36,7 @@ const AddressModal = () => {
 
         const currentAddresses = userGet.data().addresses;
         const updatedAddresses = [...currentAddresses, nAddress];
-        const docRef = firestore
-          .collection("users")
-          .doc(userSession.user.docId);
+        const docRef = firestore.collection("users").doc(user.docId);
 
         const response = await docRef.update({
           addresses: updatedAddresses,

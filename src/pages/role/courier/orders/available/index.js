@@ -22,13 +22,8 @@ import {
   Heading,
   HStack,
   Image,
-  Link,
-  AlertDialog,
-  AlertDialogBody,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogContent,
-  AlertDialogOverlay,
+  Avatar,
+  VStack,
   Modal,
   ModalBody,
   ModalCloseButton,
@@ -96,8 +91,8 @@ const Orders = ({ orderDocs, userSession }) => {
 
       const bodyForEmail = await getBodyForEmail(
         "courier-accepted",
-        userSession,
-        "timcalaguas@gmail.com"
+        order.customer,
+        userSession
       );
 
       const response = await axios.post("/api/send-mail", bodyForEmail);
@@ -151,7 +146,7 @@ const Orders = ({ orderDocs, userSession }) => {
                   <Tr>
                     <Td>{order.id}</Td>
                     <Td>{moment(new Date()).format("MM/DD/YYYY")}</Td>
-                    <Td>{order.customerName}</Td>
+                    <Td>{order.customer.name}</Td>
                     <Td textTransform={"uppercase"}>
                       <Badge>{order.status}</Badge>
                     </Td>
@@ -203,14 +198,22 @@ const Orders = ({ orderDocs, userSession }) => {
           <ModalHeader>Details</ModalHeader>
           <ModalCloseButton />
           <ModalBody>
+            <HStack mb={"12px"}>
+              <Avatar src={selectedItem.customer?.picture} />
+              <Box>
+                <Text>{selectedItem.customer?.name}</Text>
+                <Text>{selectedItem.customer?.email}</Text>
+              </Box>
+            </HStack>
             <Text mb={"12px"}>
               <Text fontWeight={"500"}>Address:</Text>{" "}
-              {selectedItem.address &&
-                `${selectedItem.address.address.no} ${selectedItem.address.address.street} ${selectedItem.address.address.barangay} ${selectedItem.address.address.city}`}
+              {selectedItem.customer?.address &&
+                `${selectedItem.customer.address.address.no} ${selectedItem.customer.address.address.street} ${selectedItem.customer.address.address.barangay} ${selectedItem.customer.address.address.city}`}
             </Text>
             <Text mb={"12px"}>
               <Text fontWeight={"500"}>Contact Number:</Text>{" "}
-              {selectedItem.address && selectedItem.address.contactNumber}{" "}
+              {selectedItem.customer?.address &&
+                selectedItem.customer.address.contactNumber}{" "}
             </Text>
             <Divider marginBlock={"6px"} />
             <Box>
@@ -244,6 +247,18 @@ const Orders = ({ orderDocs, userSession }) => {
                   </HStack>
                 ))}
             </Box>
+            <VStack alignItems={"end"}>
+              <Text>
+                <b>Subtotal:</b> {selectedItem.subtotal}
+              </Text>
+              <Text>
+                <b>Shipping Fee:</b>{" "}
+                {selectedItem.total - selectedItem.subtotal}
+              </Text>
+              <Text>
+                <b>Total:</b> {selectedItem.total}
+              </Text>
+            </VStack>
           </ModalBody>
         </ModalContent>
       </Modal>
