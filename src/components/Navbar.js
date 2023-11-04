@@ -113,7 +113,12 @@ const Navbar = ({ user }) => {
                     <VStack alignItems={"flex-end"}>
                       <Link href="/customer/profile">Profile</Link>
                       <Link href="/customer/orders">Orders</Link>
-                      <Box onClick={() => logout("customer")}>Logout</Box>
+                      <Box
+                        onClick={() => logout("customer")}
+                        cursor={"pointer"}
+                      >
+                        Logout
+                      </Box>
                     </VStack>
                   </PopoverBody>
                 </PopoverContent>

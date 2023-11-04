@@ -30,12 +30,17 @@ import {
   ModalHeader,
   ModalOverlay,
   ModalContent,
-  ModalFooter,
   useDisclosure,
   useToast,
   Badge,
   Text,
   Divider,
+  AlertDialog,
+  AlertDialogBody,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogContent,
+  AlertDialogOverlay,
 } from "@chakra-ui/react";
 import { useEffect, useState, useRef } from "react";
 import moment from "moment/moment";
@@ -46,14 +51,18 @@ import getBodyForEmail from "@/hooks/getBodyForEmail";
 
 const LinkItems = [
   { name: "Dashboard", icon: FiHome, link: "/role/courier" },
-  { name: "Orders", icon: FiCompass, link: "/role/courier/orders" },
+  {
+    name: "Available Orders",
+    icon: FiCompass,
+    link: "/role/courier/orders/available",
+  },
+  { name: "Finished Orders", icon: FiStar, link: "/role/courier/orders/done" },
 ];
 
 const Orders = ({ orderDocs, userSession }) => {
   const toast = useToast();
-
+  const [user, setUser] = useState(userSession);
   const [orders, setOrders] = useState(orderDocs);
-  const [selectedId, setSelectedId] = useState("");
   const [selectedItem, setSelectedItem] = useState([]);
   const [processLoading, setProcessLoading] = useState(false);
 
@@ -65,8 +74,12 @@ const Orders = ({ orderDocs, userSession }) => {
   } = useDisclosure();
   const cancelRef = useRef();
 
-  const openDeleteDialog = (id) => {
-    setSelectedId(id);
+  const [process, setProcess] = useState();
+
+  const openDialog = (order, process) => {
+    setSelectedItem(order);
+
+    setProcess(process);
     onOpen();
   };
 
@@ -75,7 +88,7 @@ const Orders = ({ orderDocs, userSession }) => {
     itemOnOpen();
   };
 
-  const processOrder = async (order, method) => {
+  const processOrder = async () => {
     try {
       const courier = {
         name: userSession.name,
@@ -86,28 +99,52 @@ const Orders = ({ orderDocs, userSession }) => {
 
       setProcessLoading(true);
       const indexOfObjectToUpdate = orders.findIndex(
-        (obj) => obj.id === order.id
+        (obj) => obj.id === selectedItem.id
       );
 
       const bodyForEmail = await getBodyForEmail(
         "courier-accepted",
-        order.customer,
+        selectedItem.customer,
         userSession
       );
 
       const response = await axios.post("/api/send-mail", bodyForEmail);
 
-      console.log(response);
-
-      let status = method == "accept" ? "in-transit" : "order-declined";
+      let status = process == "accept" ? "in-transit" : "order-declined";
 
       const processResponse = await firestore
         .collection("orders")
-        .doc(order.id)
+        .doc(selectedItem.id)
         .update({ status: status, courier: courier });
-      order.status = status;
-      setProcessLoading(false);
-      orders.splice(indexOfObjectToUpdate, 1);
+
+      const docRef = firestore.collection("users").doc(user.docId);
+
+      const responseUser = await docRef.update({
+        order: selectedItem.id,
+      });
+
+      user.order = selectedItem.id;
+
+      const updateSession = await axios.post("/api/auth", {
+        user: user,
+        role: user.role,
+      });
+
+      if (updateSession.status === 200) {
+        setProcessLoading(false);
+        orders.splice(indexOfObjectToUpdate, 1);
+        toast({
+          title: process == "accept" ? "Order Accepted" : "Order Declined",
+          description:
+            process == "accept"
+              ? "The order is now accepted."
+              : "The order is now declined.",
+          status: "success",
+          duration: 9000,
+          isClosable: true,
+        });
+        onClose();
+      }
     } catch (error) {
       console.log(error);
     }
@@ -168,7 +205,18 @@ const Orders = ({ orderDocs, userSession }) => {
                             variant="outline"
                             isLoading={processLoading}
                             size={"sm"}
-                            onClick={() => processOrder(order, "accept")}
+                            onClick={() => {
+                              user.order != null || user.order != undefined
+                                ? toast({
+                                    title: `Sorry but you can't accept an order yet.`,
+                                    description: `Please finish your current delivery.`,
+
+                                    status: "warning",
+                                    duration: 9000,
+                                    isClosable: true,
+                                  })
+                                : openDialog(order, "accept");
+                            }}
                           >
                             Accept
                           </Button>
@@ -191,7 +239,39 @@ const Orders = ({ orderDocs, userSession }) => {
           )}
         </TableContainer>
       </AdminLayout>
+      <AlertDialog
+        isOpen={isOpen}
+        leastDestructiveRef={cancelRef}
+        onClose={onClose}
+      >
+        <AlertDialogOverlay>
+          <AlertDialogContent>
+            <AlertDialogHeader fontSize="lg" fontWeight="bold">
+              {process == "accept" ? "Accept Order" : "Decline Order"}
+            </AlertDialogHeader>
 
+            <AlertDialogBody>
+              {process == "accept"
+                ? "Are you sure you want to accept this order? You will not be able to accept another order until you finish/deliver this order."
+                : "Are you sure you want to decline this order? After declining the order will be cancelled and the customer will be notified."}
+            </AlertDialogBody>
+
+            <AlertDialogFooter>
+              <Button ref={cancelRef} onClick={onClose}>
+                Cancel
+              </Button>
+              <Button
+                colorScheme={process == "accept" ? "blue" : "red"}
+                onClick={() => processOrder()}
+                ml={3}
+                isLoading={processLoading}
+              >
+                {process == "accept" ? "Accept" : "Decline"}
+              </Button>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialogOverlay>
+      </AlertDialog>
       <Modal isOpen={itemIsOpen} onClose={itemOnClose}>
         <ModalOverlay />
         <ModalContent>

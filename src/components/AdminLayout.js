@@ -75,12 +75,18 @@ const SidebarContent = ({ onClose, title, LinkItems, ...rest }) => {
 };
 
 const NavItem = ({ icon, children, link, ...rest }) => {
+  var words = "";
+  var mergedString = "";
   const pathName = useRouter().pathname;
-  var words = pathName.split("/");
+  if (link != pathName) {
+    words = pathName.split("/");
 
-  words.splice(4, 3);
+    words.splice(4, 3);
 
-  var mergedString = words.join("/");
+    mergedString = words.join("/");
+  } else {
+    mergedString = link;
+  }
 
   return (
     <Box

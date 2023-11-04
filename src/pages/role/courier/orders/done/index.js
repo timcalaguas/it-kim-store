@@ -1,6 +1,5 @@
 import AdminLayout from "@/components/AdminLayout";
-import { firestore } from "../../../../../firebase-config";
-import { getSession } from "next-auth/react";
+import { firestore } from "../../../../../../firebase-config";
 import { FiHome, FiTrendingUp, FiCompass, FiStar } from "react-icons/fi";
 import {
   AiTwotoneEdit,
@@ -37,12 +36,18 @@ import {
 } from "@chakra-ui/react";
 import { useEffect, useState, useRef } from "react";
 import moment from "moment/moment";
+import getDeliveredOrders from "@/hooks/courier/getDeliveredOrders";
+import { withSessionSsr } from "@/lib/withSession";
 
 const LinkItems = [
   { name: "Dashboard", icon: FiHome, link: "/role/courier" },
-  { name: "Orders", icon: FiCompass, link: "/role/courier/orders" },
+  {
+    name: "Available Orders",
+    icon: FiCompass,
+    link: "/role/courier/orders/available",
+  },
+  { name: "Finished Orders", icon: FiStar, link: "/role/courier/orders/done" },
 ];
-
 const Orders = ({ orderDocs, userSession }) => {
   const toast = useToast();
 
@@ -207,46 +212,27 @@ const Orders = ({ orderDocs, userSession }) => {
 
 export default Orders;
 
-export async function getServerSideProps(context) {
-  const userSession = await getSession(context);
+export const getServerSideProps = withSessionSsr(async ({ req, res }) => {
+  const userSession = req.session.user;
 
   if (!userSession) {
     return {
       redirect: {
         permanent: false,
-        destination: "/",
+        destination: "/role/courier/auth/login",
       },
-      props: { providers: [] },
     };
   }
 
-  const response = await firestore
-    .collection("users")
-    .where("email", "==", userSession.user.email)
-    .limit(1)
-    .get();
+  if (userSession.role != "courier") {
+    return {
+      notFound: true,
+    };
+  }
 
-  const userDoc = !response.empty ? response.docs[0].data() : {};
-  userSession.user.addresses = userDoc.addresses ? userDoc.addresses : [];
-  userSession.user.docId = response.docs[0].id;
-  userSession.user.status = userDoc.status ? userDoc.status : "";
-
-  const orderResponse = await firestore.collection("orders").get();
-
-  let orderDocs = !orderResponse.empty
-    ? orderResponse.docs.map((doc) => {
-        const returnDoc = doc.data();
-        returnDoc.id = doc.id;
-
-        return returnDoc;
-      })
-    : [];
-
-  const filteredArray = orderDocs.filter((obj) => obj.status === "delivered");
-
-  orderDocs = filteredArray;
+  const orderDocs = await getDeliveredOrders();
 
   return {
     props: { orderDocs, userSession },
   };
-}
+});

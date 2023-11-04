@@ -34,13 +34,19 @@ import {
   BsFillCartFill,
 } from "react-icons/bs";
 import getCourierDashboardCount from "@/hooks/courier/getCourierDashboardCount";
+import getCurrentOrder from "@/hooks/courier/getCurrentOrder";
 
 const LinkItems = [
   { name: "Dashboard", icon: FiHome, link: "/role/courier" },
-  { name: "Orders", icon: FiTrendingUp, link: "/role/courier/orders" },
+  {
+    name: "Available Orders",
+    icon: FiCompass,
+    link: "/role/courier/orders/available",
+  },
+  { name: "Finished Orders", icon: FiStar, link: "/role/courier/orders/done" },
 ];
 
-const Courier = ({ user, availableOrderCount, finishedOrderCount }) => {
+const Courier = ({ user, availableOrderCount, finishedOrderCount, order }) => {
   const { isOpen, onOpen, onClose } = useDisclosure();
   return (
     <AdminLayout
@@ -65,106 +71,141 @@ const Courier = ({ user, availableOrderCount, finishedOrderCount }) => {
               </Button>
             </HStack>
           </Alert>
-        )}
-        <Card mb={"24px"}>
-          <CardBody position={"relative"} overflow={"hidden"}>
-            <HStack gap={"24px"} flexWrap={"wrap"}>
-              <VStack marginInline={{ base: "auto", md: "0" }}>
-                <Avatar
-                  src={user.storeLogo}
-                  name={user.storeName}
-                  boxSize={"200px"}
-                />
-                <Tag
-                  size="lg"
-                  colorScheme={user.status === "approved" ? "green" : "orange"}
-                  borderRadius="full"
-                  marginBlock={"12px"}
-                >
-                  {user.status === "approved" ? (
-                    <TagLabel textTransform={"uppercase"}>
-                      {user.status}
-                    </TagLabel>
-                  ) : (
-                    <TagLabel textTransform={"uppercase"}>Pending</TagLabel>
-                  )}
-                </Tag>
-                <Button colorScheme="blue" onClick={onOpen}>
-                  Update Profile
-                </Button>
-              </VStack>
-              <Box>
-                <Box mb={"12px"}>
-                  <Text fontWeight={"bold"}>Name:</Text>
-                  <Text>{user.name}</Text>
-                </Box>
-                <Box mb={"12px"}>
-                  <Text fontWeight={"bold"}>Address:</Text>
-                  <Text>
-                    {user.addresses?.length > 0
-                      ? `${user.addresses[0].address.no} ${user.addresses[0].address.street} ${user.addresses[0].address.barangay} ${user.addresses[0].address.city}`
-                      : ""}
-                  </Text>
-                </Box>
-                <Box mb={"12px"}>
-                  <Text fontWeight={"bold"}>Contact No.:</Text>
-                  <Text>
-                    {user.addresses?.length > 0
-                      ? user.addresses[0].contactNumber
-                      : ""}
-                  </Text>
-                </Box>
-
-                <Box mb={"12px"}>
-                  <Text fontWeight={"bold"}>Email:</Text>
-                  <Text>{user.email}</Text>
-                </Box>
-              </Box>
-            </HStack>
-          </CardBody>
-        </Card>
-        <Box
-          border={"1px"}
-          borderColor={"gray.200"}
-          padding={"16px"}
-          borderRadius={"xl"}
-          bg={"white"}
-          minH={"200px"}
+        )}{" "}
+        <Flex
+          gap={4}
+          justifyContent={"space-between"}
+          flexWrap={"wrap"}
+          mt={"24px"}
+          alignItems={"stretch"}
         >
-          <Text mb="12px" fontWeight={"700"} fontSize={"2xl"}>
-            Current Delivery
-          </Text>
-          <Box>
-            <Text fontWeight={"600"}>Order</Text>
-            <HStack>
-              <Box p={5} border={"1px"} borderColor={"gray.100"}>
-                <Text fontWeight={"500"}>Customer Info</Text>
-                <Text>Name: Lebron James</Text>
-                <Text>Address: Lebron James</Text>
-                <Text>Email: Lebron James</Text>
-              </Box>
-              <Box p={5} border={"1px"} borderColor={"gray.100"}>
-                <Text fontWeight={"500"}>Customer Info</Text>
-                <Text>Name: Lebron James</Text>
-                <Text>Address: Lebron James</Text>
-                <Text>Email: Lebron James</Text>
-              </Box>
-            </HStack>
-          </Box>
-          {/* <Box display={"grid"} placeItems={"center"} gap={"12px"}>
-            <Text fontWeight={"700"} fontSize={"3xl"}>
-              No Order selected
-            </Text>
-            <Button
-              as={Link}
-              href="/role/courier/orders/available"
-              colorScheme="blue"
-              _hover={{ textDecor: "none" }}
-            >
-              View Available Orders
-            </Button>
-          </Box> */}
-        </Box>
+          <Card
+            minW={{ base: "100%", xl: "320px" }}
+            w={{ base: "100%", xl: "48%" }}
+            h={"100%"}
+          >
+            <CardBody position={"relative"} overflow={"hidden"}>
+              <HStack gap={"24px"} flexWrap={"wrap"}>
+                <VStack marginInline={{ base: "auto", md: "0" }}>
+                  <Avatar
+                    src={user.storeLogo}
+                    name={user.storeName}
+                    boxSize={"200px"}
+                  />
+                  <Tag
+                    size="lg"
+                    colorScheme={
+                      user.status === "approved" ? "green" : "orange"
+                    }
+                    borderRadius="full"
+                    marginBlock={"12px"}
+                  >
+                    {user.status === "approved" ? (
+                      <TagLabel textTransform={"uppercase"}>
+                        {user.status}
+                      </TagLabel>
+                    ) : (
+                      <TagLabel textTransform={"uppercase"}>Pending</TagLabel>
+                    )}
+                  </Tag>
+                  <Button colorScheme="blue" onClick={onOpen}>
+                    Update Profile
+                  </Button>
+                </VStack>
+                <Box>
+                  <Box mb={"12px"}>
+                    <Text fontWeight={"bold"}>Name:</Text>
+                    <Text>{user.name}</Text>
+                  </Box>
+                  <Box mb={"12px"}>
+                    <Text fontWeight={"bold"}>Address:</Text>
+                    <Text>
+                      {user.addresses?.length > 0
+                        ? `${user.addresses[0].address.no} ${user.addresses[0].address.street} ${user.addresses[0].address.barangay} ${user.addresses[0].address.city}`
+                        : ""}
+                    </Text>
+                  </Box>
+                  <Box mb={"12px"}>
+                    <Text fontWeight={"bold"}>Contact No.:</Text>
+                    <Text>
+                      {user.addresses?.length > 0
+                        ? user.addresses[0].contactNumber
+                        : ""}
+                    </Text>
+                  </Box>
+
+                  <Box mb={"12px"}>
+                    <Text fontWeight={"bold"}>Email:</Text>
+                    <Text>{user.email}</Text>
+                  </Box>
+                </Box>
+              </HStack>
+            </CardBody>
+          </Card>
+          <Card
+            minW={{ base: "100%", xl: "320px" }}
+            w={{ base: "100%", xl: "48%" }}
+          >
+            <CardBody>
+              <HStack justifyContent={"space-between"}>
+                <Text mb="12px" fontWeight={"700"} fontSize={"2xl"}>
+                  Current Delivery
+                </Text>
+                {order != null && (
+                  <Button colorScheme={"blue"}>Delivered?</Button>
+                )}
+              </HStack>
+              {order != null ? (
+                <Box>
+                  <Text fontWeight={"600"} mb={"12px"}>
+                    Order
+                  </Text>
+                  <HStack>
+                    <Box p={5} border={"1px"} borderColor={"gray.100"}>
+                      <Text fontWeight={"900"}>Customer Info</Text>
+                      <Text>
+                        <b>Name:</b> {order.customer.name}
+                      </Text>
+                      <Text>
+                        <b>Address:</b> {order.customer.address.address.no}{" "}
+                        {order.customer.address.address.street}{" "}
+                        {order.customer.address.address.barangay}{" "}
+                        {order.customer.address.address.city}
+                      </Text>
+                      <Text>
+                        <b>Email:</b> {order.customer.email}
+                      </Text>
+                      <Text>
+                        <b>Phone Number:</b>{" "}
+                        {order.customer.address.contactNumber}
+                      </Text>
+                    </Box>
+                    <Box p={5} border={"1px"} borderColor={"gray.100"}>
+                      <Text fontWeight={"500"}>Customer Info</Text>
+                      <Text>Name: Lebron James</Text>
+                      <Text>Address: Lebron James</Text>
+                      <Text>Email: Lebron James</Text>
+                    </Box>
+                  </HStack>
+                </Box>
+              ) : (
+                <Box display={"grid"} placeItems={"center"} gap={"12px"}>
+                  <Text fontWeight={"700"} fontSize={"3xl"}>
+                    No Order accepted yet
+                  </Text>
+                  <Button
+                    as={Link}
+                    href="/role/courier/orders/available"
+                    colorScheme="blue"
+                    _hover={{ textDecor: "none" }}
+                  >
+                    View Available Orders
+                  </Button>
+                </Box>
+              )}
+            </CardBody>
+          </Card>
+        </Flex>
         <Flex
           gap={4}
           justifyContent={"space-between"}
@@ -370,10 +411,16 @@ export const getServerSideProps = withSessionSsr(async ({ req, res }) => {
     };
   }
 
+  let order = null;
+
+  if (user.order != null && user.order != undefined) {
+    order = await getCurrentOrder(user.order);
+  }
+
   const { availableOrderCount, finishedOrderCount } =
     await getCourierDashboardCount();
 
   return {
-    props: { user, availableOrderCount, finishedOrderCount },
+    props: { user, availableOrderCount, finishedOrderCount, order },
   };
 });
