@@ -114,7 +114,7 @@ const Vendors = ({ vendorDocs, user }) => {
   return (
     <>
       <AdminLayout
-        metaTitle={"Vendor - Vendors"}
+        metaTitle={"Admin - Vendors"}
         pageName={"IT Kim - Admin"}
         user={user}
         LinkItems={LinkItems}

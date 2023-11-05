@@ -113,7 +113,7 @@ const Couriers = ({ courierDocs, user }) => {
   return (
     <>
       <AdminLayout
-        metaTitle={"Vendor - Couriers"}
+        metaTitle={"Admin - Couriers"}
         pageName={"IT Kim - Admin"}
         user={user}
         LinkItems={LinkItems}

@@ -153,8 +153,8 @@ const Orders = ({ orderDocs, userSession }) => {
   return (
     <>
       <AdminLayout
-        metaTitle={"Vendor - Orders"}
-        pageName={"IT Kim - Vendor"}
+        metaTitle={"Couriers - Available Orders"}
+        pageName={"IT Kim - Courier"}
         user={userSession}
         LinkItems={LinkItems}
       >

@@ -187,7 +187,7 @@ const Courier = ({
 
   return (
     <AdminLayout
-      metaTitle={"IT Kim - Courier"}
+      metaTitle={"Courier - Dashboard"}
       pageName="IT- Kim - Courier"
       user={user}
       LinkItems={LinkItems}
