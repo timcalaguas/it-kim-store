@@ -158,8 +158,6 @@ const Dashboard = ({ userSession, productCount, orderCount }) => {
     }
   }
 
-  console.log(user);
-
   return (
     <>
       <AdminLayout

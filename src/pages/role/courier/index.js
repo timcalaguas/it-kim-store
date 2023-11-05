@@ -24,6 +24,18 @@ import {
   ModalHeader,
   ModalCloseButton,
   ModalOverlay,
+  FormControl,
+  FormLabel,
+  Input,
+  Divider,
+  ModalFooter,
+  useToast,
+  AlertDialog,
+  AlertDialogBody,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogContent,
+  AlertDialogOverlay,
 } from "@chakra-ui/react";
 import { FiHome, FiTrendingUp, FiCompass, FiStar } from "react-icons/fi";
 import { withSessionSsr } from "@/lib/withSession";
@@ -35,6 +47,10 @@ import {
 } from "react-icons/bs";
 import getCourierDashboardCount from "@/hooks/courier/getCourierDashboardCount";
 import getCurrentOrder from "@/hooks/courier/getCurrentOrder";
+import { useForm } from "react-hook-form";
+import { useState, useRef } from "react";
+import { firestore } from "../../../../firebase-config";
+import axios from "axios";
 
 const LinkItems = [
   { name: "Dashboard", icon: FiHome, link: "/role/courier" },
@@ -46,8 +62,129 @@ const LinkItems = [
   { name: "Finished Orders", icon: FiStar, link: "/role/courier/orders/done" },
 ];
 
-const Courier = ({ user, availableOrderCount, finishedOrderCount, order }) => {
+const Courier = ({
+  userSession,
+  availableOrderCount,
+  finishedOrderCount,
+  order,
+}) => {
   const { isOpen, onOpen, onClose } = useDisclosure();
+  const {
+    isOpen: dialogIsOpen,
+    onOpen: dialogOnOpen,
+    onClose: dialogClose,
+  } = useDisclosure();
+  const { register, handleSubmit, errors, isSubmitting } = useForm();
+  const [user, setUser] = useState(userSession);
+  const toast = useToast();
+  const [doneCount, setDoneCount] = useState(finishedOrderCount);
+
+  async function updateProfile(values) {
+    try {
+      const addresses = [
+        {
+          address: {
+            no: values.no,
+            street: values.street,
+            barangay: values.barangay,
+            city: values.city,
+          },
+          contactNumber: values.contactNumber,
+        },
+      ];
+
+      user.addresses = addresses;
+
+      const response = await firestore
+        .collection("users")
+        .doc(user.docId)
+        .update({
+          addresses: addresses,
+        });
+
+      const updateSession = await axios.post("/api/auth", {
+        user: user,
+        role: user.role,
+      });
+
+      if (!isSubmitting && updateSession.status == 200) {
+        toast({
+          title: "User Profile updated.",
+          description: "Your user profile is successfully updated.",
+          status: "success",
+          duration: 9000,
+          isClosable: true,
+        });
+        setUser(user);
+        onClose();
+      }
+    } catch (error) {
+      console.error("Error:", error);
+    }
+  }
+
+  const [type, setType] = useState("");
+  const [selectedItem, setSelectedItem] = useState({});
+  const cancelRef = useRef();
+  const [processLoading, setProcessLoading] = useState(false);
+
+  const openModal = (type, order) => {
+    if (type === "update") {
+      onOpen();
+      setType(type);
+    } else {
+      onOpen();
+      setType(type);
+      setSelectedItem(order);
+    }
+  };
+
+  const openDialog = (order) => {
+    dialogOnOpen();
+    setSelectedItem(order);
+  };
+
+  const processOrder = async () => {
+    try {
+      setProcessLoading(true);
+
+      const processResponse = await firestore
+        .collection("orders")
+        .doc(selectedItem.id)
+        .update({ status: "delivered" });
+
+      const docRef = firestore.collection("users").doc(user.docId);
+
+      const responseUser = await docRef.update({
+        order: null,
+      });
+
+      user.order = null;
+
+      const updateSession = await axios.post("/api/auth", {
+        user: user,
+        role: user.role,
+      });
+
+      setUser(user);
+
+      if (updateSession.status === 200) {
+        setProcessLoading(false);
+        toast({
+          title: "Order is Delivered",
+          description: "The order is now delivered. Thank you.",
+          status: "success",
+          duration: 9000,
+          isClosable: true,
+        });
+        dialogClose();
+        setDoneCount(doneCount + 1);
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   return (
     <AdminLayout
       metaTitle={"IT Kim - Courier"}
@@ -56,7 +193,7 @@ const Courier = ({ user, availableOrderCount, finishedOrderCount, order }) => {
       LinkItems={LinkItems}
     >
       <Box>
-        {(user.storeName == "" || user.addresses == null) && (
+        {user.addresses == null && (
           <Alert status="warning" mb={"20px"}>
             <AlertIcon />
             <HStack
@@ -66,7 +203,11 @@ const Courier = ({ user, availableOrderCount, finishedOrderCount, order }) => {
               flexWrap={"wrap"}
             >
               <Text>Please provide your store details</Text>
-              <Button variant={"primary"} size={"sm"} onClick={onOpen}>
+              <Button
+                variant={"primary"}
+                size={"sm"}
+                onClick={() => openModal("update", {})}
+              >
                 Update Profile
               </Button>
             </HStack>
@@ -108,7 +249,10 @@ const Courier = ({ user, availableOrderCount, finishedOrderCount, order }) => {
                       <TagLabel textTransform={"uppercase"}>Pending</TagLabel>
                     )}
                   </Tag>
-                  <Button colorScheme="blue" onClick={onOpen}>
+                  <Button
+                    colorScheme="blue"
+                    onClick={() => openModal("update", {})}
+                  >
                     Update Profile
                   </Button>
                 </VStack>
@@ -152,7 +296,12 @@ const Courier = ({ user, availableOrderCount, finishedOrderCount, order }) => {
                   Current Delivery
                 </Text>
                 {order != null && (
-                  <Button colorScheme={"blue"}>Delivered?</Button>
+                  <Button
+                    colorScheme={"blue"}
+                    onClick={() => openDialog(order)}
+                  >
+                    Delivered?
+                  </Button>
                 )}
               </HStack>
               {order != null ? (
@@ -160,8 +309,8 @@ const Courier = ({ user, availableOrderCount, finishedOrderCount, order }) => {
                   <Text fontWeight={"600"} mb={"12px"}>
                     Order
                   </Text>
-                  <HStack>
-                    <Box p={5} border={"1px"} borderColor={"gray.100"}>
+                  <HStack flexWrap={"wrap"} alignItems={"start"}>
+                    <Box p={2} border={"1px"} borderColor={"gray.100"}>
                       <Text fontWeight={"900"}>Customer Info</Text>
                       <Text>
                         <b>Name:</b> {order.customer.name}
@@ -180,27 +329,40 @@ const Courier = ({ user, availableOrderCount, finishedOrderCount, order }) => {
                         {order.customer.address.contactNumber}
                       </Text>
                     </Box>
-                    <Box p={5} border={"1px"} borderColor={"gray.100"}>
-                      <Text fontWeight={"500"}>Customer Info</Text>
-                      <Text>Name: Lebron James</Text>
-                      <Text>Address: Lebron James</Text>
-                      <Text>Email: Lebron James</Text>
+                    <Box p={2} border={"1px"} borderColor={"gray.100"}>
+                      <Text mb={"12px"}>
+                        <b>Vendor Name:</b> {order.vendor}
+                      </Text>
+                      <Button
+                        colorScheme="orange"
+                        size={"sm"}
+                        onClick={() => openModal("view-items", order)}
+                      >
+                        View Items
+                      </Button>
                     </Box>
                   </HStack>
                 </Box>
               ) : (
-                <Box display={"grid"} placeItems={"center"} gap={"12px"}>
-                  <Text fontWeight={"700"} fontSize={"3xl"}>
-                    No Order accepted yet
-                  </Text>
-                  <Button
-                    as={Link}
-                    href="/role/courier/orders/available"
-                    colorScheme="blue"
-                    _hover={{ textDecor: "none" }}
-                  >
-                    View Available Orders
-                  </Button>
+                <Box
+                  display={"grid"}
+                  placeItems={"center"}
+                  gap={"12px"}
+                  height={"100%"}
+                >
+                  <Box display={"grid"} placeItems={"center"} gap={"12px"}>
+                    <Text fontWeight={"700"} fontSize={"3xl"}>
+                      No Order accepted yet
+                    </Text>
+                    <Button
+                      as={Link}
+                      href="/role/courier/orders/available"
+                      colorScheme="blue"
+                      _hover={{ textDecor: "none" }}
+                    >
+                      View Available Orders
+                    </Button>
+                  </Box>
                 </Box>
               )}
             </CardBody>
@@ -273,120 +435,142 @@ const Courier = ({ user, availableOrderCount, finishedOrderCount, order }) => {
                 </Box>
                 <Box padding={"16px"}>
                   <Heading color={"#3082CF"}>FINISHED ORDERS</Heading>
-                  <Heading size={"4xl"}>{finishedOrderCount}</Heading>
+                  <Heading size={"4xl"}>{doneCount}</Heading>
                 </Box>
               </Stack>
             </CardBody>
           </Card>
         </Flex>
       </Box>
-      {/* <Modal isOpen={isOpen} onClose={onClose} size={"2xl"}>
+      <AlertDialog
+        isOpen={dialogIsOpen}
+        leastDestructiveRef={cancelRef}
+        onClose={dialogClose}
+      >
+        <AlertDialogOverlay>
+          <AlertDialogContent>
+            <AlertDialogHeader fontSize="lg" fontWeight="bold">
+              Order is delivered?
+            </AlertDialogHeader>
+
+            <AlertDialogBody>
+              Are you sure you already delivered the order and the customer have
+              accepted it?
+            </AlertDialogBody>
+
+            <AlertDialogFooter>
+              <Button ref={cancelRef} onClick={dialogClose}>
+                Cancel
+              </Button>
+              <Button
+                colorScheme={"blue"}
+                onClick={() => processOrder()}
+                ml={3}
+                isLoading={processLoading}
+              >
+                Yes
+              </Button>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialogOverlay>
+      </AlertDialog>
+      <Modal isOpen={isOpen} onClose={onClose} size={"2xl"}>
+        <ModalOverlay />
         <form onSubmit={handleSubmit(updateProfile)}>
-          <ModalOverlay />
           <ModalContent>
-            <ModalHeader>Update Profile</ModalHeader>
+            <ModalHeader>
+              {type === "update" ? "Update Profile" : "Order Items"}
+            </ModalHeader>
             <ModalCloseButton />
             <ModalBody>
-              <Box
-                display={"flex"}
-                flexDirection={"start"}
-                w={"100%"}
-                gap={"24px"}
-                flexWrap={"wrap"}
-                mb="12px"
-              >
-                {storeLogo == "" ? (
-                  <Image
-                    id="preview"
-                    src={
-                      previewImage == ""
-                        ? "https://placehold.co/400x400"
-                        : URL.createObjectURL(selectedFile[0])
-                    }
-                    boxSize={{ base: "100%", sm: "200px" }}
-                  />
-                ) : (
-                  <Image
-                    id="preview"
-                    src={storeLogo}
-                    boxSize={{ base: "100%", sm: "200px" }}
-                  />
-                )}
-
-                <FormControl
-                  isInvalid={errors.image}
-                  w={{ base: "100%", sm: "fit-content" }}
-                >
-                  <FormLabel htmlFor="name">Image</FormLabel>
-                  <Input
-                    type="file"
-                    accept="image/*"
-                    {...register("storeLogo", {
-                      validate: (value) => {
-                        const types = ["image/png", "image/jpeg", "image/jpg"];
-                        if (value.length > 0) {
-                          if (!types.includes(value[0]?.type)) {
-                            return "Invalid file format. Only JPG and PNG are allowed.";
-                          }
-
-                          if (value[0]?.size > 5242880) {
-                            return "File is too large. Upload images with a size of 5MB or below.";
-                          }
-                        }
-
-                        return true;
-                      },
-                    })}
-                  />
-                  <FormErrorMessage>
-                    {errors.image && errors.image.message}
-                  </FormErrorMessage>
-                </FormControl>
-              </Box>
-              <FormControl>
-                <FormLabel>Store Name</FormLabel>
-                <Input type="text" {...register("storeName")} />
-              </FormControl>
-
-              <Divider marginBlock={"12px"} />
-              <Text fontWeight={"bold"} fontSize={"xl"} marginBottom={"12px"}>
-                Address
-              </Text>
-              <FormControl>
-                <FormLabel>Contact Number</FormLabel>
-                <Input type="text" {...register("contactNumber")} />
-              </FormControl>
-              <FormControl>
-                <FormLabel>House No. / Blk No. / Lot No.</FormLabel>
-                <Input type="text" {...register("no")} />
-              </FormControl>
-              <FormControl>
-                <FormLabel>Street</FormLabel>
-                <Input type="text" {...register("street")} />
-              </FormControl>
-              <FormControl>
-                <FormLabel>Barangay</FormLabel>
-                <Input type="text" {...register("barangay")} />
-              </FormControl>
-              <FormControl>
-                <FormLabel>City</FormLabel>
-                <Input type="text" {...register("city")} />
-              </FormControl>
+              {type === "update" ? (
+                <>
+                  <FormControl>
+                    <FormLabel>Contact Number</FormLabel>
+                    <Input type="text" {...register("contactNumber")} />
+                  </FormControl>
+                  <FormControl>
+                    <FormLabel>House No. / Blk No. / Lot No.</FormLabel>
+                    <Input type="text" {...register("no")} />
+                  </FormControl>
+                  <FormControl>
+                    <FormLabel>Street</FormLabel>
+                    <Input type="text" {...register("street")} />
+                  </FormControl>
+                  <FormControl>
+                    <FormLabel>Barangay</FormLabel>
+                    <Input type="text" {...register("barangay")} />
+                  </FormControl>
+                  <FormControl>
+                    <FormLabel>City</FormLabel>
+                    <Input type="text" {...register("city")} />
+                  </FormControl>
+                </>
+              ) : (
+                <>
+                  <Box>
+                    <Text fontWeight={"600"}>Items</Text>
+                    {selectedItem.items &&
+                      selectedItem.items.map((item) => (
+                        <HStack
+                          paddingBlock={4}
+                          alignItems={"center"}
+                          justifyContent={"space-between"}
+                          w={"100%"}
+                          flexWrap={"wrap"}
+                          key={item.id}
+                        >
+                          <HStack gap={4} w={"50%"}>
+                            <Image
+                              src={item.image}
+                              boxSize={"50px"}
+                              borderRadius={"lg"}
+                            />
+                            <Box>
+                              <Text fontSize={"md"} fontWeight={"medium"}>
+                                {item.productName}
+                              </Text>
+                              <Text fontSize={"md"}>
+                                {item.discountedPrice}
+                              </Text>
+                            </Box>
+                          </HStack>
+                          <HStack>
+                            <Text fontSize={"md"}>x {item.quantity}</Text>
+                          </HStack>
+                        </HStack>
+                      ))}
+                  </Box>
+                  <VStack alignItems={"end"}>
+                    <Text>
+                      <b>Subtotal:</b> {selectedItem.subtotal}
+                    </Text>
+                    <Text>
+                      <b>Shipping Fee:</b>{" "}
+                      {selectedItem.total - selectedItem.subtotal}
+                    </Text>
+                    <Text>
+                      <b>Total:</b> {selectedItem.total}
+                    </Text>
+                  </VStack>
+                </>
+              )}
             </ModalBody>
-
-            <ModalFooter>
-              <Button
-                colorScheme="blue"
-                mr={3}
-                isLoading={isSubmitting}
-                type="submit"
-              >
-                Update
-              </Button>
-            </ModalFooter>
+            {type === "update" && (
+              <ModalFooter>
+                <Button
+                  colorScheme="blue"
+                  mr={3}
+                  isLoading={isSubmitting}
+                  type="submit"
+                >
+                  Update
+                </Button>
+              </ModalFooter>
+            )}
           </ModalContent>
         </form>
-      </Modal> */}
+      </Modal>
     </AdminLayout>
   );
 };
@@ -394,9 +578,9 @@ const Courier = ({ user, availableOrderCount, finishedOrderCount, order }) => {
 export default Courier;
 
 export const getServerSideProps = withSessionSsr(async ({ req, res }) => {
-  const user = req.session.user;
+  const userSession = req.session.user;
 
-  if (!user) {
+  if (!userSession) {
     return {
       redirect: {
         permanent: false,
@@ -405,7 +589,7 @@ export const getServerSideProps = withSessionSsr(async ({ req, res }) => {
     };
   }
 
-  if (user.role != "courier") {
+  if (userSession.role != "courier") {
     return {
       notFound: true,
     };
@@ -413,14 +597,14 @@ export const getServerSideProps = withSessionSsr(async ({ req, res }) => {
 
   let order = null;
 
-  if (user.order != null && user.order != undefined) {
-    order = await getCurrentOrder(user.order);
+  if (userSession.order != null && userSession.order != undefined) {
+    order = await getCurrentOrder(userSession.order);
   }
 
   const { availableOrderCount, finishedOrderCount } =
     await getCourierDashboardCount();
 
   return {
-    props: { user, availableOrderCount, finishedOrderCount, order },
+    props: { userSession, availableOrderCount, finishedOrderCount, order },
   };
 });

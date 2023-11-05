@@ -33,6 +33,7 @@ import {
   Badge,
   Text,
   Divider,
+  Avatar,
 } from "@chakra-ui/react";
 import { useEffect, useState, useRef } from "react";
 import moment from "moment/moment";
@@ -122,7 +123,7 @@ const Orders = ({ orderDocs, userSession }) => {
                   <Tr>
                     <Td>{order.id}</Td>
                     <Td>{moment(new Date()).format("MM/DD/YYYY")}</Td>
-                    <Td>{order.customerName}</Td>
+                    <Td>{order.customer.name}</Td>
                     <Td textTransform={"uppercase"}>
                       <Badge>{order.status}</Badge>
                     </Td>
@@ -162,14 +163,22 @@ const Orders = ({ orderDocs, userSession }) => {
           <ModalHeader>Details</ModalHeader>
           <ModalCloseButton />
           <ModalBody>
+            <HStack mb={"12px"}>
+              <Avatar src={selectedItem.customer?.picture} />
+              <Box>
+                <Text>{selectedItem.customer?.name}</Text>
+                <Text>{selectedItem.customer?.email}</Text>
+              </Box>
+            </HStack>
             <Text mb={"12px"}>
               <Text fontWeight={"500"}>Address:</Text>{" "}
-              {selectedItem.address &&
-                `${selectedItem.address.address.no} ${selectedItem.address.address.street} ${selectedItem.address.address.barangay} ${selectedItem.address.address.city}`}
+              {selectedItem.customer?.address &&
+                `${selectedItem.customer.address.address.no} ${selectedItem.customer.address.address.street} ${selectedItem.customer.address.address.barangay} ${selectedItem.customer.address.address.city}`}
             </Text>
             <Text mb={"12px"}>
               <Text fontWeight={"500"}>Contact Number:</Text>{" "}
-              {selectedItem.address && selectedItem.address.contactNumber}{" "}
+              {selectedItem.customer?.address &&
+                selectedItem.customer.address.contactNumber}{" "}
             </Text>
             <Divider marginBlock={"6px"} />
             <Box>

@@ -203,7 +203,6 @@ const Orders = ({ orderDocs, userSession }) => {
                             leftIcon={<AiFillCheckCircle />}
                             colorScheme="blue"
                             variant="outline"
-                            isLoading={processLoading}
                             size={"sm"}
                             onClick={() => {
                               user.order != null || user.order != undefined
