@@ -152,9 +152,10 @@ const Products = ({ productDocs, user }) => {
                     <Td>{product.discountedPrice}</Td>
                     <Td>{product.quantity}</Td>
                     <Td>
-                      {product.averageStarRating == null ? (
+                      {product.averageStarRating != null &&
+                      product.averageStarRating != undefined ? (
                         <HStack>
-                          <Text>1</Text>
+                          <Text>{product.averageStarRating}</Text>
                           <AiFillStar fill="gold" />
                         </HStack>
                       ) : (
@@ -249,7 +250,13 @@ export const getServerSideProps = withSessionSsr(async ({ req, res }) => {
     };
   }
 
-  const productDocs = await getVendorsProducts(user.docId);
+  if (user.role != "vendor") {
+    return {
+      notFound: true,
+    };
+  }
+
+  const { productDocs } = await getVendorsProducts(user.docId);
 
   return {
     props: { productDocs, user },

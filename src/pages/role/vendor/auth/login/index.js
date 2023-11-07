@@ -18,6 +18,7 @@ import Head from "next/head";
 import { FcGoogle } from "react-icons/fc";
 import { AiFillShop } from "react-icons/ai";
 import AuthManager from "@/hooks/auth/AuthManager";
+import { withSessionSsr } from "@/lib/withSession";
 
 export default function SimpleCard() {
   const { loginWithGoogle } = AuthManager();
@@ -82,3 +83,46 @@ export default function SimpleCard() {
     </>
   );
 }
+
+export const getServerSideProps = withSessionSsr(async ({ req, res }) => {
+  const user = req.session.user ? req.session.user : null;
+
+  if (user) {
+    if (user.role === "customer") {
+      return {
+        redirect: {
+          permanent: false,
+          destination: "/",
+        },
+      };
+    }
+    if (user.role === "admin") {
+      return {
+        redirect: {
+          permanent: false,
+          destination: "/role/admin",
+        },
+      };
+    }
+    if (user.role === "courier") {
+      return {
+        redirect: {
+          permanent: false,
+          destination: "/role/courier",
+        },
+      };
+    }
+    if (user.role === "vendor") {
+      return {
+        redirect: {
+          permanent: false,
+          destination: "/role/vendor",
+        },
+      };
+    }
+  }
+
+  return {
+    props: { user },
+  };
+});

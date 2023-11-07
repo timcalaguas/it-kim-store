@@ -20,7 +20,7 @@ import {
 import { useCartStore } from "@/hooks/stores/cartStore";
 import { IoBagCheckOutline } from "react-icons/io5";
 import { useRouter } from "next/router";
-import { FaTrash } from "react-icons/fa";
+import { FaTrash, FaPlus, FaMinus } from "react-icons/fa";
 
 const Cart = ({ cart, isOpen, onClose, btnRef }) => {
   const { updateQuantity } = useCartStore();
@@ -67,13 +67,18 @@ const Cart = ({ cart, isOpen, onClose, btnRef }) => {
                             flexWrap={"wrap"}
                             key={product.id}
                           >
-                            <HStack gap={4} w={"50%"}>
+                            <HStack gap={4} w={{ base: "100%", sm: "40%" }}>
                               <Image
                                 src={product.image}
                                 boxSize={"50px"}
                                 borderRadius={"lg"}
                               />
-                              <Box>
+                              <Box
+                                display={{ base: "flex", sm: "block" }}
+                                justifyContent={"space-between"}
+                                w={"100%"}
+                                pr={{ base: "8px", sm: "0" }}
+                              >
                                 <Text fontSize={"md"} fontWeight={"medium"}>
                                   {product.productName}
                                 </Text>
@@ -82,7 +87,10 @@ const Cart = ({ cart, isOpen, onClose, btnRef }) => {
                                 </Text>
                               </Box>
                             </HStack>
-                            <HStack w={"40%"}>
+                            <HStack
+                              w={{ base: "100%", sm: "40%" }}
+                              justifyContent={"center"}
+                            >
                               <Button
                                 size={"sm"}
                                 onClick={() =>
@@ -92,16 +100,15 @@ const Cart = ({ cart, isOpen, onClose, btnRef }) => {
                                   )
                                 }
                               >
-                                +
+                                <FaPlus />
                               </Button>
-                              <Input
-                                w={"10ch"}
-                                size={"sm"}
-                                value={product.quantity}
-                                onChange={(e) =>
-                                  updateQuantity(product.id, e.target.value)
-                                }
-                              />
+                              <Box
+                                w={"25px"}
+                                placeItems={"center"}
+                                display={"grid"}
+                              >
+                                {product.quantity}
+                              </Box>
                               <Button
                                 size={"sm"}
                                 onClick={() =>
@@ -111,7 +118,7 @@ const Cart = ({ cart, isOpen, onClose, btnRef }) => {
                                   )
                                 }
                               >
-                                -
+                                <FaMinus />
                               </Button>
                               <Button
                                 size={"sm"}

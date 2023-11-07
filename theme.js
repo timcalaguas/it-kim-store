@@ -19,6 +19,15 @@ const customTheme = extendTheme({
           _hover: {
             bg: "primary.500",
             textDecoration: "none",
+            _disabled: {
+              bg: "primary.500",
+            },
+            _active: {
+              bg: "primary.500",
+            },
+            _focused: {
+              bg: "primary.500",
+            },
           },
         },
         secondary: {
@@ -27,6 +36,15 @@ const customTheme = extendTheme({
           _hover: {
             bg: "secondary.500",
             textDecoration: "none",
+            _disabled: {
+              bg: "secondary.500",
+            },
+            _active: {
+              bg: "primary.500",
+            },
+            _focused: {
+              bg: "primary.500",
+            },
           },
         },
       },

@@ -35,7 +35,7 @@ const getOrders = async (userId) => {
           result.orderPlaced.push(order);
         } else if (status == "in-transit" || status == "courier-accepted") {
           result.inTransit.push(order);
-        } else if (status == "completed") {
+        } else if (status == "delivered") {
           result.completed.push(order);
         }
       }

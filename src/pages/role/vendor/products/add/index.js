@@ -263,6 +263,12 @@ export const getServerSideProps = withSessionSsr(async ({ req, res }) => {
     };
   }
 
+  if (user.role != "vendor") {
+    return {
+      notFound: true,
+    };
+  }
+
   return {
     props: { user },
   };

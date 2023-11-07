@@ -15,7 +15,7 @@ import {
 } from "@chakra-ui/react";
 import { FcGoogle } from "react-icons/fc";
 import Head from "next/head";
-
+import { withSessionSsr } from "@/lib/withSession";
 import AuthManager from "@/hooks/auth/AuthManager";
 
 export default function Login() {
@@ -59,3 +59,46 @@ export default function Login() {
     </>
   );
 }
+
+export const getServerSideProps = withSessionSsr(async ({ req, res }) => {
+  const user = req.session.user ? req.session.user : null;
+
+  if (user) {
+    if (user.role === "customer") {
+      return {
+        redirect: {
+          permanent: false,
+          destination: "/",
+        },
+      };
+    }
+    if (user.role === "admin") {
+      return {
+        redirect: {
+          permanent: false,
+          destination: "/role/admin",
+        },
+      };
+    }
+    if (user.role === "courier") {
+      return {
+        redirect: {
+          permanent: false,
+          destination: "/role/courier",
+        },
+      };
+    }
+    if (user.role === "vendor") {
+      return {
+        redirect: {
+          permanent: false,
+          destination: "/role/vendor",
+        },
+      };
+    }
+  }
+
+  return {
+    props: { user },
+  };
+});

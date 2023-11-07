@@ -294,6 +294,12 @@ export const getServerSideProps = withSessionSsr(async (context) => {
     };
   }
 
+  if (user.role != "vendor") {
+    return {
+      notFound: true,
+    };
+  }
+
   const { product } = await getSingleProduct(context.query.id);
 
   return {

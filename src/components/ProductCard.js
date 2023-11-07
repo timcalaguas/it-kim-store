@@ -8,7 +8,6 @@ import {
   useColorModeValue,
   Button,
   Icon,
-  Link,
   HStack,
 } from "@chakra-ui/react";
 import {
@@ -18,6 +17,8 @@ import {
 } from "react-icons/ai";
 import { useCartStore } from "@/hooks/stores/cartStore";
 import StarRating from "./StarRating";
+import Link from "next/link";
+
 const ProductCard = ({ product }) => {
   const { addToCart } = useCartStore();
 
@@ -26,8 +27,11 @@ const ProductCard = ({ product }) => {
     addToCart(product);
   };
 
+  console.log(product);
+
   return (
-    <Link
+    <Box
+      as={Link}
       href={`/products/${product.id}`}
       _hover={{ textDecoration: "none" }}
       height={"100%"}
@@ -89,16 +93,24 @@ const ProductCard = ({ product }) => {
               {product.productName}
             </Heading>
             <Box minH={5}>
-              <StarRating rating={product.rating} />
+              <StarRating rating={product.averageStarRating} />
             </Box>
-            <Stack direction={"row"} align={"center"}>
-              <Text fontWeight={800} fontSize={"xl"}>
-                ₱{product.discountedPrice}
-              </Text>
-              <Text textDecoration={"line-through"} color="red.200">
-                ₱{product.price}
-              </Text>
-            </Stack>
+            {product.discountedPrice != "" ? (
+              <Stack direction={"row"} align={"center"}>
+                <Text fontWeight={800} fontSize={"xl"}>
+                  ₱{product.discountedPrice}
+                </Text>
+                <Text textDecoration={"line-through"} color="red.200">
+                  ₱{product.price}
+                </Text>
+              </Stack>
+            ) : (
+              <Stack direction={"row"} align={"center"}>
+                <Text fontWeight={800} fontSize={"xl"}>
+                  ₱{product.price}
+                </Text>
+              </Stack>
+            )}
             <Button
               mt={"12px"}
               variant={"primary"}
@@ -111,7 +123,7 @@ const ProductCard = ({ product }) => {
           </Stack>
         </Box>
       </Center>
-    </Link>
+    </Box>
   );
 };
 

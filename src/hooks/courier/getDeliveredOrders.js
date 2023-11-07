@@ -1,6 +1,6 @@
 import { firestore } from "../../../firebase-config";
 
-const getDeliveredOrders = async () => {
+const getDeliveredOrders = async (id) => {
   const orderResponse = await firestore.collection("orders").get();
 
   let orderDocs = !orderResponse.empty
@@ -12,7 +12,9 @@ const getDeliveredOrders = async () => {
       })
     : [];
 
-  const filteredArray = orderDocs.filter((obj) => obj.status === "delivered");
+  const filteredArray = orderDocs.filter(
+    (order) => order.status === "delivered" && order.courier.id === id
+  );
 
   orderDocs = filteredArray;
 

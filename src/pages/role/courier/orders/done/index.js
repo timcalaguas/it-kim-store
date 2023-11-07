@@ -239,7 +239,7 @@ export const getServerSideProps = withSessionSsr(async ({ req, res }) => {
     };
   }
 
-  const orderDocs = await getDeliveredOrders();
+  const orderDocs = await getDeliveredOrders(userSession.docId);
 
   return {
     props: { orderDocs, userSession },

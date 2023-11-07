@@ -1,4 +1,5 @@
-import { Box, Image, Text, Link, VStack, Avatar } from "@chakra-ui/react";
+import { Box, Image, Text, VStack, Avatar } from "@chakra-ui/react";
+import Link from "next/link";
 
 const VendorCard = ({ vendor }) => {
   return (

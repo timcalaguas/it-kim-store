@@ -17,12 +17,11 @@ import {
   Link,
   useToast,
   VStack,
+  Checkbox,
 } from "@chakra-ui/react";
 import { IoBagCheckOutline } from "react-icons/io5";
-import { getSession } from "next-auth/react";
 import { firestore } from "../../../firebase-config";
 import { FcGoogle } from "react-icons/fc";
-import { signIn } from "next-auth/react";
 import { useEffect, useState } from "react";
 import { withSessionSsr } from "@/lib/withSession";
 import AuthManager from "@/hooks/auth/AuthManager";
@@ -49,6 +48,8 @@ export default function Checkout({ userSession }) {
   };
 
   const selectedCart = cart.filter((vendor) => vendor.vendorUID === vendorUID);
+
+  const [checked, setChecked] = useState(false);
 
   const checkout = async () => {
     try {
@@ -93,6 +94,8 @@ export default function Checkout({ userSession }) {
     }
   };
 
+  console.log(checked);
+
   return (
     <>
       <Layout metaTitle={"IT Kim - Checkout"} user={userSession}>
@@ -119,60 +122,37 @@ export default function Checkout({ userSession }) {
               bg={"white"}
             >
               <Heading mb={"20px"}>Checkout</Heading>
-              <Box mb={"20px"}>
-                <Box display={"flex"} gap={"5px"}>
-                  <Text fontWeight={"600"}>Name:</Text> {userSession.name}
-                </Box>
-                <Box display={"flex"} gap={"5px"}>
-                  <Text fontWeight={"600"}>Email:</Text> {userSession.email}
-                </Box>
-                <Box display={"flex"} gap={"5px"}>
-                  <Text fontWeight={"600"}>Address:</Text>{" "}
-                  {selectedAddress?.address.no}{" "}
-                  {selectedAddress?.address.street}{" "}
-                  {selectedAddress?.address.barangay}{" "}
-                  {selectedAddress?.address.city}
-                </Box>
-                <Box display={"flex"} gap={"5px"}>
-                  <Text fontWeight={"600"}>Contact Number:</Text>{" "}
-                  {selectedAddress?.contactNumber}
-                </Box>
-              </Box>
               {userSession != null ? (
-                <Stack>
-                  {userSession && userSession.addresses.length > 0 ? (
-                    <FormControl mb={"16px"}>
-                      <HStack
-                        justifyContent={"space-between"}
-                        alignItems={"end"}
-                        mb={"12px"}
-                      >
-                        <Text fontWeight={"600"}>Select Address</Text>
-                        <Button
-                          variant={"primary"}
-                          size={"sm"}
-                          as={Link}
-                          href={"/customer/profile"}
-                        >
-                          Add address
-                        </Button>
-                      </HStack>
-                      <Select onChange={(e) => changeAddress(e.target.value)}>
-                        {userSession.addresses.map((address, index) => (
-                          <option value={index}>
-                            {address.address.no} {address.address.street},
-                            {address.address.barangay}, {address.address.city} -{" "}
-                            {address.contactNumber}
-                          </option>
-                        ))}
-                      </Select>
-                    </FormControl>
-                  ) : (
-                    <HStack>
+                <>
+                  <Box mb={"20px"}>
+                    <Box display={"flex"} gap={"5px"}>
+                      <Text fontWeight={"600"}>Name:</Text> {userSession.name}
+                    </Box>
+                    <Box display={"flex"} gap={"5px"}>
+                      <Text fontWeight={"600"}>Email:</Text> {userSession.email}
+                    </Box>
+                    <Box display={"flex"} gap={"5px"}>
+                      <Text fontWeight={"600"}>Address:</Text>{" "}
+                      {selectedAddress?.address.no}{" "}
+                      {selectedAddress?.address.street}{" "}
+                      {selectedAddress?.address.barangay}{" "}
+                      {selectedAddress?.address.city}
+                    </Box>
+                    <Box display={"flex"} gap={"5px"}>
+                      <Text fontWeight={"600"}>Contact Number:</Text>{" "}
+                      {selectedAddress?.contactNumber}
+                    </Box>
+                  </Box>
+
+                  <Stack>
+                    {userSession && userSession.addresses.length > 0 ? (
                       <FormControl mb={"16px"}>
-                        <FormLabel>Address</FormLabel>
-                        <HStack w={"100%"} justifyContent={"space-between"}>
-                          <Text>No Address Found</Text>
+                        <HStack
+                          justifyContent={"space-between"}
+                          alignItems={"end"}
+                          mb={"12px"}
+                        >
+                          <Text fontWeight={"600"}>Select Address</Text>
                           <Button
                             variant={"primary"}
                             size={"sm"}
@@ -182,10 +162,36 @@ export default function Checkout({ userSession }) {
                             Add address
                           </Button>
                         </HStack>
+                        <Select onChange={(e) => changeAddress(e.target.value)}>
+                          {userSession.addresses.map((address, index) => (
+                            <option value={index}>
+                              {address.address.no} {address.address.street},
+                              {address.address.barangay}, {address.address.city}{" "}
+                              - {address.contactNumber}
+                            </option>
+                          ))}
+                        </Select>
                       </FormControl>
-                    </HStack>
-                  )}
-                </Stack>
+                    ) : (
+                      <HStack>
+                        <FormControl mb={"16px"}>
+                          <FormLabel>Address</FormLabel>
+                          <HStack w={"100%"} justifyContent={"space-between"}>
+                            <Text>No Address Found</Text>
+                            <Button
+                              variant={"primary"}
+                              size={"sm"}
+                              as={Link}
+                              href={"/customer/profile"}
+                            >
+                              Add address
+                            </Button>
+                          </HStack>
+                        </FormControl>
+                      </HStack>
+                    )}
+                  </Stack>
+                </>
               ) : (
                 <Stack spacing={1} mb={"16px"}>
                   <Text fontWeight={"bold"}>Sign in to checkout</Text>
@@ -203,6 +209,14 @@ export default function Checkout({ userSession }) {
                   return <Items items={vendor.items} />;
                 })}
               </Box>
+              <Box>
+                <Checkbox
+                  onChange={(e) => setChecked(e.target.checked)}
+                  value={checked}
+                >
+                  Check the box to agree to our no-return policy.
+                </Checkbox>
+              </Box>
               <VStack
                 fontWeight={"600"}
                 alignItems={"end"}
@@ -217,7 +231,7 @@ export default function Checkout({ userSession }) {
                 <Button
                   variant={"primary"}
                   rightIcon={<IoBagCheckOutline />}
-                  disabled={!userSession}
+                  isDisabled={userSession == null || !checked}
                   onClick={checkout}
                   isLoading={loading}
                 >
@@ -244,48 +258,39 @@ const Items = ({ items }) => {
             justifyContent={"space-between"}
             w={"100%"}
             flexWrap={"wrap"}
-            key={index}
+            key={product.id}
           >
-            <HStack gap={4} w={"50%"}>
+            <HStack gap={4} w={{ base: "100%", sm: "40%" }}>
               <Image src={product.image} boxSize={"50px"} borderRadius={"lg"} />
-              <Box>
+              <Box
+                display={{ base: "flex", sm: "block" }}
+                justifyContent={"space-between"}
+                w={"100%"}
+                pr={{ base: "8px", sm: "0" }}
+              >
                 <Text fontSize={"md"} fontWeight={"medium"}>
                   {product.productName}
                 </Text>
-                <Text fontSize={"md"}>
-                  {product.discountedPrice !== ""
-                    ? parseInt(product.discountedPrice)
-                    : parseInt(product.price)}
-                </Text>
+                <Text fontSize={"md"}>{product.discountedPrice}</Text>
               </Box>
             </HStack>
-            <HStack>
+            <HStack w={{ base: "100%", sm: "40%" }} justifyContent={"center"}>
               <Button
                 size={"sm"}
                 onClick={() => updateQuantity(product.id, product.quantity + 1)}
-                fontWeight={"extrabold"}
               >
                 <FaPlus />
               </Button>
-              <Input
-                w={"7ch"}
-                size={"sm"}
-                value={product.quantity}
-                onChange={(e) => updateQuantity(product.id, e.target.value)}
-              />
+              <Box w={"25px"} placeItems={"center"} display={"grid"}>
+                {product.quantity}
+              </Box>
               <Button
                 size={"sm"}
                 onClick={() => updateQuantity(product.id, product.quantity - 1)}
-                fontWeight={"extrabold"}
               >
                 <FaMinus />
               </Button>
-              <Button
-                variant={"outline"}
-                size={"sm"}
-                onClick={() => updateQuantity(product.id, 0)}
-                fontWeight={"extrabold"}
-              >
+              <Button size={"sm"} onClick={() => updateQuantity(product.id, 0)}>
                 <FaTrash />
               </Button>
             </HStack>
@@ -296,16 +301,7 @@ const Items = ({ items }) => {
 };
 
 export const getServerSideProps = withSessionSsr(async ({ req, res }) => {
-  const userSession = req.session.user;
-
-  if (!userSession) {
-    return {
-      redirect: {
-        permanent: false,
-        destination: "/",
-      },
-    };
-  }
+  const userSession = req.session.user ? req.session.user : null;
 
   return {
     props: { userSession },
