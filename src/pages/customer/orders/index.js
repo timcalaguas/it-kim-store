@@ -35,6 +35,7 @@ import getOrders from "@/hooks/customer/getOrders";
 import { withSessionSsr } from "@/lib/withSession";
 import RateProductModal from "@/components/RateProductModal";
 import StarRatingInput from "@/components/StarRatingInput";
+import { MdDeliveryDining } from "react-icons/md";
 
 const Orders = ({ user, result }) => {
   const {
@@ -82,7 +83,7 @@ const Orders = ({ user, result }) => {
               </Tab>
               <Tab>
                 <HStack minH={"30px"}>
-                  <BiSolidTruck fontSize={"25px"} />
+                  <MdDeliveryDining fontSize={"25px"} />
                   <Text>In Transit</Text>
                 </HStack>
               </Tab>
