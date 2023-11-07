@@ -50,6 +50,7 @@ const ProductDetails = ({ products, product, user }) => {
           minHeight={"100vh"}
           display={"grid"}
           placeItems={"center"}
+          paddingTop={"120px"}
         >
           <SimpleGrid
             columns={{ base: 1, lg: 2 }}
@@ -67,7 +68,7 @@ const ProductDetails = ({ products, product, user }) => {
                 h={{ base: "100%", sm: "400px", lg: "500px" }}
               />
             </Flex>
-            <Stack spacing={{ base: 6, md: 10 }}>
+            <Stack spacing={{ base: 6, md: 6 }}>
               <Box as={"header"}>
                 <Heading
                   lineHeight={1.1}
@@ -110,25 +111,6 @@ const ProductDetails = ({ products, product, user }) => {
                   )}
                 </HStack>
               </Box>
-
-              <Stack
-                spacing={{ base: 4, sm: 6 }}
-                direction={"column"}
-                divider={
-                  <StackDivider
-                    borderColor={useColorModeValue("gray.200", "gray.600")}
-                  />
-                }
-              >
-                <Text
-                  color={useColorModeValue("gray.500", "gray.400")}
-                  fontSize={"2xl"}
-                  fontWeight={"300"}
-                >
-                  {product.description}
-                </Text>
-              </Stack>
-
               <Button
                 variant={"primary"}
                 rightIcon={<Icon as={AiOutlineShoppingCart} />}
@@ -147,6 +129,23 @@ const ProductDetails = ({ products, product, user }) => {
               >
                 Add to cart
               </Button>
+              <Stack
+                spacing={{ base: 4, sm: 6 }}
+                direction={"column"}
+                divider={
+                  <StackDivider
+                    borderColor={useColorModeValue("gray.200", "gray.600")}
+                  />
+                }
+              >
+                <Text
+                  color={useColorModeValue("gray.500", "gray.400")}
+                  fontSize={"2xl"}
+                  fontWeight={"300"}
+                >
+                  {product.description}
+                </Text>
+              </Stack>
             </Stack>
           </SimpleGrid>
         </Container>
