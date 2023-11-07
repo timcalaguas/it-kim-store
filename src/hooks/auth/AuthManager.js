@@ -8,7 +8,7 @@ const AuthManager = () => {
 
   const logout = async (role) => {
     try {
-      let redirect = "auth/login";
+      let redirect = "/auth/login";
       const response = await axios.delete("/api/auth");
       signOut(auth);
       if (response.status == 200) {
