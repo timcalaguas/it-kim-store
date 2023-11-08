@@ -5,6 +5,7 @@ const fillNewUserData = (user, role) => {
     picture: user.photoURL,
     role: role,
     addresses: [],
+    status: "active",
   };
 
   if (role == "vendor") {

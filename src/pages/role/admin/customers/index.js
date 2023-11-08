@@ -3,11 +3,12 @@ import { firestore } from "../../../../../firebase-config";
 import { getSession } from "next-auth/react";
 import { FiHome, FiTrendingUp, FiCompass, FiStar } from "react-icons/fi";
 import {
-  AiFillShop,
   AiFillDelete,
+  AiFillShop,
   AiFillEye,
   AiFillCheckCircle,
 } from "react-icons/ai";
+import { MdPerson, MdDeliveryDining } from "react-icons/md";
 import {
   TableContainer,
   Table,
@@ -44,10 +45,8 @@ import {
   AlertDialogOverlay,
 } from "@chakra-ui/react";
 import { useEffect, useState, useRef } from "react";
-import { MdDeliveryDining, MdPerson } from "react-icons/md";
-import moment from "moment/moment";
-import { withSessionSsr } from "@/lib/withSession";
 import getUsers from "@/hooks/getUsers";
+import { withSessionSsr } from "@/lib/withSession";
 
 const LinkItems = [
   { name: "Dashboard", icon: FiHome, link: "/role/admin" },
@@ -56,13 +55,13 @@ const LinkItems = [
   { name: "Customers", icon: MdPerson, link: "/role/admin/customers" },
 ];
 
-const Vendors = ({ vendorDocs, user }) => {
+const Couriers = ({ customerDocs, user }) => {
   const toast = useToast();
 
-  const [vendors, setVendors] = useState(vendorDocs);
+  const [customers, setCustomers] = useState(customerDocs);
   const [selectedId, setSelectedId] = useState("");
   const [process, setProcess] = useState("accept");
-  const [selectedItem, setSelectedItem] = useState([]);
+  const [selectedItem, setSelectedItem] = useState({});
   const [processLoading, setProcessLoading] = useState(false);
 
   const { isOpen, onOpen, onClose } = useDisclosure();
@@ -81,14 +80,14 @@ const Vendors = ({ vendorDocs, user }) => {
     onOpen();
   };
 
-  const openModal = (vendor) => {
-    setSelectedItem(vendor);
+  const openModal = (customer) => {
+    setSelectedItem(customer);
     itemOnOpen();
   };
 
-  const processVendor = async () => {
+  const processCustomer = async () => {
     setProcessLoading(true);
-    const indexOfObjectToUpdate = vendors.findIndex(
+    const indexOfObjectToUpdate = customers.findIndex(
       (obj) => obj.id === selectedItem.id
     );
     let status = process == "accept" ? "approved" : "blocked";
@@ -98,14 +97,14 @@ const Vendors = ({ vendorDocs, user }) => {
       .update({ status: status });
     selectedItem.status = status;
     setProcessLoading(false);
-    vendors[indexOfObjectToUpdate] = selectedItem;
+    customers[indexOfObjectToUpdate] = selectedItem;
 
     toast({
       title: process == "accept" ? "Approved" : "Blocked",
       description:
         process == "accept"
-          ? "The vendor is now approved."
-          : "The vendor is now blocked.",
+          ? "The courier is now approved."
+          : "The courier is now blocked.",
       status: "success",
       duration: 9000,
       isClosable: true,
@@ -116,13 +115,13 @@ const Vendors = ({ vendorDocs, user }) => {
   return (
     <>
       <AdminLayout
-        metaTitle={"Admin - Vendors"}
+        metaTitle={"Admin - Customers"}
         pageName={"IT Kim - Admin"}
         user={user}
         LinkItems={LinkItems}
       >
         <HStack alignItems={"center"} justifyContent={"space-between"} mb={6}>
-          <Heading>List of Vendors</Heading>
+          <Heading>List of Customers</Heading>
         </HStack>
 
         <TableContainer
@@ -130,7 +129,7 @@ const Vendors = ({ vendorDocs, user }) => {
           p={{ base: 2, md: 5 }}
           borderRadius={6}
         >
-          {vendors.length > 0 ? (
+          {customers.length > 0 ? (
             <Table variant="simple">
               <Thead>
                 <Tr>
@@ -141,17 +140,17 @@ const Vendors = ({ vendorDocs, user }) => {
                 </Tr>
               </Thead>
               <Tbody>
-                {vendors.map((vendor) => (
+                {customers.map((customer) => (
                   <Tr>
                     <Td>
                       <HStack>
-                        <Avatar boxSize={"32px"} src={vendor.picture} />
-                        <Text>{vendor.name}</Text>
+                        <Avatar boxSize={"32px"} src={customer.picture} />
+                        <Text>{customer.name}</Text>
                       </HStack>
                     </Td>
-                    <Td>{vendor.email}</Td>
+                    <Td>{customer.email}</Td>
                     <Td textTransform={"uppercase"}>
-                      <Badge>{vendor.status}</Badge>
+                      <Badge>{customer.status}</Badge>
                     </Td>
                     <Td>
                       <Stack direction="row" spacing={2}>
@@ -160,11 +159,11 @@ const Vendors = ({ vendorDocs, user }) => {
                           colorScheme="orange"
                           variant={"outline"}
                           leftIcon={<AiFillEye />}
-                          onClick={() => openModal(vendor)}
+                          onClick={() => openModal(customer)}
                         >
                           View Details
                         </Button>
-                        {vendor.status != "approved" && (
+                        {customer.status != "approved" && (
                           <>
                             <Button
                               leftIcon={<AiFillCheckCircle />}
@@ -172,20 +171,22 @@ const Vendors = ({ vendorDocs, user }) => {
                               variant="outline"
                               size={"sm"}
                               onClick={() =>
-                                openProcessDialog(vendor, "accept")
+                                openProcessDialog(customer, "accept")
                               }
                             >
                               Approve
                             </Button>
                           </>
                         )}
-                        {vendor.status != "blocked" && (
+                        {customer.status != "blocked" && (
                           <Button
                             leftIcon={<AiFillDelete />}
                             colorScheme="red"
                             size={"sm"}
                             variant="outline"
-                            onClick={() => openProcessDialog(vendor, "decline")}
+                            onClick={() =>
+                              openProcessDialog(customer, "decline")
+                            }
                           >
                             Block
                           </Button>
@@ -203,7 +204,7 @@ const Vendors = ({ vendorDocs, user }) => {
               placeItems={"center"}
               textAlign={"center"}
             >
-              <Heading>No vendors yet</Heading>
+              <Heading>No customers yet</Heading>
             </Box>
           )}
         </TableContainer>
@@ -216,13 +217,13 @@ const Vendors = ({ vendorDocs, user }) => {
         <AlertDialogOverlay>
           <AlertDialogContent>
             <AlertDialogHeader fontSize="lg" fontWeight="bold">
-              {process == "accept" ? "Approve Vendor" : "Block Vendor"}
+              {process == "accept" ? "Approve Customer" : "Block Customer"}
             </AlertDialogHeader>
 
             <AlertDialogBody>
               {process == "accept"
-                ? "Are you sure you want to approve this vendor? This will allow the vendor to publish their products."
-                : "Are you sure you want to block this vendor? They will no longer be allowed to use their store and sell products."}
+                ? "Are you sure you want to approve this customer? This will allow the customer to order products to all of the approved vendors."
+                : "Are you sure you want to block this customer? They will no longer be allowed to use the store."}
             </AlertDialogBody>
 
             <AlertDialogFooter>
@@ -231,7 +232,7 @@ const Vendors = ({ vendorDocs, user }) => {
               </Button>
               <Button
                 colorScheme={process == "accept" ? "blue" : "red"}
-                onClick={() => processVendor()}
+                onClick={() => processCustomer()}
                 ml={3}
                 isLoading={processLoading}
               >
@@ -245,7 +246,7 @@ const Vendors = ({ vendorDocs, user }) => {
       <Modal isOpen={itemIsOpen} onClose={itemOnClose}>
         <ModalOverlay />
         <ModalContent>
-          <ModalHeader>Store Profile</ModalHeader>
+          <ModalHeader>Customer Profile</ModalHeader>
           <ModalCloseButton />
           <ModalBody>
             <VStack textAlign={"center"}>
@@ -255,18 +256,29 @@ const Vendors = ({ vendorDocs, user }) => {
                 border={"1px"}
               />
               <Text mb={"12px"}>
-                <Text fontWeight={"500"}>Store Name:</Text>{" "}
-                {selectedItem.storeName}
+                <Text fontWeight={"500"}>Name:</Text> {selectedItem.name}
+              </Text>
+
+              <Text mb={"12px"}>
+                <Text fontWeight={"500"}>Address:</Text>
+                {selectedItem.addresses && selectedItem.addresses.length > 0 ? (
+                  <Text>
+                    {selectedItem.addresses[0].address.no}{" "}
+                    {selectedItem.addresses[0].address.street}{" "}
+                    {selectedItem.addresses[0].address.barangay}{" "}
+                    {selectedItem.addresses[0].address.city}
+                  </Text>
+                ) : (
+                  <Text>N/A</Text>
+                )}
               </Text>
               <Text mb={"12px"}>
-                <Text fontWeight={"500"}>Store Address:</Text>{" "}
-                {selectedItem.addresses?.length > 0 &&
-                  `${selectedItem.addresses[0].address.no} ${selectedItem.addresses[0].address.street} ${selectedItem.addresses[0].address.barangay} ${selectedItem.addresses[0].address.city}`}
-              </Text>
-              <Text mb={"12px"}>
-                <Text fontWeight={"500"}>Contact Number:</Text>{" "}
-                {selectedItem.addresses?.length > 0 &&
-                  selectedItem.addresses[0].contactNumber}{" "}
+                <Text fontWeight={"500"}>Contact Number:</Text>
+                {selectedItem.addresses && selectedItem.addresses.length > 0 ? (
+                  <Text>selectedItem.addresses[0].contactNumber</Text>
+                ) : (
+                  <Text>N/A</Text>
+                )}
               </Text>
             </VStack>
           </ModalBody>
@@ -276,7 +288,7 @@ const Vendors = ({ vendorDocs, user }) => {
   );
 };
 
-export default Vendors;
+export default Couriers;
 
 export const getServerSideProps = withSessionSsr(async ({ req, res }) => {
   const user = req.session.user;
@@ -296,9 +308,9 @@ export const getServerSideProps = withSessionSsr(async ({ req, res }) => {
     };
   }
 
-  const vendorDocs = await getUsers("vendor");
+  const customerDocs = await getUsers("customer");
 
   return {
-    props: { vendorDocs, user },
+    props: { customerDocs, user },
   };
 });

@@ -113,7 +113,7 @@ const NavItem = ({ icon, children, link, ...rest }) => {
         {icon && (
           <Icon
             mr="4"
-            fontSize="16"
+            fontSize="24"
             _groupHover={{
               color: "white",
             }}
@@ -295,7 +295,7 @@ const AdminLayout = ({ metaTitle, pageName, user, LinkItems, children }) => {
                     our regulations. For more information or to appeal, please
                     contact our support team.
                   </Heading>
-                  <Button onClick={() => logout("vendor")}>Sign out</Button>
+                  <Button onClick={() => logout(user.role)}>Sign out</Button>
                 </Box>
               </Box>
             )}

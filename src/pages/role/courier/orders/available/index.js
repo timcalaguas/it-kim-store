@@ -94,7 +94,7 @@ const Orders = ({ orderDocs, userSession }) => {
         name: userSession.name,
         picture: userSession.picture,
         email: userSession.email,
-        phone: "",
+        phone: userSession.addresses[0].contactNumber,
       };
 
       setProcessLoading(true);
@@ -209,6 +209,15 @@ const Orders = ({ orderDocs, userSession }) => {
                                 ? toast({
                                     title: `Sorry but you can't accept an order yet.`,
                                     description: `Please finish your current delivery.`,
+
+                                    status: "warning",
+                                    duration: 9000,
+                                    isClosable: true,
+                                  })
+                                : user.addresses.length > 0
+                                ? toast({
+                                    title: `Sorry but you can't accept an order yet.`,
+                                    description: `Please fill up your info first.`,
 
                                     status: "warning",
                                     duration: 9000,

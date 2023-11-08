@@ -209,14 +209,18 @@ export default function Checkout({ userSession }) {
                   return <Items items={vendor.items} />;
                 })}
               </Box>
-              <Box>
+              <VStack textAlign={"left"} alignItems={"start"}>
+                <Text>
+                  Once the seller has approved your product, there's no refund
+                  available for it.
+                </Text>
                 <Checkbox
                   onChange={(e) => setChecked(e.target.checked)}
                   value={checked}
                 >
-                  Check the box to agree to our no-return policy.
+                  Check the box to agree to our No Refund Policy in our terms.
                 </Checkbox>
-              </Box>
+              </VStack>
               <VStack
                 fontWeight={"600"}
                 alignItems={"end"}

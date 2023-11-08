@@ -3,11 +3,12 @@ import { firestore } from "../../../../../firebase-config";
 import { getSession } from "next-auth/react";
 import { FiHome, FiTrendingUp, FiCompass, FiStar } from "react-icons/fi";
 import {
-  AiTwotoneEdit,
+  AiFillShop,
   AiFillDelete,
   AiFillEye,
   AiFillCheckCircle,
 } from "react-icons/ai";
+import { MdDeliveryDining, MdPerson } from "react-icons/md";
 import {
   TableContainer,
   Table,
@@ -49,8 +50,9 @@ import { withSessionSsr } from "@/lib/withSession";
 
 const LinkItems = [
   { name: "Dashboard", icon: FiHome, link: "/role/admin" },
-  { name: "Vendors", icon: FiTrendingUp, link: "/role/admin/vendors" },
-  { name: "Couriers", icon: FiCompass, link: "/role/admin/couriers" },
+  { name: "Vendors", icon: AiFillShop, link: "/role/admin/vendors" },
+  { name: "Couriers", icon: MdDeliveryDining, link: "/role/admin/couriers" },
+  { name: "Customers", icon: MdPerson, link: "/role/admin/customers" },
 ];
 
 const Couriers = ({ courierDocs, user }) => {
@@ -221,7 +223,7 @@ const Couriers = ({ courierDocs, user }) => {
             <AlertDialogBody>
               {process == "accept"
                 ? "Are you sure you want to approve this courier? This will allow the courier to accept and deliver orders."
-                : "Are you sure you want to block this courier? They will no longer be allowed to use the their store."}
+                : "Are you sure you want to block this courier? They will no longer be allowed to use website to accept orders."}
             </AlertDialogBody>
 
             <AlertDialogFooter>

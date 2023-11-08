@@ -28,7 +28,7 @@ const getBodyForEmail = (type, customer, user) => {
         
         We're thrilled to let you know that your order is currently in progress. Our vendor has accepted it, and preparations are underway. The next step is to send it out for delivery to your address.
 
-        We'll keep you updated on the progress, and you can monitor the order details on our website. If you have any questions, feel free to reach out to the vendor's email: ${user.email}.
+        We'll keep you updated on the progress, and you can monitor the order details on our website. If you have any questions, feel free to reach out to the vendor's email ${user.email} or contact number ${user.addresses[0].contactNumber}.
         
         Thank you for choosing our services.
 
@@ -45,7 +45,7 @@ const getBodyForEmail = (type, customer, user) => {
         
         We regret to inform you that your recent order has been declined by our vendor. The reason for this decision is due to concerns that the order might be a potential bogus or fraudulent transaction.
         
-        We understand the importance of your order and would like to assist you in finding an alternative solution. Please feel free to reach out to our vendor's email: ${user.email}. We can help you explore other product options, address any concerns, or provide further assistance to ensure a better experience in the future.
+        We understand the importance of your order and would like to assist you in finding an alternative solution. Please feel free to reach out to our vendor's email: ${user.email} or contact number ${user.addresses[0].contactNumber}. We can help you explore other product options, address any concerns, or provide further assistance to ensure a better experience in the future.
         
         Once again, we apologize for any inconvenience this may have caused. We appreciate your understanding and look forward to serving you better in the future.
 
