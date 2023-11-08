@@ -58,43 +58,66 @@ export default function Checkout({ userSession }) {
         (vendor) => vendor.vendorUID === vendorUID
       );
 
-      const orderData = {
-        vendorId: selectedCart[0].vendorUID,
-        vendor: selectedCart[0].vendor,
-        items: selectedCart[0].items,
-        customer: {
-          id: userSession.docId,
-          name: userSession.name,
-          email: userSession.email,
-          address: selectedAddress,
-          picture: userSession.picture,
-        },
-        status: "order-placed",
-        total: calculateSubtotal(vendorUID) + 30,
-        subtotal: calculateSubtotal(vendorUID),
-        date: moment(new Date()).format("MM-DD-YYYY"),
-      };
+      if (
+        selectedAddress.contactNumber !== "" &&
+        selectedAddress.address.no &&
+        selectedAddress.address.street &&
+        selectedAddress.address.barangay &&
+        selectedAddress.address.city
+      ) {
+        const orderData = {
+          vendorId: selectedCart[0].vendorUID,
+          vendor: selectedCart[0].vendor,
+          items: selectedCart[0].items,
+          customer: {
+            id: userSession.docId,
+            name: userSession.name,
+            email: userSession.email,
+            address: selectedAddress,
+            picture: userSession.picture,
+          },
+          status: "order-placed",
+          total: calculateSubtotal(vendorUID) + 30,
+          subtotal: calculateSubtotal(vendorUID),
+          date: moment(new Date()).format("MM-DD-YYYY"),
+        };
 
-      const order = await firestore.collection("orders").add(orderData);
+        const order = await firestore.collection("orders").add(orderData);
 
-      if (order) {
-        removeItemsByVendorId(vendorUID);
-        // Success
+        if (order) {
+          removeItemsByVendorId(vendorUID);
+          // Success
+          toast({
+            title: "Checkout successful.",
+            status: "success",
+            duration: 5000,
+            isClosable: true,
+          });
+          setLoading(false);
+          router.push("/");
+        }
+      } else {
+        setLoading(false);
         toast({
-          title: "Checkout successful.",
-          status: "success",
+          title: "Please fill up your address correctly.",
+          status: "warning",
           duration: 5000,
           isClosable: true,
         });
-        setLoading(false);
-        router.push("/");
       }
     } catch (error) {
       console.error(error);
     }
   };
 
-  console.log(checked);
+  console.log(
+    userSession == null,
+    !checked,
+    userSession != null && userSession.addresses.length > 0,
+    (userSession == null,
+    !checked,
+    userSession != null && userSession.addresses.length > 0)
+  );
 
   return (
     <>
@@ -235,7 +258,11 @@ export default function Checkout({ userSession }) {
                 <Button
                   variant={"primary"}
                   rightIcon={<IoBagCheckOutline />}
-                  isDisabled={userSession == null || !checked}
+                  isDisabled={
+                    userSession == null ||
+                    !checked ||
+                    (userSession != null && userSession.addresses.length == 0)
+                  }
                   onClick={checkout}
                   isLoading={loading}
                 >
