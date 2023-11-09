@@ -2,7 +2,7 @@ import AdminLayout from "@/components/AdminLayout";
 import { firestore } from "../../../../../firebase-config";
 import { getSession } from "next-auth/react";
 import { FiHome, FiTrendingUp, FiCompass, FiStar } from "react-icons/fi";
-import { AiTwotoneEdit, AiFillDelete, AiFillCheckCircle } from "react-icons/ai";
+import { AiTwotoneEdit, AiFillDelete, AiFillEye } from "react-icons/ai";
 import { IoIosAddCircle } from "react-icons/io";
 import {
   TableContainer,
@@ -18,7 +18,6 @@ import {
   Heading,
   HStack,
   Image,
-  Link,
   Text,
   AlertDialog,
   AlertDialogBody,
@@ -35,6 +34,7 @@ import { useEffect, useState, useRef } from "react";
 import { withSessionSsr } from "@/lib/withSession";
 import getVendorsProducts from "@/hooks/products/getVendorProducts";
 import { AiFillStar } from "react-icons/ai";
+import Link from "next/link";
 
 const LinkItems = [
   { name: "Dashboard", icon: FiHome, link: "/role/vendor" },
@@ -164,16 +164,26 @@ const Products = ({ productDocs, user }) => {
                     </Td>
                     <Td>
                       <Stack direction="row" spacing={2}>
-                        <Link href={`/role/vendor/products/edit/${product.id}`}>
-                          <Button
-                            leftIcon={<AiTwotoneEdit />}
-                            colorScheme="blue"
-                            variant="outline"
-                            size={"sm"}
-                          >
-                            Edit
-                          </Button>
-                        </Link>
+                        <Button
+                          as={Link}
+                          leftIcon={<AiFillEye />}
+                          colorScheme="blue"
+                          variant="outline"
+                          size={"sm"}
+                          href={`/role/vendor/products/${product.id}`}
+                        >
+                          View
+                        </Button>
+                        <Button
+                          as={Link}
+                          leftIcon={<AiTwotoneEdit />}
+                          colorScheme="blue"
+                          variant="outline"
+                          size={"sm"}
+                          href={`/role/vendor/products/edit/${product.id}`}
+                        >
+                          Edit
+                        </Button>
                         <Button
                           leftIcon={<AiFillDelete />}
                           colorScheme="red"

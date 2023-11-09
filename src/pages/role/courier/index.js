@@ -51,6 +51,7 @@ import { useForm } from "react-hook-form";
 import { useState, useRef } from "react";
 import { firestore } from "../../../../firebase-config";
 import axios from "axios";
+import { MdBorderColor } from "react-icons/md";
 
 const LinkItems = [
   { name: "Dashboard", icon: FiHome, link: "/role/courier" },
@@ -221,9 +222,8 @@ const Courier = ({
           alignItems={"stretch"}
         >
           <Card
-            minW={{ base: "100%", xl: "320px" }}
-            w={{ base: "100%", xl: "48%" }}
-            h={"100%"}
+            minW={{ base: "100%", xl: "100%" }}
+            w={{ base: "100%", xl: "100%" }}
           >
             <CardBody position={"relative"} overflow={"hidden"}>
               <HStack gap={"24px"} flexWrap={"wrap"}>
@@ -287,59 +287,82 @@ const Courier = ({
             </CardBody>
           </Card>
           <Card
-            minW={{ base: "100%", xl: "320px" }}
-            w={{ base: "100%", xl: "48%" }}
+            minW={{ base: "100%", xl: "100%" }}
+            w={{ base: "100%", xl: "100%" }}
           >
             <CardBody>
               <HStack justifyContent={"space-between"}>
-                <Text mb="12px" fontWeight={"700"} fontSize={"2xl"}>
+                <Text mb="12px" fontWeight={"700"} fontSize={"32px"}>
                   Current Delivery
                 </Text>
                 {order != null && (
-                  <Button
-                    colorScheme={"blue"}
-                    onClick={() => openDialog(order)}
-                  >
-                    Delivered?
-                  </Button>
+                  <HStack>
+                    <Button
+                      colorScheme="orange"
+                      size={"sm"}
+                      onClick={() => openModal("view-items", order)}
+                    >
+                      View Items
+                    </Button>
+                    <Button
+                      colorScheme={"blue"}
+                      size={"sm"}
+                      onClick={() => openDialog(order)}
+                    >
+                      Delivered?
+                    </Button>
+                  </HStack>
                 )}
               </HStack>
               {order != null ? (
                 <Box>
-                  <Text fontWeight={"600"} mb={"12px"}>
+                  <Text fontSize={"24px"} fontWeight={"700"} mb={"12px"}>
                     Order
                   </Text>
-                  <HStack flexWrap={"wrap"} alignItems={"start"}>
-                    <Box p={2} border={"1px"} borderColor={"gray.100"}>
-                      <Text fontWeight={"900"}>Customer Info</Text>
-                      <Text>
-                        <b>Name:</b> {order.customer.name}
+                  <HStack flexWrap={"wrap"} alignItems={"start"} gap={"24px"}>
+                    <Box w={"50%"}>
+                      <Text fontWeight={"600"} fontSize={"18px"} mb={"12px"}>
+                        Customer Info
+                      </Text>
+                      <HStack mb={"12px"}>
+                        <Avatar src={order.customer?.picture} />
+                        <Box>
+                          <Text>{order.customer?.name}</Text>
+                          <Text>{order.customer?.email}</Text>
+                        </Box>
+                      </HStack>
+                      <Text mb={"12px"}>
+                        <Text fontWeight={"500"}>Address:</Text>{" "}
+                        {order.customer?.address &&
+                          `${order.customer.address.address.no} ${order.customer.address.address.street} ${order.customer.address.address.barangay} ${order.customer.address.address.city}`}
                       </Text>
                       <Text>
-                        <b>Address:</b> {order.customer.address.address.no}{" "}
-                        {order.customer.address.address.street}{" "}
-                        {order.customer.address.address.barangay}{" "}
-                        {order.customer.address.address.city}
-                      </Text>
-                      <Text>
-                        <b>Email:</b> {order.customer.email}
-                      </Text>
-                      <Text>
-                        <b>Phone Number:</b>{" "}
-                        {order.customer.address.contactNumber}
+                        <Text fontWeight={"500"}>Contact Number:</Text>{" "}
+                        {order.customer?.address &&
+                          order.customer.address.contactNumber}{" "}
                       </Text>
                     </Box>
-                    <Box p={2} border={"1px"} borderColor={"gray.100"}>
-                      <Text mb={"12px"}>
-                        <b>Vendor Name:</b> {order.vendor}
+                    <Box>
+                      <Text fontWeight={"600"} fontSize={"18px"} mb={"12px"}>
+                        Vendor Info
                       </Text>
-                      <Button
-                        colorScheme="orange"
-                        size={"sm"}
-                        onClick={() => openModal("view-items", order)}
-                      >
-                        View Items
-                      </Button>
+                      <HStack mb={"12px"}>
+                        <Avatar src={order.vendorImage} />
+                        <Box>
+                          <Text>{order.vendor}</Text>
+                          <Text>{order.vendorEmail}</Text>
+                        </Box>
+                      </HStack>
+                      <Text mb={"12px"}>
+                        <Text fontWeight={"500"}>Address:</Text>{" "}
+                        {order.vendorAddress &&
+                          `${order.vendorAddress.address.no} ${order.vendorAddress.address.street} ${order.vendorAddress.address.barangay} ${order.vendorAddress.address.city}`}
+                      </Text>
+                      <Text mb={"12px"}>
+                        <Text fontWeight={"500"}>Contact Number:</Text>{" "}
+                        {order.vendorAddress &&
+                          order.vendorAddress.contactNumber}{" "}
+                      </Text>
                     </Box>
                   </HStack>
                 </Box>

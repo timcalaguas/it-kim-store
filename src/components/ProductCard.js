@@ -19,7 +19,7 @@ import { useCartStore } from "@/hooks/stores/cartStore";
 import StarRating from "./StarRating";
 import Link from "next/link";
 
-const ProductCard = ({ product }) => {
+const ProductCard = ({ product, vendor = false }) => {
   const { addToCart } = useCartStore();
 
   const addToCartNotLink = (e, product) => {
@@ -32,7 +32,7 @@ const ProductCard = ({ product }) => {
   return (
     <Box
       as={Link}
-      href={`/products/${product.id}`}
+      href={vendor ? "#" : `/products/${product.id}`}
       _hover={{ textDecoration: "none" }}
       height={"100%"}
     >
@@ -116,6 +116,7 @@ const ProductCard = ({ product }) => {
               variant={"primary"}
               size="md"
               rightIcon={<Icon as={AiOutlineShoppingCart} />}
+              isDisabled={vendor}
               onClick={(e) => addToCartNotLink(e, product)}
             >
               Add to Cart

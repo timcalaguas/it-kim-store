@@ -193,7 +193,14 @@ const MobileNav = ({ onOpen, title, user, ...rest }) => {
   );
 };
 
-const AdminLayout = ({ metaTitle, pageName, user, LinkItems, children }) => {
+const AdminLayout = ({
+  metaTitle,
+  pageName,
+  user,
+  LinkItems,
+  name,
+  children,
+}) => {
   const { isOpen, onOpen, onClose } = useDisclosure();
   const { logout } = AuthManager();
   const router = useRouter();
@@ -201,9 +208,13 @@ const AdminLayout = ({ metaTitle, pageName, user, LinkItems, children }) => {
   const pathName = router.pathname;
 
   var words = pathName.split("/");
-
+  console.log(words);
   if (words[0] === "") {
     words.shift();
+  }
+
+  if (words[words.length - 1] === "[id]") {
+    words[words.length - 1] = name;
   }
 
   if (words.length > 3) {

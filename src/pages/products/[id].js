@@ -169,8 +169,6 @@ export const getServerSideProps = withSessionSsr(async (context) => {
   const id = context.params.id;
   const { products, product } = await getSingleProduct(id);
 
-  console.log(product);
-
   return {
     props: { product, products, user },
   };

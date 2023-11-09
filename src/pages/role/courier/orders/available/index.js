@@ -180,7 +180,7 @@ const Orders = ({ orderDocs, userSession }) => {
               </Thead>
               <Tbody>
                 {orders.map((order) => (
-                  <Tr>
+                  <Tr key={order.id}>
                     <Td>{order.id}</Td>
                     <Td>{moment(new Date()).format("MM/DD/YYYY")}</Td>
                     <Td>{order.customer.name}</Td>
@@ -286,26 +286,57 @@ const Orders = ({ orderDocs, userSession }) => {
           <ModalHeader>Details</ModalHeader>
           <ModalCloseButton />
           <ModalBody>
-            <HStack mb={"12px"}>
-              <Avatar src={selectedItem.customer?.picture} />
-              <Box>
-                <Text>{selectedItem.customer?.name}</Text>
-                <Text>{selectedItem.customer?.email}</Text>
-              </Box>
-            </HStack>
-            <Text mb={"12px"}>
-              <Text fontWeight={"500"}>Address:</Text>{" "}
-              {selectedItem.customer?.address &&
-                `${selectedItem.customer.address.address.no} ${selectedItem.customer.address.address.street} ${selectedItem.customer.address.address.barangay} ${selectedItem.customer.address.address.city}`}
-            </Text>
-            <Text mb={"12px"}>
-              <Text fontWeight={"500"}>Contact Number:</Text>{" "}
-              {selectedItem.customer?.address &&
-                selectedItem.customer.address.contactNumber}{" "}
-            </Text>
-            <Divider marginBlock={"6px"} />
             <Box>
-              <Text fontWeight={"600"}>Items</Text>
+              <Text fontWeight={"600"} fontSize={"18px"} mb={"12px"}>
+                Customer Info
+              </Text>
+              <HStack mb={"12px"}>
+                <Avatar src={selectedItem.customer?.picture} />
+                <Box>
+                  <Text>{selectedItem.customer?.name}</Text>
+                  <Text>{selectedItem.customer?.email}</Text>
+                </Box>
+              </HStack>
+              <Text mb={"12px"}>
+                <Text fontWeight={"500"}>Address:</Text>{" "}
+                {selectedItem.customer?.address &&
+                  `${selectedItem.customer.address.address.no} ${selectedItem.customer.address.address.street} ${selectedItem.customer.address.address.barangay} ${selectedItem.customer.address.address.city}`}
+              </Text>
+              <Text>
+                <Text fontWeight={"500"}>Contact Number:</Text>{" "}
+                {selectedItem.customer?.address &&
+                  selectedItem.customer.address.contactNumber}{" "}
+              </Text>
+            </Box>
+            <Divider h={"3px"} marginBlock={"12px"} />
+            <Box>
+              <Text fontWeight={"600"} fontSize={"18px"} mb={"12px"}>
+                Vendor Info
+              </Text>
+              <HStack mb={"12px"}>
+                <Avatar src={selectedItem.vendorImage} />
+                <Box>
+                  <Text>{selectedItem.vendor}</Text>
+                  <Text>{selectedItem.vendorEmail}</Text>
+                </Box>
+              </HStack>
+              <Text mb={"12px"}>
+                <Text fontWeight={"500"}>Address:</Text>{" "}
+                {selectedItem.vendorAddress &&
+                  `${selectedItem.vendorAddress.address.no} ${selectedItem.vendorAddress.address.street} ${selectedItem.vendorAddress.address.barangay} ${selectedItem.vendorAddress.address.city}`}
+              </Text>
+              <Text mb={"12px"}>
+                <Text fontWeight={"500"}>Contact Number:</Text>{" "}
+                {selectedItem.vendorAddress &&
+                  selectedItem.vendorAddress.contactNumber}{" "}
+              </Text>
+            </Box>
+
+            <Divider h={"3px"} marginBlock={"12px"} />
+            <Box>
+              <Text fontWeight={"600"} fontSize={"18px"}>
+                Items
+              </Text>
               {selectedItem.items &&
                 selectedItem.items.map((item) => (
                   <HStack
