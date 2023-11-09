@@ -90,60 +90,78 @@ const Orders = ({ orderDocs, userSession }) => {
 
   const processOrder = async () => {
     try {
-      const courier = {
-        name: userSession.name,
-        picture: userSession.picture,
-        email: userSession.email,
-        phone: userSession.addresses[0].contactNumber,
-      };
-
-      setProcessLoading(true);
-      const indexOfObjectToUpdate = orders.findIndex(
-        (obj) => obj.id === selectedItem.id
-      );
-
-      const bodyForEmail = await getBodyForEmail(
-        "courier-accepted",
-        selectedItem.customer,
-        userSession
-      );
-
-      const response = await axios.post("/api/send-mail", bodyForEmail);
-
-      let status = process == "accept" ? "in-transit" : "order-declined";
-
-      const processResponse = await firestore
-        .collection("orders")
-        .doc(selectedItem.id)
-        .update({ status: status, courier: courier });
-
-      const docRef = firestore.collection("users").doc(user.docId);
-
-      const responseUser = await docRef.update({
-        order: selectedItem.id,
-      });
-
-      user.order = selectedItem.id;
-
-      const updateSession = await axios.post("/api/auth", {
-        user: user,
-        role: user.role,
-      });
-
-      if (updateSession.status === 200) {
-        setProcessLoading(false);
-        orders.splice(indexOfObjectToUpdate, 1);
+      if (
+        user.addresses.length == 0 ||
+        user.addresses[0].contactNumber == "" ||
+        user.addresses[0].address.no == "" ||
+        user.addresses[0].address.street == "" ||
+        user.addresses[0].address.barangay == "" ||
+        user.addresses[0].address.city == ""
+      ) {
         toast({
-          title: process == "accept" ? "Order Accepted" : "Order Declined",
-          description:
-            process == "accept"
-              ? "The order is now accepted."
-              : "The order is now declined.",
-          status: "success",
+          title: `Sorry but you can't accept an order yet.`,
+          description: `Please fill up your info first.`,
+
+          status: "warning",
           duration: 9000,
           isClosable: true,
         });
-        onClose();
+      } else {
+        const courier = {
+          name: userSession.name,
+          picture: userSession.picture,
+          email: userSession.email,
+          phone: userSession.addresses[0].contactNumber,
+        };
+
+        setProcessLoading(true);
+        const indexOfObjectToUpdate = orders.findIndex(
+          (obj) => obj.id === selectedItem.id
+        );
+
+        const bodyForEmail = await getBodyForEmail(
+          "courier-accepted",
+          selectedItem.customer,
+          userSession
+        );
+
+        const response = await axios.post("/api/send-mail", bodyForEmail);
+
+        let status = process == "accept" ? "in-transit" : "order-declined";
+
+        const processResponse = await firestore
+          .collection("orders")
+          .doc(selectedItem.id)
+          .update({ status: status, courier: courier });
+
+        const docRef = firestore.collection("users").doc(user.docId);
+
+        const responseUser = await docRef.update({
+          order: selectedItem.id,
+        });
+
+        user.order = selectedItem.id;
+
+        const updateSession = await axios.post("/api/auth", {
+          user: user,
+          role: user.role,
+        });
+
+        if (updateSession.status === 200) {
+          setProcessLoading(false);
+          orders.splice(indexOfObjectToUpdate, 1);
+          toast({
+            title: process == "accept" ? "Order Accepted" : "Order Declined",
+            description:
+              process == "accept"
+                ? "The order is now accepted."
+                : "The order is now declined.",
+            status: "success",
+            duration: 9000,
+            isClosable: true,
+          });
+          onClose();
+        }
       }
     } catch (error) {
       console.log(error);
@@ -209,15 +227,6 @@ const Orders = ({ orderDocs, userSession }) => {
                                 ? toast({
                                     title: `Sorry but you can't accept an order yet.`,
                                     description: `Please finish your current delivery.`,
-
-                                    status: "warning",
-                                    duration: 9000,
-                                    isClosable: true,
-                                  })
-                                : user.addresses.length > 0
-                                ? toast({
-                                    title: `Sorry but you can't accept an order yet.`,
-                                    description: `Please fill up your info first.`,
 
                                     status: "warning",
                                     duration: 9000,
