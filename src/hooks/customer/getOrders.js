@@ -31,11 +31,15 @@ const getOrders = async (userId) => {
       const status = order.status;
 
       if (status) {
-        if (status == "order-placed" || status == "order-declined") {
+        if (
+          status == "order-placed" ||
+          status == "order-declined" ||
+          status == "order-accepted"
+        ) {
           result.orderPlaced.push(order);
         } else if (status == "in-transit" || status == "courier-accepted") {
           result.inTransit.push(order);
-        } else if (status == "delivered") {
+        } else if (status == "delivered" || status == "received") {
           result.completed.push(order);
         }
       }

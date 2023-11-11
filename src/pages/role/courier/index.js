@@ -36,6 +36,7 @@ import {
   AlertDialogHeader,
   AlertDialogContent,
   AlertDialogOverlay,
+  FormErrorMessage,
 } from "@chakra-ui/react";
 import { FiHome, FiTrendingUp, FiCompass, FiStar } from "react-icons/fi";
 import { withSessionSsr } from "@/lib/withSession";
@@ -48,10 +49,9 @@ import {
 import getCourierDashboardCount from "@/hooks/courier/getCourierDashboardCount";
 import getCurrentOrder from "@/hooks/courier/getCurrentOrder";
 import { useForm } from "react-hook-form";
-import { useState, useRef } from "react";
-import { firestore } from "../../../../firebase-config";
+import { useState, useRef, useEffect } from "react";
+import { firestore, storage } from "../../../../firebase-config";
 import axios from "axios";
-import { MdBorderColor } from "react-icons/md";
 
 const LinkItems = [
   { name: "Dashboard", icon: FiHome, link: "/role/courier" },
@@ -70,15 +70,44 @@ const Courier = ({
   order,
 }) => {
   const { isOpen, onOpen, onClose } = useDisclosure();
+
   const {
     isOpen: dialogIsOpen,
     onOpen: dialogOnOpen,
     onClose: dialogClose,
   } = useDisclosure();
-  const { register, handleSubmit, errors, isSubmitting } = useForm();
+  const storageRef = storage.ref();
+
+  const { register, handleSubmit, watch, setValue, errors, isSubmitting } =
+    useForm();
+
   const [user, setUser] = useState(userSession);
   const toast = useToast();
   const [doneCount, setDoneCount] = useState(finishedOrderCount);
+
+  const [storeLogo, setStoreLogo] = useState("");
+  const [previewImage, setPreviewImage] = useState("");
+
+  const selectedFile = watch("storeLogo");
+
+  useEffect(() => {
+    if (selectedFile?.length > 0) {
+      setPreviewImage(selectedFile[0]);
+    }
+  }, [selectedFile]);
+
+  useEffect(() => {
+    setValue("storeLogo", "");
+    if (user.addresses?.length > 0) {
+      setValue("no", user.addresses[0].address.no);
+      setValue("street", user.addresses[0].address.street);
+      setValue("barangay", user.addresses[0].address.barangay);
+      setValue("city", user.addresses[0].address.city);
+      setValue("contactNumber", user.addresses[0].contactNumber);
+    }
+    setValue("storeName", user.storeName);
+    setStoreLogo(user.picture);
+  }, [user]);
 
   async function updateProfile(values) {
     try {
@@ -94,13 +123,30 @@ const Courier = ({
         },
       ];
 
+      let downloadURL;
+
+      if (values.storeLogo.length > 0) {
+        const productImageName = values.storeLogo[0]?.name;
+
+        const imageRef = storageRef.child(`images/${productImageName}`);
+        const file = values.storeLogo[0];
+
+        const snapshot = await imageRef.put(file);
+
+        downloadURL = await imageRef.getDownloadURL();
+      } else {
+        downloadURL = user.picture;
+      }
+
       user.addresses = addresses;
+      user.picture = downloadURL;
 
       const response = await firestore
         .collection("users")
         .doc(user.docId)
         .update({
           addresses: addresses,
+          picture: downloadURL,
         });
 
       const updateSession = await axios.post("/api/auth", {
@@ -229,8 +275,8 @@ const Courier = ({
               <HStack gap={"24px"} flexWrap={"wrap"}>
                 <VStack marginInline={{ base: "auto", md: "0" }}>
                   <Avatar
-                    src={user.storeLogo}
-                    name={user.storeName}
+                    src={user.picture}
+                    name={user.name}
                     boxSize={"200px"}
                   />
                   <Tag
@@ -367,12 +413,7 @@ const Courier = ({
                   </HStack>
                 </Box>
               ) : (
-                <Box
-                  display={"grid"}
-                  placeItems={"center"}
-                  gap={"12px"}
-                  height={"100%"}
-                >
+                <Box display={"grid"} placeItems={"center"} gap={"12px"}>
                   <Box display={"grid"} placeItems={"center"} gap={"12px"}>
                     <Text fontWeight={"700"} fontSize={"3xl"}>
                       No Order accepted yet
@@ -508,6 +549,67 @@ const Courier = ({
             <ModalBody>
               {type === "update" ? (
                 <>
+                  <Box
+                    display={"flex"}
+                    flexDirection={"start"}
+                    w={"100%"}
+                    gap={"24px"}
+                    flexWrap={"wrap"}
+                    mb="12px"
+                  >
+                    {previewImage != "" ? (
+                      <Avatar
+                        id="preview"
+                        src={
+                          selectedFile?.length > 0
+                            ? URL.createObjectURL(selectedFile[0])
+                            : "https://placehold.co/400x400"
+                        }
+                        boxSize={{ base: "100%", sm: "200px" }}
+                      />
+                    ) : storeLogo != "" ? (
+                      <Avatar
+                        id="preview"
+                        src={storeLogo}
+                        boxSize={{ base: "100%", sm: "200px" }}
+                      />
+                    ) : (
+                      <Avatar
+                        id="preview"
+                        src={"https://placehold.co/400x400"}
+                        boxSize={{ base: "100%", sm: "200px" }}
+                      />
+                    )}
+
+                    <FormControl w={{ base: "100%", sm: "fit-content" }}>
+                      <FormLabel htmlFor="name">Image</FormLabel>
+                      <Input
+                        type="file"
+                        accept="image/*"
+                        {...register("storeLogo", {
+                          validate: (value) => {
+                            const types = [
+                              "image/png",
+                              "image/jpeg",
+                              "image/jpg",
+                            ];
+                            if (value.length > 0) {
+                              if (!types.includes(value[0]?.type)) {
+                                return "Invalid file format. Only JPG and PNG are allowed.";
+                              }
+
+                              if (value[0]?.size > 5242880) {
+                                return "File is too large. Upload images with a size of 5MB or below.";
+                              }
+                            }
+
+                            return true;
+                          },
+                        })}
+                      />
+                      <FormErrorMessage></FormErrorMessage>
+                    </FormControl>
+                  </Box>
                   <FormControl>
                     <FormLabel>Contact Number</FormLabel>
                     <Input type="text" {...register("contactNumber")} />

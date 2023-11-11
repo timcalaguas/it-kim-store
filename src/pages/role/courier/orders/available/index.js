@@ -1,13 +1,7 @@
 import AdminLayout from "@/components/AdminLayout";
 import { firestore } from "../../../../../../firebase-config";
-import { getSession } from "next-auth/react";
-import { FiHome, FiTrendingUp, FiCompass, FiStar } from "react-icons/fi";
-import {
-  AiTwotoneEdit,
-  AiFillDelete,
-  AiFillEye,
-  AiFillCheckCircle,
-} from "react-icons/ai";
+import { FiHome, FiCompass, FiStar } from "react-icons/fi";
+import { AiFillEye, AiFillCheckCircle } from "react-icons/ai";
 import {
   TableContainer,
   Table,
@@ -61,6 +55,7 @@ const LinkItems = [
 
 const Orders = ({ orderDocs, userSession }) => {
   const toast = useToast();
+
   const [user, setUser] = useState(userSession);
   const [orders, setOrders] = useState(orderDocs);
   const [selectedItem, setSelectedItem] = useState([]);
@@ -100,7 +95,7 @@ const Orders = ({ orderDocs, userSession }) => {
       ) {
         toast({
           title: `Sorry but you can't accept an order yet.`,
-          description: `Please fill up your info first.`,
+          description: `Please properly fill up your info first.`,
 
           status: "warning",
           duration: 9000,

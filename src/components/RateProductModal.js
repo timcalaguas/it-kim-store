@@ -100,6 +100,7 @@ const RateProductModal = (user) => {
 
   return {
     modalOpen,
+    setModalOpen,
     loading,
     handleRatingChange,
     openRatingModal,

@@ -28,18 +28,34 @@ import {
   FormControl,
   FormLabel,
   Textarea,
+  Avatar,
+  AlertDialog,
+  AlertDialogBody,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogContent,
+  AlertDialogOverlay,
+  useDisclosure,
+  useToast,
 } from "@chakra-ui/react";
 import { BsBagFill, BsBagCheckFill } from "react-icons/bs";
-import { BiSolidTruck } from "react-icons/bi";
+import { useState, useRef } from "react";
 import getOrders from "@/hooks/customer/getOrders";
 import { withSessionSsr } from "@/lib/withSession";
 import RateProductModal from "@/components/RateProductModal";
 import StarRatingInput from "@/components/StarRatingInput";
 import { MdDeliveryDining } from "react-icons/md";
+import { firestore } from "../../../../firebase-config";
+import getBodyForEmail from "@/hooks/getBodyForEmail";
+import axios from "axios";
 
-const Orders = ({ user, result }) => {
+const Orders = ({ user, orders }) => {
+  const [result, setResult] = useState(orders);
+  const toast = useToast();
+
   const {
     modalOpen,
+    setModalOpen,
     loading,
     handleRatingChange,
     openRatingModal,
@@ -50,6 +66,61 @@ const Orders = ({ user, result }) => {
     comment,
     setComment,
   } = RateProductModal(user);
+
+  const cancelRef = useRef();
+
+  const [selectedItem, setSelectedItem] = useState();
+  const { isOpen, onOpen, onClose } = useDisclosure();
+  const [processLoading, setProcessLoading] = useState(false);
+
+  const openDialog = (order) => {
+    setSelectedItem(order);
+    onOpen();
+  };
+
+  const processOrder = async () => {
+    try {
+      setProcessLoading(true);
+      const indexOfObjectToUpdate = result.completed.findIndex(
+        (obj) => obj.id === selectedItem.id
+      );
+
+      const vendorResponse = await firestore
+        .collection("users")
+        .doc(selectedItem.vendorId)
+        .get();
+
+      const vendor = vendorResponse.data();
+      const bodyForEmail = await getBodyForEmail(
+        "received",
+        user,
+        vendor,
+        selectedItem.id
+      );
+
+      const response = await axios.post("/api/send-mail", bodyForEmail);
+
+      let status = "received";
+
+      const processResponse = await firestore
+        .collection("orders")
+        .doc(selectedItem.id)
+        .update({ status: status });
+
+      result.completed[indexOfObjectToUpdate].status = status;
+      setProcessLoading(false);
+      toast({
+        title: "Order Received",
+        description: "You sucessfully marked your order as Received.",
+        status: "success",
+        duration: 9000,
+        isClosable: true,
+      });
+      onClose();
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   return (
     <Layout metaTitle={"IT Kim - Orders"} user={user}>
@@ -90,7 +161,7 @@ const Orders = ({ user, result }) => {
               <Tab>
                 <HStack minH={"30px"}>
                   <BsBagCheckFill fontSize={"25px"} />
-                  <Text>Order Received</Text>
+                  <Text>Delivered</Text>
                 </HStack>
               </Tab>
             </TabList>
@@ -98,328 +169,39 @@ const Orders = ({ user, result }) => {
               <TabPanel>
                 <VStack w={"100%"}>
                   <Accordion allowToggle w={"100%"}>
-                    {result.orderPlaced.map((order) => {
-                      let total = 0;
-                      return (
-                        <AccordionItem>
-                          <h2>
-                            <AccordionButton>
-                              <Box
-                                as="span"
-                                flex="1"
-                                textAlign="left"
-                                fontWeight={"700"}
-                              >
-                                <Tag
-                                  textTransform={"uppercase"}
-                                  mr={"8px"}
-                                  colorScheme={
-                                    order.status == "order-declined"
-                                      ? "red"
-                                      : "blue"
-                                  }
-                                >
-                                  {order.status.replace("-", " ")}
-                                </Tag>
-                                Order {order.id.slice(0, 4)}
-                              </Box>
-                              <AccordionIcon />
-                            </AccordionButton>
-                          </h2>
-                          <AccordionPanel pb={4}>
-                            <Box>
-                              <HStack
-                                mb={"16px"}
-                                justifyContent={"space-between"}
-                                alignItems={"center"}
-                              >
-                                <Text fontWeight={"500"}>{order.vendor}</Text>
-                              </HStack>
-                              <VStack alignItems={"start"} gap={"10px"}>
-                                {order.items.map((item) => {
-                                  total =
-                                    total +
-                                    item.quantity * item.discountedPrice;
-                                  return (
-                                    <HStack
-                                      flexWrap={"wrap"}
-                                      w={"100%"}
-                                      justifyContent={"space-between"}
-                                    >
-                                      <HStack
-                                        gap={"4px"}
-                                        w={"50%"}
-                                        flexWrap={"wrap"}
-                                      >
-                                        <Image
-                                          src={item.image}
-                                          boxSize={"65px"}
-                                          borderRadius={"lg"}
-                                        />
-                                        <VStack alignItems={"start"}>
-                                          <Text
-                                            fontSize={"md"}
-                                            fontWeight={"medium"}
-                                          >
-                                            {item.productName}
-                                          </Text>
-                                        </VStack>
-                                      </HStack>
-                                      <Text fontSize={"md"}>
-                                        {item.quantity} x {item.discountedPrice}
-                                      </Text>
-                                    </HStack>
-                                  );
-                                })}
-
-                                <VStack
-                                  mt={"12px"}
-                                  flexWrap={"wrap"}
-                                  w={"100%"}
-                                  justifyContent={"end"}
-                                  alignItems={"end"}
-                                >
-                                  <Text fontSize={"md"} fontWeight={"600"}>
-                                    SubTotal: {order.subtotal}
-                                  </Text>
-                                  <Text fontSize={"md"} fontWeight={"600"}>
-                                    Shipping fee: 30
-                                  </Text>
-                                  <Text fontSize={"md"} fontWeight={"600"}>
-                                    Total: {order.total}
-                                  </Text>
-                                </VStack>
-                              </VStack>
-                            </Box>
-                          </AccordionPanel>
-                        </AccordionItem>
-                      );
-                    })}
+                    {result.orderPlaced.map((order) => (
+                      <Order
+                        order={order}
+                        open={openRatingModal}
+                        openDialog={openDialog}
+                      />
+                    ))}
                   </Accordion>
                 </VStack>
               </TabPanel>
               <TabPanel>
                 <VStack w={"100%"}>
                   <Accordion allowToggle w={"100%"}>
-                    {result.inTransit.map((order) => {
-                      let total = 0;
-                      return (
-                        <AccordionItem>
-                          <h2>
-                            <AccordionButton>
-                              <Box
-                                as="span"
-                                flex="1"
-                                textAlign="left"
-                                fontWeight={"700"}
-                              >
-                                <Tag
-                                  textTransform={"uppercase"}
-                                  mr={"8px"}
-                                  colorScheme={
-                                    order.status == "in-transit"
-                                      ? "green"
-                                      : "blue"
-                                  }
-                                >
-                                  {order.status.replace("-", " ")}
-                                </Tag>
-                                Order {order.id.slice(0, 4)}
-                              </Box>
-                              <AccordionIcon />
-                            </AccordionButton>
-                          </h2>
-                          <AccordionPanel pb={4}>
-                            <Box>
-                              <HStack
-                                mb={"16px"}
-                                justifyContent={"space-between"}
-                                alignItems={"center"}
-                              >
-                                <Text fontWeight={"500"}>{order.vendor}</Text>
-                              </HStack>
-                              <VStack alignItems={"start"} gap={"10px"}>
-                                {order.items.map((item) => {
-                                  total =
-                                    total +
-                                    item.quantity * item.discountedPrice;
-                                  return (
-                                    <HStack
-                                      flexWrap={"wrap"}
-                                      w={"100%"}
-                                      justifyContent={"space-between"}
-                                    >
-                                      <HStack
-                                        gap={"4px"}
-                                        w={"50%"}
-                                        flexWrap={"wrap"}
-                                      >
-                                        <Image
-                                          src={item.image}
-                                          boxSize={"65px"}
-                                          borderRadius={"lg"}
-                                        />
-                                        <VStack alignItems={"start"}>
-                                          <Text
-                                            fontSize={"md"}
-                                            fontWeight={"medium"}
-                                          >
-                                            {item.productName}
-                                          </Text>
-                                        </VStack>
-                                      </HStack>
-                                      <Text fontSize={"md"}>
-                                        {item.quantity} x {item.discountedPrice}
-                                      </Text>
-                                    </HStack>
-                                  );
-                                })}
-
-                                <VStack
-                                  mt={"12px"}
-                                  flexWrap={"wrap"}
-                                  w={"100%"}
-                                  justifyContent={"end"}
-                                  alignItems={"end"}
-                                >
-                                  <Text fontSize={"md"} fontWeight={"600"}>
-                                    SubTotal: {order.subtotal}
-                                  </Text>
-                                  <Text fontSize={"md"} fontWeight={"600"}>
-                                    Shipping fee: 30
-                                  </Text>
-                                  <Text fontSize={"md"} fontWeight={"600"}>
-                                    Total: {order.total}
-                                  </Text>
-                                </VStack>
-                              </VStack>
-                            </Box>
-                          </AccordionPanel>
-                        </AccordionItem>
-                      );
-                    })}
+                    {result.inTransit.map((order) => (
+                      <Order
+                        order={order}
+                        open={openRatingModal}
+                        openDialog={openDialog}
+                      />
+                    ))}
                   </Accordion>
                 </VStack>
               </TabPanel>
               <TabPanel>
                 <VStack w={"100%"}>
                   <Accordion allowToggle w={"100%"}>
-                    {result.completed.map((order) => {
-                      let total = 0;
-                      return (
-                        <AccordionItem>
-                          <h2>
-                            <AccordionButton>
-                              <Box
-                                as="span"
-                                flex="1"
-                                textAlign="left"
-                                fontWeight={"700"}
-                              >
-                                <Tag
-                                  textTransform={"uppercase"}
-                                  mr={"8px"}
-                                  colorScheme={
-                                    order.status == "completed"
-                                      ? "green"
-                                      : "blue"
-                                  }
-                                >
-                                  {order.status.replace("-", " ")}
-                                </Tag>
-                                Order {order.id.slice(0, 4)}
-                              </Box>
-                              <AccordionIcon />
-                            </AccordionButton>
-                          </h2>
-                          <AccordionPanel pb={4}>
-                            <Box>
-                              <HStack
-                                mb={"16px"}
-                                justifyContent={"space-between"}
-                                alignItems={"center"}
-                              >
-                                <Text fontWeight={"500"}>{order.vendor}</Text>
-                              </HStack>
-                              <VStack alignItems={"start"} gap={"10px"}>
-                                {order.items.map((item) => {
-                                  total =
-                                    total +
-                                    item.quantity * item.discountedPrice;
-                                  return (
-                                    <HStack
-                                      flexWrap={"wrap"}
-                                      w={"100%"}
-                                      justifyContent={"space-between"}
-                                    >
-                                      <HStack
-                                        gap={"4px"}
-                                        w={"50%"}
-                                        flexWrap={"wrap"}
-                                      >
-                                        <Image
-                                          src={item.image}
-                                          boxSize={"65px"}
-                                          borderRadius={"lg"}
-                                        />
-                                        <VStack alignItems={"start"}>
-                                          <Text
-                                            fontSize={"md"}
-                                            fontWeight={"medium"}
-                                          >
-                                            {item.productName}
-                                          </Text>
-                                          {item.rated == false ||
-                                            (item.rated == undefined && (
-                                              <Button
-                                                size={"sm"}
-                                                variant={"link"}
-                                                _hover={{
-                                                  background: "transparent",
-                                                  textDecor: "underline",
-                                                }}
-                                                onClick={() => {
-                                                  openRatingModal(
-                                                    item,
-                                                    order.id
-                                                  );
-                                                }}
-                                              >
-                                                Rate Product
-                                              </Button>
-                                            ))}
-                                        </VStack>
-                                      </HStack>
-                                      <Text fontSize={"md"}>
-                                        {item.quantity} x {item.discountedPrice}
-                                      </Text>
-                                    </HStack>
-                                  );
-                                })}
-
-                                <VStack
-                                  mt={"12px"}
-                                  flexWrap={"wrap"}
-                                  w={"100%"}
-                                  justifyContent={"end"}
-                                  alignItems={"end"}
-                                >
-                                  <Text fontSize={"md"} fontWeight={"600"}>
-                                    SubTotal: {order.subtotal}
-                                  </Text>
-                                  <Text fontSize={"md"} fontWeight={"600"}>
-                                    Shipping fee: 30
-                                  </Text>
-                                  <Text fontSize={"md"} fontWeight={"600"}>
-                                    Total: {order.total}
-                                  </Text>
-                                </VStack>
-                              </VStack>
-                            </Box>
-                          </AccordionPanel>
-                        </AccordionItem>
-                      );
-                    })}
+                    {result.completed.map((order) => (
+                      <Order
+                        order={order}
+                        open={openRatingModal}
+                        openDialog={openDialog}
+                      />
+                    ))}
                   </Accordion>
                 </VStack>
               </TabPanel>
@@ -463,7 +245,177 @@ const Orders = ({ user, result }) => {
           </ModalFooter>
         </ModalContent>
       </Modal>
+      <AlertDialog
+        isOpen={isOpen}
+        leastDestructiveRef={cancelRef}
+        onClose={onClose}
+      >
+        <AlertDialogOverlay>
+          <AlertDialogContent>
+            <AlertDialogHeader fontSize="lg" fontWeight="bold">
+              Receive Order?
+            </AlertDialogHeader>
+
+            <AlertDialogBody>
+              Are you sure you want to mark this order as Received? The vendor
+              will be notified that you received the order.
+            </AlertDialogBody>
+
+            <AlertDialogFooter>
+              <Button ref={cancelRef} onClick={onClose}>
+                Cancel
+              </Button>
+              <Button
+                colorScheme={"blue"}
+                onClick={() => processOrder()}
+                ml={3}
+                isLoading={processLoading}
+              >
+                Receive
+              </Button>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialogOverlay>
+      </AlertDialog>
     </Layout>
+  );
+};
+
+const Order = ({ order, open, openDialog }) => {
+  let total = 0;
+  return (
+    <AccordionItem>
+      <h2>
+        <AccordionButton>
+          <Box as="span" flex="1" textAlign="left" fontWeight={"700"}>
+            <Tag
+              textTransform={"uppercase"}
+              mr={"8px"}
+              colorScheme={
+                order.status == "order-declined"
+                  ? "red"
+                  : order.status == "delivered" || order.status == "received"
+                  ? "green"
+                  : "blue"
+              }
+            >
+              {order.status.replace("-", " ")}
+            </Tag>
+            Order {order.id.slice(0, 4)}
+          </Box>
+          <AccordionIcon />
+        </AccordionButton>
+      </h2>
+      <AccordionPanel pb={4}>
+        <Box>
+          <HStack
+            mb={"16px"}
+            justifyContent={"space-between"}
+            alignItems={"center"}
+          >
+            <Text fontWeight={"500"} fontSize={"18px"}>
+              {order.vendor}
+            </Text>
+
+            {order.status === "delivered" && (
+              <Button
+                size={"sm"}
+                colorScheme="green"
+                onClick={() => openDialog(order)}
+              >
+                Received?
+              </Button>
+            )}
+          </HStack>
+          <Box>
+            <Text mb={"12px"} fontWeight={"500"} fontSize={"14px"}>
+              Items
+            </Text>
+            <VStack alignItems={"start"} gap={"10px"}>
+              {order.items.map((item) => {
+                total = total + item.quantity * item.discountedPrice;
+                return (
+                  <HStack
+                    flexWrap={"wrap"}
+                    w={"100%"}
+                    justifyContent={"space-between"}
+                  >
+                    <HStack gap={"4px"} w={"50%"} flexWrap={"wrap"}>
+                      <Image
+                        src={item.image}
+                        boxSize={"65px"}
+                        borderRadius={"lg"}
+                      />
+                      <VStack alignItems={"start"}>
+                        <Text fontSize={"md"} fontWeight={"medium"}>
+                          {item.productName}
+                        </Text>
+                        {item.rated == false ||
+                          (item.rated == undefined && (
+                            <Button
+                              size={"sm"}
+                              variant={"link"}
+                              _hover={{
+                                background: "transparent",
+                                textDecor: "underline",
+                              }}
+                              onClick={() => {
+                                open(item, order.id);
+                              }}
+                            >
+                              Rate Product
+                            </Button>
+                          ))}
+                      </VStack>
+                    </HStack>
+                    <Text fontSize={"md"}>
+                      {item.quantity} x {item.discountedPrice}
+                    </Text>
+                  </HStack>
+                );
+              })}
+              {(order.status == "in-transit" ||
+                order.status == "delivered" ||
+                order.status == "received") && (
+                <Box>
+                  <Text fontWeight={"600"} fontSize={"14px"} mb={"12px"}>
+                    Courier
+                  </Text>
+                  <HStack mb={"12px"}>
+                    <Avatar src={order.courier?.picture} />
+                    <Box fontSize={"14px"}>
+                      <Text>{order.courier?.name}</Text>
+                      <Text>{order.courier?.email}</Text>
+                      <Text>{order.courier?.contactNumber}</Text>
+                    </Box>
+                  </HStack>
+                </Box>
+              )}
+              <VStack
+                mt={"12px"}
+                flexWrap={"wrap"}
+                w={"100%"}
+                justifyContent={"end"}
+                alignItems={"end"}
+              >
+                <Text fontSize={"md"} fontWeight={"600"}>
+                  Payment Method: {order.paymentMethod}
+                </Text>
+                <Text fontSize={"md"} fontWeight={"600"}>
+                  Subtotal: {order.subtotal}
+                </Text>
+                <Text fontSize={"md"} fontWeight={"600"}>
+                  Shipping fee: 30
+                </Text>
+                <Text fontSize={"md"} fontWeight={"600"}>
+                  Total: {order.total}
+                </Text>
+              </VStack>
+            </VStack>
+          </Box>
+        </Box>
+      </AccordionPanel>
+    </AccordionItem>
   );
 };
 
@@ -487,9 +439,9 @@ export const getServerSideProps = withSessionSsr(async ({ req, res }) => {
     };
   }
 
-  const result = await getOrders(user.docId);
+  const orders = await getOrders(user.docId);
 
   return {
-    props: { user, result },
+    props: { user, orders },
   };
 });

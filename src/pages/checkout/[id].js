@@ -47,6 +47,8 @@ export default function Checkout({ userSession }) {
     setSelectedAddress(userSession.addresses[index]);
   };
 
+  const [paymentMethod, setPaymentMethod] = useState("Cash on Delivery");
+
   const selectedCart = cart.filter((vendor) => vendor.vendorUID === vendorUID);
 
   const [checked, setChecked] = useState(false);
@@ -76,6 +78,7 @@ export default function Checkout({ userSession }) {
             address: selectedAddress,
             picture: userSession.picture,
           },
+          paymentMethod: paymentMethod,
           status: "order-placed",
           total: calculateSubtotal(vendorUID) + 30,
           subtotal: calculateSubtotal(vendorUID),
@@ -228,10 +231,26 @@ export default function Checkout({ userSession }) {
               )}
 
               <Box>
+                <Text fontWeight={"600"}>Items</Text>
                 {selectedCart.map((vendor) => {
                   return <Items items={vendor.items} />;
                 })}
               </Box>
+              <FormControl mb={"16px"}>
+                <HStack
+                  justifyContent={"space-between"}
+                  alignItems={"end"}
+                  mb={"12px"}
+                >
+                  <Text fontWeight={"600"}>Payment Method</Text>
+                </HStack>
+                <Select onChange={(e) => setPaymentMethod(e.target.value)}>
+                  <option value={"Cash on Delivery"}>Cash on Delivery</option>
+                  <option value={"Cash on Delivery"} disabled>
+                    Other - Coming out soon
+                  </option>
+                </Select>
+              </FormControl>
               <VStack textAlign={"left"} alignItems={"start"}>
                 <Text>
                   Once the seller has approved your product, there's no refund

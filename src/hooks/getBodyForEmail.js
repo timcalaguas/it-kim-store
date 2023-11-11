@@ -1,4 +1,4 @@
-const getBodyForEmail = (type, customer, user) => {
+const getBodyForEmail = (type, customer, user, order = null) => {
   if (type == "courier-accepted") {
     const body = {
       to: customer.email,
@@ -51,6 +51,21 @@ const getBodyForEmail = (type, customer, user) => {
 
         Best regards,
         IT Kim`,
+    };
+
+    return body;
+  } else if (type == "received") {
+    const body = {
+      to: user.email,
+      subject: `Order #${order} is received by the customer`,
+      body: `Hello ${user.name},
+        
+      We hope this message finds you well. We are pleased to inform you that the customer has successfully received their order.
+
+      Thank you for your prompt service!
+
+      Best regards,
+      IT Kim`,
     };
 
     return body;

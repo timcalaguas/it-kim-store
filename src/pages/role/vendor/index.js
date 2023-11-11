@@ -350,7 +350,7 @@ const Dashboard = ({ userSession, productCount, orderCount }) => {
                   )}
 
                   <FormControl
-                    isInvalid={errors.image}
+                    isInvalid={errors.storeLogo}
                     w={{ base: "100%", sm: "fit-content" }}
                   >
                     <FormLabel htmlFor="name">Image</FormLabel>
@@ -379,7 +379,7 @@ const Dashboard = ({ userSession, productCount, orderCount }) => {
                       })}
                     />
                     <FormErrorMessage>
-                      {errors.image && errors.image.message}
+                      {errors.storeLogo && errors.storeLogo.message}
                     </FormErrorMessage>
                   </FormControl>
                 </Box>

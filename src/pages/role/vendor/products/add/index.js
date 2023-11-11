@@ -17,6 +17,7 @@ import {
   Flex,
   useToast,
   Textarea,
+  FormHelperText,
 } from "@chakra-ui/react";
 import { useForm } from "react-hook-form";
 import { useState } from "react";
@@ -56,6 +57,13 @@ const AddProduct = ({ user }) => {
       values.image = downloadURL;
       values.rating = [];
       values.averageStarRating = null;
+
+      const priceWithFee = parseInt(values.costPrice) * 0.1;
+
+      values.price = parseInt(values.costPrice) + priceWithFee;
+      values.discountedPrice =
+        parseInt(values.costDiscountedPrice) +
+        parseInt(values.costDiscountedPrice) * 0.1;
 
       const response = await firestore
         .collection("products")
@@ -172,28 +180,33 @@ const AddProduct = ({ user }) => {
                   </FormErrorMessage>
                 </FormControl>
                 <Flex w="100%" gap={"12px"}>
-                  <FormControl isInvalid={errors.price}>
+                  <FormControl isInvalid={errors.costPrice}>
                     <FormLabel htmlFor="price">Price</FormLabel>
                     <Input
                       type="number"
                       id="price"
-                      {...register("price", {
+                      {...register("costPrice", {
                         required: "This is required",
                       })}
                     />
+                    <FormHelperText>
+                      Note: A 5% platform fee will be added to the product price
+                      and discounted price.
+                    </FormHelperText>
                     <FormErrorMessage>
-                      {errors.price && errors.price.message}
+                      {errors.costPrice && errors.costPrice.message}
                     </FormErrorMessage>
                   </FormControl>
-                  <FormControl isInvalid={errors.discountedPrice}>
+                  <FormControl isInvalid={errors.costDiscountedPrice}>
                     <FormLabel htmlFor="name">Discounted Price</FormLabel>
                     <Input
                       type="number"
-                      id="discountedPrice"
-                      {...register("discountedPrice", {})}
+                      id="costDiscountedPrice"
+                      {...register("costDiscountedPrice", {})}
                     />
                     <FormErrorMessage>
-                      {errors.discountedPrice && errors.discountedPrice.message}
+                      {errors.costDiscountedPrice &&
+                        errors.costDiscountedPrice.message}
                     </FormErrorMessage>
                   </FormControl>
                 </Flex>
