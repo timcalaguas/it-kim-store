@@ -3,12 +3,21 @@ import ProductList from "@/components/ProductList";
 import getVendorsProducts from "@/hooks/products/getVendorProducts";
 
 import { withSessionSsr } from "@/lib/withSession";
+import { AiTwotoneMail, AiTwotoneHome, AiTwotonePhone } from "react-icons/ai";
+import {
+  Avatar,
+  Box,
+  Card,
+  CardBody,
+  HStack,
+  Heading,
+  Text,
+  VStack,
+} from "@chakra-ui/react";
 
-import { Box, Heading } from "@chakra-ui/react";
-
-const Vendor = ({ productDocs, user, vendorName }) => {
+const Vendor = ({ productDocs, user, vendor }) => {
   return (
-    <Layout metaTitle={`IT Kim - ${vendorName}`} user={user}>
+    <Layout metaTitle={`IT Kim - ${vendor.storeName}`} user={user}>
       <Box
         minH={"100vh"}
         backgroundImage={"url('/wave.svg')"}
@@ -21,7 +30,35 @@ const Vendor = ({ productDocs, user, vendorName }) => {
           marginInline={"auto"}
           paddingTop={"120px"}
         >
-          <Heading>{vendorName}'s Products </Heading>
+          <Card mb={"24px"}>
+            <CardBody>
+              <HStack gap={"24px"}>
+                <Avatar src={vendor.storeLogo} boxSize={"150px"} />
+                <Box>
+                  <Text fontSize={"24px"} fontWeight={"600"}>
+                    {vendor.storeName != "" ? vendor.storeName : vendor.name}
+                  </Text>
+                  <HStack>
+                    <AiTwotoneMail />
+                    <Text>{vendor.email}</Text>
+                  </HStack>
+                  <HStack>
+                    <AiTwotoneHome />
+                    <Text>
+                      {vendor.addresses?.length > 0
+                        ? `${vendor.addresses[0].address.no} ${vendor.addresses[0].address.street} ${vendor.addresses[0].address.barangay} ${vendor.addresses[0].address.city}`
+                        : ""}
+                    </Text>
+                  </HStack>
+                  <HStack>
+                    <AiTwotonePhone />
+                    <Text>{vendor.addresses[0].contactNumber}</Text>
+                  </HStack>
+                </Box>
+              </HStack>
+            </CardBody>
+          </Card>
+          <Heading>Products </Heading>
           {productDocs.length > 0 ? (
             <ProductList products={productDocs} />
           ) : (
@@ -47,9 +84,9 @@ export const getServerSideProps = withSessionSsr(async (context) => {
   const user = req.session.user ? req.session.user : null;
 
   const id = context.params.id;
-  const { vendorName, productDocs } = await getVendorsProducts(id);
+  const { vendor, productDocs } = await getVendorsProducts(id);
 
   return {
-    props: { productDocs, user, vendorName },
+    props: { productDocs, user, vendor },
   };
 });

@@ -18,19 +18,39 @@ import {
   useToast,
   VStack,
   Checkbox,
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+  PopoverHeader,
+  PopoverBody,
+  PopoverArrow,
+  PopoverCloseButton,
+  AlertDialog,
+  AlertDialogBody,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogFooter,
+  AlertDialogCloseButton,
+  AlertDialogOverlay,
+  useDisclosure,
 } from "@chakra-ui/react";
 import { IoBagCheckOutline } from "react-icons/io5";
 import { firestore } from "../../../firebase-config";
 import { FcGoogle } from "react-icons/fc";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { withSessionSsr } from "@/lib/withSession";
 import AuthManager from "@/hooks/auth/AuthManager";
 import moment from "moment";
+import { BsPatchQuestion } from "react-icons/bs";
 import { FaTrash, FaPlus, FaMinus } from "react-icons/fa";
+import getOrderCount from "@/hooks/customer/getOrderCount";
 
-export default function Checkout({ userSession }) {
+export default function Checkout({ userSession, orderCount }) {
   const router = useRouter();
   const vendorUID = router.query.id;
+
+  const { isOpen, onClose, onOpen } = useDisclosure();
+  const cancelRef = useRef();
 
   const { loginWithGoogle } = AuthManager();
 
@@ -52,6 +72,23 @@ export default function Checkout({ userSession }) {
   const selectedCart = cart.filter((vendor) => vendor.vendorUID === vendorUID);
 
   const [checked, setChecked] = useState(false);
+
+  const [shipping, setShipping] = useState(30);
+
+  useEffect(() => {
+    if (orderCount <= 10 || calculateSubtotal(vendorUID) >= 150) {
+      setShipping(0);
+    } else if (
+      calculateSubtotal(vendorUID) >= 100 &&
+      calculateSubtotal(vendorUID) < 150
+    ) {
+      setShipping(15);
+    } else {
+      setShipping(30);
+    }
+
+    console.log(shipping);
+  }, [cart]);
 
   const checkout = async () => {
     try {
@@ -80,7 +117,7 @@ export default function Checkout({ userSession }) {
           },
           paymentMethod: paymentMethod,
           status: "order-placed",
-          total: calculateSubtotal(vendorUID) + 30,
+          total: calculateSubtotal(vendorUID) + shipping,
           subtotal: calculateSubtotal(vendorUID),
           date: moment(new Date()).format("MM-DD-YYYY"),
         };
@@ -269,8 +306,50 @@ export default function Checkout({ userSession }) {
                 paddingBlock={"12px"}
               >
                 <Text>Subtotal: {calculateSubtotal(vendorUID)}</Text>
-                <Text>Shipping fee: 30</Text>
-                <Text>Total: {calculateSubtotal(vendorUID) + 30}</Text>
+                {shipping == 0 ? (
+                  <HStack>
+                    <Popover>
+                      <PopoverTrigger>
+                        <Box cursor={"pointer"}>
+                          <BsPatchQuestion />
+                        </Box>
+                      </PopoverTrigger>
+                      <PopoverContent>
+                        <PopoverArrow />
+                        <PopoverHeader>Delivery Fee Promo</PopoverHeader>
+                        <PopoverCloseButton />
+                        <PopoverBody>
+                          Enjoy free delivery fee on orders over 150 or when you
+                          are one of the 10 first orders. For orders between 100
+                          and 150, delivery fee is half-priced
+                        </PopoverBody>
+                      </PopoverContent>
+                    </Popover>
+                    <Text>FREE DELIVERY</Text>
+                  </HStack>
+                ) : (
+                  <HStack>
+                    <Popover>
+                      <PopoverTrigger>
+                        <Box cursor={"pointer"}>
+                          <BsPatchQuestion />
+                        </Box>
+                      </PopoverTrigger>
+                      <PopoverContent>
+                        <PopoverArrow />
+                        <PopoverHeader>Delivery Fee Promo</PopoverHeader>
+                        <PopoverCloseButton />
+                        <PopoverBody>
+                          Enjoy free delivery fee on orders over 150 or when you
+                          are one of the 10 first orders. For orders between 100
+                          and 150, delivery fee is half-priced
+                        </PopoverBody>
+                      </PopoverContent>
+                    </Popover>
+                    <Text>Delivery fee: {shipping}</Text>
+                  </HStack>
+                )}
+                <Text>Total: {calculateSubtotal(vendorUID) + shipping}</Text>
               </VStack>
 
               <HStack justifyContent={"end"}>
@@ -282,8 +361,7 @@ export default function Checkout({ userSession }) {
                     !checked ||
                     (userSession != null && userSession.addresses.length == 0)
                   }
-                  onClick={checkout}
-                  isLoading={loading}
+                  onClick={onOpen}
                 >
                   Place order
                 </Button>
@@ -291,6 +369,39 @@ export default function Checkout({ userSession }) {
             </Box>
           </Box>
         </Box>
+        <AlertDialog
+          isOpen={isOpen}
+          leastDestructiveRef={cancelRef}
+          onClose={onClose}
+        >
+          <AlertDialogOverlay>
+            <AlertDialogContent>
+              <AlertDialogHeader fontSize="lg" fontWeight="bold">
+                Place Order?
+              </AlertDialogHeader>
+
+              <AlertDialogBody>
+                Are you sure you want to place this order? Please note that once
+                you proceed, cancellations will not be possible.
+              </AlertDialogBody>
+
+              <AlertDialogFooter>
+                <Button ref={cancelRef} onClick={onClose}>
+                  Cancel
+                </Button>
+                <Button
+                  rightIcon={<IoBagCheckOutline />}
+                  variant={"primary"}
+                  onClick={() => checkout()}
+                  ml={3}
+                  isLoading={loading}
+                >
+                  Place Order
+                </Button>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialogOverlay>
+        </AlertDialog>
       </Layout>
     </>
   );
@@ -352,8 +463,11 @@ const Items = ({ items }) => {
 
 export const getServerSideProps = withSessionSsr(async ({ req, res }) => {
   const userSession = req.session.user ? req.session.user : null;
+  const orderCount = await getOrderCount();
+
+  console.log(orderCount);
 
   return {
-    props: { userSession },
+    props: { userSession, orderCount },
   };
 });

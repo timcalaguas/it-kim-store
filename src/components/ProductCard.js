@@ -9,6 +9,7 @@ import {
   Button,
   Icon,
   HStack,
+  useToast,
 } from "@chakra-ui/react";
 import {
   AiOutlineShoppingCart,
@@ -21,13 +22,18 @@ import Link from "next/link";
 
 const ProductCard = ({ product, vendor = false }) => {
   const { addToCart } = useCartStore();
+  const toast = useToast();
 
   const addToCartNotLink = (e, product) => {
     e.preventDefault();
+    toast({
+      title: `${product.productName} is added to cart`,
+      status: "success",
+      duration: 3000,
+      isClosable: true,
+    });
     addToCart(product);
   };
-
-  console.log(product);
 
   return (
     <Box

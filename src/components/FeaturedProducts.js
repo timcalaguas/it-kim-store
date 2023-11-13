@@ -8,6 +8,8 @@ const FeaturedProducts = ({ products, fromVendor }) => {
       backgroundImage={`url('/wave.svg')`}
       backgroundRepeat={"no-repeat"}
       backgroundPosition={"bottom"}
+      w={"100%"}
+      minH={"500px"}
     >
       <Box
         textAlign={"center"}
