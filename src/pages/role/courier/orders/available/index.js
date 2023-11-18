@@ -127,7 +127,11 @@ const Orders = ({ orderDocs, userSession }) => {
         const processResponse = await firestore
           .collection("orders")
           .doc(selectedItem.id)
-          .update({ status: status, courier: courier });
+          .update({
+            status: status,
+            courier: courier,
+            deliveryDate: moment(new Date()).format("MM-DD-YYYY HH:mm"),
+          });
 
         const docRef = firestore.collection("users").doc(user.docId);
 

@@ -97,49 +97,63 @@ export default function Checkout({ userSession, orderCount }) {
         (vendor) => vendor.vendorUID === vendorUID
       );
 
-      if (
-        selectedAddress.contactNumber !== "" &&
-        selectedAddress.address.no &&
-        selectedAddress.address.street &&
-        selectedAddress.address.barangay &&
-        selectedAddress.address.city
-      ) {
-        const orderData = {
-          vendorId: selectedCart[0].vendorUID,
-          vendor: selectedCart[0].vendor,
-          items: selectedCart[0].items,
-          customer: {
-            id: userSession.docId,
-            name: userSession.name,
-            email: userSession.email,
-            address: selectedAddress,
-            picture: userSession.picture,
-          },
-          paymentMethod: paymentMethod,
-          status: "order-placed",
-          total: calculateSubtotal(vendorUID) + shipping,
-          subtotal: calculateSubtotal(vendorUID),
-          date: moment(new Date()).format("MM-DD-YYYY"),
-        };
+      const angelesOnly = ["angeles city", "angeles"];
+      const city = selectedAddress.address.city.toLowerCase();
+      if (angelesOnly.includes(city)) {
+        if (
+          selectedAddress.contactNumber !== "" &&
+          selectedAddress.address.no &&
+          selectedAddress.address.street &&
+          selectedAddress.address.barangay &&
+          selectedAddress.address.city
+        ) {
+          const orderData = {
+            vendorId: selectedCart[0].vendorUID,
+            vendor: selectedCart[0].vendor,
+            items: selectedCart[0].items,
+            customer: {
+              id: userSession.docId,
+              name: userSession.name,
+              email: userSession.email,
+              address: selectedAddress,
+              picture: userSession.picture,
+            },
+            paymentMethod: paymentMethod,
+            status: "order-placed",
+            total: calculateSubtotal(vendorUID) + shipping,
+            subtotal: calculateSubtotal(vendorUID),
+            deliveryFee: shipping,
+            date: moment(new Date()).format("MM-DD-YYYY HH:mm"),
+          };
 
-        const order = await firestore.collection("orders").add(orderData);
+          const order = await firestore.collection("orders").add(orderData);
 
-        if (order) {
-          removeItemsByVendorId(vendorUID);
-          // Success
+          if (order) {
+            removeItemsByVendorId(vendorUID);
+            // Success
+            toast({
+              title: "Checkout successful.",
+              status: "success",
+              duration: 5000,
+              isClosable: true,
+            });
+            setLoading(false);
+            router.push("/");
+          }
+        } else {
+          setLoading(false);
           toast({
-            title: "Checkout successful.",
-            status: "success",
+            title: "Please fill up your address correctly.",
+            status: "warning",
             duration: 5000,
             isClosable: true,
           });
-          setLoading(false);
-          router.push("/");
         }
       } else {
         setLoading(false);
         toast({
-          title: "Please fill up your address correctly.",
+          title:
+            "This service is only currently available around Angeles City.",
           status: "warning",
           duration: 5000,
           isClosable: true,

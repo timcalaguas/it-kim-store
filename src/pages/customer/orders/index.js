@@ -350,8 +350,8 @@ const Order = ({ order, open, openDialog }) => {
                         <Text fontSize={"md"} fontWeight={"medium"}>
                           {item.productName}
                         </Text>
-                        {item.rated == false ||
-                          (item.rated == undefined && (
+                        {(item.rated == false || item.rated == undefined) &&
+                          order.status == "delivered" && (
                             <Button
                               size={"sm"}
                               variant={"link"}
@@ -365,7 +365,7 @@ const Order = ({ order, open, openDialog }) => {
                             >
                               Rate Product
                             </Button>
-                          ))}
+                          )}
                       </VStack>
                     </HStack>
                     <Text fontSize={"md"}>
@@ -391,26 +391,62 @@ const Order = ({ order, open, openDialog }) => {
                   </HStack>
                 </Box>
               )}
-              <VStack
-                mt={"12px"}
-                flexWrap={"wrap"}
+              <HStack
+                justifyContent={"space-between"}
                 w={"100%"}
-                justifyContent={"end"}
-                alignItems={"end"}
+                flexWrap={"wrap"}
+                alignItems={"start"}
               >
-                <Text fontSize={"md"} fontWeight={"600"}>
-                  Payment Method: {order.paymentMethod}
-                </Text>
-                <Text fontSize={"md"} fontWeight={"600"}>
-                  Subtotal: {order.subtotal}
-                </Text>
-                <Text fontSize={"md"} fontWeight={"600"}>
-                  Shipping fee: 30
-                </Text>
-                <Text fontSize={"md"} fontWeight={"600"}>
-                  Total: {order.total}
-                </Text>
-              </VStack>
+                <VStack
+                  mt={"12px"}
+                  w={{ base: "100%", md: "auto" }}
+                  flexWrap={"wrap"}
+                  justifyContent={"start"}
+                  alignItems={"start"}
+                >
+                  <Text fontSize={"md"} fontWeight={"600"}>
+                    Order Time: {order.date}
+                  </Text>
+                  {order.status != "order-placed" &&
+                    order.status != "order-accepted" &&
+                    order.status != "order-declined" && (
+                      <Text fontSize={"md"} fontWeight={"600"}>
+                        Ship Time: {order.deliveryDate}
+                      </Text>
+                    )}
+                  {order.status != "order-placed" &&
+                    order.status != "order-accepted" &&
+                    order.status != "order-declined" &&
+                    order.status !=
+                      "in-transit"(
+                        <Text fontSize={"md"} fontWeight={"600"}>
+                          Delivered Time: 30
+                        </Text>
+                      )}
+                </VStack>
+                <VStack
+                  w={{ base: "100%", md: "auto" }}
+                  mt={"12px"}
+                  flexWrap={"wrap"}
+                  justifyContent={"end"}
+                  alignItems={{ base: "start", md: "end" }}
+                >
+                  <Text fontSize={"md"} fontWeight={"600"}>
+                    Payment Method: {order.paymentMethod}
+                  </Text>
+                  <Text fontSize={"md"} fontWeight={"600"}>
+                    Subtotal: {order.subtotal}
+                  </Text>
+                  <Text fontSize={"md"} fontWeight={"600"}>
+                    {order.deliveryFee == 0
+                      ? "FREE DELIVERY"
+                      : `Delivery fee: ${order.deliveryFee}`}
+                  </Text>
+                  <Text fontSize={"md"} fontWeight={"600"}>
+                    Total: {order.total}
+                  </Text>
+                </VStack>
+              </HStack>
             </VStack>
           </Box>
         </Box>
