@@ -417,12 +417,11 @@ const Order = ({ order, open, openDialog }) => {
                   {order.status != "order-placed" &&
                     order.status != "order-accepted" &&
                     order.status != "order-declined" &&
-                    order.status !=
-                      "in-transit"(
-                        <Text fontSize={"md"} fontWeight={"600"}>
-                          Delivered Time: 30
-                        </Text>
-                      )}
+                    order.status != "in-transit" && (
+                      <Text fontSize={"md"} fontWeight={"600"}>
+                        Delivered Time: {order.completedDate}
+                      </Text>
+                    )}
                 </VStack>
                 <VStack
                   w={{ base: "100%", md: "auto" }}

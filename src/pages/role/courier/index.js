@@ -52,6 +52,7 @@ import { useForm } from "react-hook-form";
 import { useState, useRef, useEffect } from "react";
 import { firestore, storage } from "../../../../firebase-config";
 import axios from "axios";
+import moment from "moment";
 
 const LinkItems = [
   { name: "Dashboard", icon: FiHome, link: "/role/courier" },
@@ -198,7 +199,10 @@ const Courier = ({
       const processResponse = await firestore
         .collection("orders")
         .doc(selectedItem.id)
-        .update({ status: "delivered" });
+        .update({
+          status: "delivered",
+          completedDate: moment(new Date()).format("MM-DD-YYYY HH:mm"),
+        });
 
       const docRef = firestore.collection("users").doc(user.docId);
 
