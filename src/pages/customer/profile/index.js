@@ -17,8 +17,7 @@ import {
   FormControl,
   Input,
   FormLabel,
-  useDisclosure,
-  useToast,
+  Select,
   Avatar,
 } from "@chakra-ui/react";
 import { IoLocationSharp } from "react-icons/io5";
@@ -26,6 +25,42 @@ import { AiFillEdit, AiFillDelete } from "react-icons/ai";
 import Layout from "@/components/Layout";
 import AddressModal from "@/components/AddressModal";
 import { withSessionSsr } from "@/lib/withSession";
+
+const barangays = [
+  "Agapito del Rosario",
+  "Amsic",
+  "Anunas",
+  "Balibago",
+  "Capaya",
+  "Claro M. Recto",
+  "Cuayan",
+  "Cutcut",
+  "Cutud",
+  "Lourdes North West",
+  "Lourdes Sur (Talimundoc)",
+  "Lourdes Sur East",
+  "Malabañas",
+  "Margot",
+  "Marisol (Ninoy Aquino)",
+  "Mining",
+  "Pampang (Santo Niño)",
+  "Pandan",
+  "Pulung Bulu",
+  "Pulung Cacutud",
+  "Pulung Maragul",
+  "Salapungan",
+  "San José",
+  "San Nicolas",
+  "Santa Teresita",
+  "Santa Trinidad",
+  "Santo Cristo",
+  "Santo Domingo",
+  "Santo Rosario (Población)",
+  "Sapalibutad",
+  "Sapangbato",
+  "Tabun",
+  "Virgen Delos Remedios",
+];
 
 const Profile = ({ user }) => {
   const {
@@ -119,7 +154,7 @@ const Profile = ({ user }) => {
                     <HStack justifyContent={"space-between"} w={"100%"}>
                       <Box>
                         <Text fontWeight={"semibold"}>
-                          {address.address.no} {address.address.street},
+                          {address.address.no} {address.address.street},{" "}
                           {address.address.barangay}, {address.address.city}
                         </Text>
                         <Text>{address.contactNumber}</Text>
@@ -206,23 +241,29 @@ const Profile = ({ user }) => {
                 </FormControl>
                 <FormControl>
                   <FormLabel>Barangay</FormLabel>
-                  <Input
-                    type="text"
+
+                  <Select
                     value={newAddress.barangay}
                     onChange={(e) =>
                       setNewAddress({ ...newAddress, barangay: e.target.value })
                     }
-                  />
+                  >
+                    {barangays.map((barangay) => (
+                      <option value={barangay}>{barangay}</option>
+                    ))}
+                  </Select>
                 </FormControl>
                 <FormControl>
                   <FormLabel>City</FormLabel>
-                  <Input
-                    type="text"
+
+                  <Select
                     value={newAddress.city}
                     onChange={(e) =>
                       setNewAddress({ ...newAddress, city: e.target.value })
                     }
-                  />
+                  >
+                    <option value={"Angeles City"}>Angeles City</option>
+                  </Select>
                 </FormControl>
               </VStack>
             ) : (
