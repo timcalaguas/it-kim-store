@@ -211,8 +211,10 @@ export default function Checkout({ userSession, orderCount }) {
                     <Box display={"flex"} gap={"5px"}>
                       <Text fontWeight={"600"}>Address:</Text>{" "}
                       {selectedAddress?.address.no}{" "}
-                      {selectedAddress?.address.street}{" "}
-                      {selectedAddress?.address.barangay}{" "}
+                      {selectedAddress?.address.street}
+                      {", "}
+                      {selectedAddress?.address.barangay}
+                      {", "}
                       {selectedAddress?.address.city}
                     </Box>
                     <Box display={"flex"} gap={"5px"}>
