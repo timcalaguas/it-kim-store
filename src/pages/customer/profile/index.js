@@ -19,6 +19,9 @@ import {
   FormLabel,
   Select,
   Avatar,
+  FormErrorMessage,
+  InputLeftAddon,
+  InputGroup,
 } from "@chakra-ui/react";
 import { IoLocationSharp } from "react-icons/io5";
 import { AiFillEdit, AiFillDelete } from "react-icons/ai";
@@ -76,6 +79,8 @@ const Profile = ({ user }) => {
     deleteAddress,
     loading,
     type,
+    isValidPHPhoneNumber,
+    validPhone,
   } = AddressModal();
 
   const setAddress = (address) => {
@@ -87,6 +92,8 @@ const Profile = ({ user }) => {
       contact: address.contactNumber,
     });
   };
+
+  console.log(newAddress);
 
   return (
     <Layout metaTitle={"IT Kim - Profile"} user={user}>
@@ -209,19 +216,26 @@ const Profile = ({ user }) => {
           <ModalBody>
             {type != "delete" ? (
               <VStack>
-                <FormControl>
+                <FormControl isInvalid={!validPhone}>
                   <FormLabel>Contact Number</FormLabel>
-                  <Input
-                    type="number"
-                    value={newAddress.contact}
-                    onChange={(e) =>
-                      setNewAddress({ ...newAddress, contact: e.target.value })
-                    }
-                  />
+                  <InputGroup>
+                    <InputLeftAddon children="+63" />
+                    <Input
+                      type="tel"
+                      placeholder="9123456789"
+                      value={newAddress.contact}
+                      onChange={(e) => isValidPHPhoneNumber(e.target.value)}
+                      required
+                    />
+                  </InputGroup>
+                  {!validPhone && (
+                    <FormErrorMessage>Invalid Phone Number</FormErrorMessage>
+                  )}
                 </FormControl>
                 <FormControl>
                   <FormLabel>House No. / Blk No. / Lot No.</FormLabel>
                   <Input
+                    required
                     type="text"
                     value={newAddress.no}
                     onChange={(e) =>
@@ -232,6 +246,7 @@ const Profile = ({ user }) => {
                 <FormControl>
                   <FormLabel>Street</FormLabel>
                   <Input
+                    required
                     type="text"
                     value={newAddress.street}
                     onChange={(e) =>
