@@ -41,12 +41,15 @@ const AddressModal = () => {
       if (
         newAddress.no == "" ||
         newAddress.contact == "" ||
-        newAddress.street == ""
+        newAddress.street == "" || !validPhone
       ) {
         setLoading(false);
+        const title = !validPhone ? "Invalid Phone number" : "Incomplete details.";
+        const message = !validPhone ? "Please enter a valid number" : "Please complete the form before submitting.";
+        
         toast({
-          title: "Incomplete details.",
-          description: "Please complete the form before submitting.",
+          title: title,
+          description: message,
           status: "warning",
           duration: 5000,
           isClosable: true,
@@ -110,12 +113,15 @@ const AddressModal = () => {
       if (
         newAddress.no == "" ||
         newAddress.contact == "" ||
-        newAddress.street == ""
+        newAddress.street == "" || !validPhone
       ) {
         setLoading(false);
+        const title = !validPhone ? "Invalid Phone number" : "Incomplete details.";
+        const message = !validPhone ? "Please enter a valid number" : "Please complete the form before submitting.";
+        
         toast({
-          title: "Incomplete details.",
-          description: "Please complete the form before submitting.",
+          title: title,
+          description: message,
           status: "warning",
           duration: 5000,
           isClosable: true,
