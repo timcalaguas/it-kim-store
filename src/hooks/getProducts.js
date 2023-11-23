@@ -28,7 +28,10 @@ const getProducts = async (limit, query) => {
 
 const sortedProductDocs = productDocs.sort((a, b) => b.averageStarRating - a.averageStarRating);
 
-    return sortedProductDocs;
+
+const top3Products = sortedProductDocs.slice(0, 3);
+
+    return top3Products;
   } catch (error) {
     console.log(error);
     return [];
