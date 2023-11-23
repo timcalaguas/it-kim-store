@@ -10,7 +10,7 @@ const getVendorsProducts = async (id) => {
 
   const vendorName = vendor.storeName != "" ? vendor.storeName : vendor.name;
 
-  const productDocs = !response.empty
+  let productDocs = !response.empty
     ? response.docs.map((doc) => {
         const returnDoc = doc.data();
         returnDoc.id = doc.id;
@@ -19,6 +19,9 @@ const getVendorsProducts = async (id) => {
       })
     : [];
 
+
+const sortedProductDocs = productDocs.sort((a, b) => b.averageStarRating - a.averageStarRating);
+productDocs = sortedProductDocs
   return { productDocs, vendor };
 };
 
