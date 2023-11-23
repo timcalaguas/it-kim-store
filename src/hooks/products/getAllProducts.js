@@ -26,7 +26,10 @@ const getAllProducts = async () => {
         })
       : [];
 
-    return productDocs;
+
+const sortedProductDocs = productDocs.sort((a, b) => b.averageStarRating - a.averageStarRating);
+
+    return sortedProductDocs;
   } catch (error) {
     console.log(error);
     return [];
