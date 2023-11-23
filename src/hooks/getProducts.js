@@ -2,7 +2,7 @@ import { firestore } from "../../firebase-config";
 
 const getProducts = async (limit, query) => {
   try {
-    const response = await firestore.collection("products").limit(limit).get();
+    const response = await firestore.collection("products").get();
     const vendors = await firestore
       .collection("users")
       .where("role", "==", "vendor")
