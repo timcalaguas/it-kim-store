@@ -14,7 +14,7 @@ const ProductRatings = ({ ratings }) => {
     <Container maxW={"7xl"}>
       <Heading mb="24px">Product Ratings</Heading>
       <VStack alignItems={"start"} w={"100%"}>
-        {ratings.map((rating) => (
+        {ratings.map((rating, index) => (
           <Box
             padding={"16px"}
             border={"1px"}
@@ -23,6 +23,7 @@ const ProductRatings = ({ ratings }) => {
             display={"flex"}
             flexDir={"column"}
             gap={"12px"}
+            key={index}
           >
             <HStack>
               <Avatar boxSize={"50px"} src={rating.user.image} />

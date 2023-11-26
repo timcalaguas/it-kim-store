@@ -16,11 +16,14 @@ const getAdminDashboardCount = async () => {
     .where("role", "==", "customer")
     .get();
 
+  const order = await firestore.collection("orders").get();
+
   const vendorCount = vendors.size;
   const courierCount = couriers.size;
   const customerCount = customer.size;
+  const orderCount = order.size;
 
-  return { vendorCount, courierCount, customerCount };
+  return { vendorCount, courierCount, customerCount, orderCount };
 };
 
 export default getAdminDashboardCount;

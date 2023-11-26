@@ -3,7 +3,7 @@ import { firestore } from "../../../../../firebase-config";
 import { getSession } from "next-auth/react";
 import { FiHome, FiTrendingUp, FiCompass, FiStar } from "react-icons/fi";
 import {
-  AiTwotoneEdit,
+  AiFillShop,
   AiFillDelete,
   AiFillEye,
   AiFillCheckCircle,
@@ -22,13 +22,6 @@ import {
   Heading,
   HStack,
   Image,
-  Link,
-  AlertDialog,
-  AlertDialogBody,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogContent,
-  AlertDialogOverlay,
   Modal,
   ModalBody,
   ModalCloseButton,
@@ -43,17 +36,25 @@ import {
   Divider,
   Avatar,
   VStack,
+  AlertDialog,
+  AlertDialogBody,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogContent,
+  AlertDialogOverlay,
+  Card,
+  CardBody,
 } from "@chakra-ui/react";
 import { useEffect, useState, useRef } from "react";
+import { MdDeliveryDining, MdPerson } from "react-icons/md";
 import moment from "moment/moment";
-import getVendorOrders from "@/hooks/vendors/getVendorOrders";
 import { withSessionSsr } from "@/lib/withSession";
-import axios from "axios";
-import getBodyForEmail from "@/hooks/getBodyForEmail";
-
-import { FaPesoSign } from "react-icons/fa6";
 import { AiFillShopping } from "react-icons/ai";
 import { BsFillCartCheckFill } from "react-icons/bs";
+
+import getAdminOrders from "@/hooks/admin/getAdminOrders";
+import getVendorOrders from "@/hooks/vendors/getVendorOrders";
+import { FaPesoSign } from "react-icons/fa6";
 const LinkItems = [
   { name: "Dashboard", icon: FiHome, link: "/role/vendor" },
   { name: "Products", icon: AiFillShopping, link: "/role/vendor/products" },
@@ -61,11 +62,12 @@ const LinkItems = [
   { name: "Sales Report", icon: FaPesoSign, link: "/role/vendor/sales-report" },
 ];
 
-const Orders = ({ orderDocs, user }) => {
+const Vendors = ({ orderDocs, user, grandTotalProfit }) => {
   const toast = useToast();
 
   const [orders, setOrders] = useState(orderDocs);
-  const [process, setProcess] = useState("");
+  const [selectedId, setSelectedId] = useState("");
+  const [process, setProcess] = useState("accept");
   const [selectedItem, setSelectedItem] = useState([]);
   const [processLoading, setProcessLoading] = useState(false);
 
@@ -78,66 +80,87 @@ const Orders = ({ orderDocs, user }) => {
   } = useDisclosure();
   const cancelRef = useRef();
 
-  const openDeleteDialog = (order, process) => {
-    setSelectedItem(order);
+  const openProcessDialog = (vendor, process) => {
+    setSelectedItem(vendor);
 
     setProcess(process);
     onOpen();
   };
 
-  const openModal = (order) => {
-    setSelectedItem(order);
+  const openModal = (vendor) => {
+    setSelectedItem(vendor);
     itemOnOpen();
   };
 
-  const processOrder = async () => {
+  const processVendor = async () => {
     setProcessLoading(true);
-    const indexOfObjectToUpdate = orders.findIndex(
+    const indexOfObjectToUpdate = vendors.findIndex(
       (obj) => obj.id === selectedItem.id
     );
-
-    let status = process == "accept" ? "order-accepted" : "order-declined";
-
-    const bodyForEmail = await getBodyForEmail(
-      status,
-      selectedItem.customer,
-      user
-    );
-
-    const response = await axios.post("/api/send-mail", bodyForEmail);
-
+    let status = process == "accept" ? "approved" : "blocked";
     const processResponse = await firestore
-      .collection("orders")
+      .collection("users")
       .doc(selectedItem.id)
       .update({ status: status });
     selectedItem.status = status;
     setProcessLoading(false);
-    onClose();
-    orders[indexOfObjectToUpdate] = selectedItem;
+    vendors[indexOfObjectToUpdate] = selectedItem;
+
     toast({
-      title: process == "accept" ? "Order Accepted" : "Order Declined",
+      title: process == "accept" ? "Approved" : "Blocked",
       description:
         process == "accept"
-          ? "The order is now accepted."
-          : "The order is now declined.",
+          ? "The vendor is now approved."
+          : "The vendor is now blocked.",
       status: "success",
       duration: 9000,
       isClosable: true,
     });
+    onClose();
   };
 
   return (
     <>
       <AdminLayout
-        metaTitle={"Vendor - Orders"}
+        metaTitle={"Vendor - Sales Report"}
         pageName={"IT Kim - Vendor"}
         user={user}
         LinkItems={LinkItems}
       >
         <HStack alignItems={"center"} justifyContent={"space-between"} mb={6}>
-          <Heading>List of Orders</Heading>
+          <Heading>Sales Report</Heading>
         </HStack>
 
+        <Card
+          minHeight={"250px"}
+          position={"relative"}
+          overflow={"hidden"}
+          mb={"24px"}
+        >
+          <CardBody p={0}>
+            <Stack
+              height={"full"}
+              alignItems={"start"}
+              flexDirection={{ base: "column", md: "row" }}
+            >
+              <Box
+                bg={"gray.100"}
+                height={"100%"}
+                w={{ base: "100%", md: "20%" }}
+                minW={{ base: "150px", md: "200px" }}
+                minH={"250px"}
+                display={"grid"}
+                placeItems={"center"}
+              >
+                <FaPesoSign fontSize={"100px"} fill="#3082CF" />
+              </Box>
+              <Box padding={"16px"}>
+                <Heading color={"#3082CF"}>TOTAL SALES</Heading>
+                <Heading size={"4xl"}>{grandTotalProfit}</Heading>
+              </Box>
+            </Stack>
+          </CardBody>
+        </Card>
         <TableContainer
           background={"white"}
           p={{ base: 2, md: 5 }}
@@ -148,58 +171,40 @@ const Orders = ({ orderDocs, user }) => {
               <Thead>
                 <Tr>
                   <Th>Order ID</Th>
-                  <Th>Date</Th>
-                  <Th>Customer</Th>
+                  <Th>Total</Th>
                   <Th>Status</Th>
                   <Th>Actions</Th>
                 </Tr>
               </Thead>
               <Tbody>
-                {orders.map((order) => (
-                  <Tr>
-                    <Td>{order.id}</Td>
-                    <Td>{moment(new Date()).format("MM/DD/YYYY")}</Td>
-                    <Td>{order.customer.name}</Td>
-                    <Td textTransform={"uppercase"}>
-                      <Badge>{order.status}</Badge>
-                    </Td>
-                    <Td>
-                      <Stack direction="row" spacing={2}>
-                        <Button
-                          size={"sm"}
-                          colorScheme="orange"
-                          variant={"outline"}
-                          leftIcon={<AiFillEye />}
-                          onClick={() => openModal(order)}
-                        >
-                          View Details
-                        </Button>
-                        {order.status == "order-placed" && (
-                          <>
-                            <Button
-                              leftIcon={<AiFillCheckCircle />}
-                              colorScheme="blue"
-                              variant="outline"
-                              size={"sm"}
-                              onClick={() => openDeleteDialog(order, "accept")}
-                            >
-                              Accept
-                            </Button>
-                            <Button
-                              leftIcon={<AiFillDelete />}
-                              colorScheme="red"
-                              size={"sm"}
-                              variant="outline"
-                              onClick={() => openDeleteDialog(order, "decline")}
-                            >
-                              Decline
-                            </Button>
-                          </>
-                        )}
-                      </Stack>
-                    </Td>
-                  </Tr>
-                ))}
+                {orders.map((order) => {
+                  return (
+                    <Tr key={order.id}>
+                      <Td>
+                        <HStack>
+                          <Text>{order.id}</Text>
+                        </HStack>
+                      </Td>
+                      <Td>{order.subtotal}</Td>
+                      <Td textTransform={"uppercase"}>
+                        <Badge>{order.status}</Badge>
+                      </Td>
+                      <Td>
+                        <Stack direction="row" spacing={2}>
+                          <Button
+                            size={"sm"}
+                            colorScheme="orange"
+                            variant={"outline"}
+                            leftIcon={<AiFillEye />}
+                            onClick={() => openModal(order)}
+                          >
+                            View Items
+                          </Button>
+                        </Stack>
+                      </Td>
+                    </Tr>
+                  );
+                })}
               </Tbody>
             </Table>
           ) : (
@@ -209,7 +214,7 @@ const Orders = ({ orderDocs, user }) => {
               placeItems={"center"}
               textAlign={"center"}
             >
-              <Heading>No orders yet</Heading>
+              <Heading>No vendors yet</Heading>
             </Box>
           )}
         </TableContainer>
@@ -222,13 +227,13 @@ const Orders = ({ orderDocs, user }) => {
         <AlertDialogOverlay>
           <AlertDialogContent>
             <AlertDialogHeader fontSize="lg" fontWeight="bold">
-              {process == "accept" ? "Accept Order" : "Decline Order"}
+              {process == "accept" ? "Approve Vendor" : "Block Vendor"}
             </AlertDialogHeader>
 
             <AlertDialogBody>
               {process == "accept"
-                ? "Are you sure you want to accept this order? After accepting this order will be available to all couriers."
-                : "Are you sure you want to decline this order? After declining the order will be cancelled and the customer will be notified."}
+                ? "Are you sure you want to approve this vendor? This will allow the vendor to publish their products."
+                : "Are you sure you want to block this vendor? They will no longer be allowed to use their store and sell products."}
             </AlertDialogBody>
 
             <AlertDialogFooter>
@@ -237,11 +242,11 @@ const Orders = ({ orderDocs, user }) => {
               </Button>
               <Button
                 colorScheme={process == "accept" ? "blue" : "red"}
-                onClick={() => processOrder()}
+                onClick={() => processVendor()}
                 ml={3}
                 isLoading={processLoading}
               >
-                {process == "accept" ? "Accept" : "Decline"}
+                {process == "accept" ? "Approve" : "Block"}
               </Button>
             </AlertDialogFooter>
           </AlertDialogContent>
@@ -254,26 +259,34 @@ const Orders = ({ orderDocs, user }) => {
           <ModalHeader>Details</ModalHeader>
           <ModalCloseButton />
           <ModalBody>
-            <HStack mb={"12px"}>
-              <Avatar src={selectedItem.customer?.picture} />
-              <Box>
-                <Text>{selectedItem.customer?.name}</Text>
-                <Text>{selectedItem.customer?.email}</Text>
-              </Box>
-            </HStack>
-            <Text mb={"12px"}>
-              <Text fontWeight={"500"}>Address:</Text>{" "}
-              {selectedItem.customer?.address &&
-                `${selectedItem.customer.address.address.no} ${selectedItem.customer.address.address.street} ${selectedItem.customer.address.address.barangay} ${selectedItem.customer.address.address.city}`}
-            </Text>
-            <Text mb={"12px"}>
-              <Text fontWeight={"500"}>Contact Number:</Text>{" "}
-              {selectedItem.customer?.address &&
-                selectedItem.customer.address.contactNumber}{" "}
-            </Text>
-            <Divider marginBlock={"6px"} />
             <Box>
-              <Text fontWeight={"600"}>Items</Text>
+              <Text fontWeight={"600"} fontSize={"18px"} mb={"12px"}>
+                Customer Info
+              </Text>
+              <HStack mb={"12px"}>
+                <Avatar src={selectedItem.customer?.picture} />
+                <Box>
+                  <Text>{selectedItem.customer?.name}</Text>
+                  <Text>{selectedItem.customer?.email}</Text>
+                </Box>
+              </HStack>
+              <Text mb={"12px"}>
+                <Text fontWeight={"500"}>Address:</Text>{" "}
+                {selectedItem.customer?.address &&
+                  `${selectedItem.customer.address.address.no} ${selectedItem.customer.address.address.street} ${selectedItem.customer.address.address.barangay} ${selectedItem.customer.address.address.city}`}
+              </Text>
+              <Text>
+                <Text fontWeight={"500"}>Contact Number:</Text>{" "}
+                {selectedItem.customer?.address &&
+                  selectedItem.customer.address.contactNumber}{" "}
+              </Text>
+            </Box>
+            <Divider h={"3px"} marginBlock={"12px"} />
+
+            <Box>
+              <Text fontWeight={"600"} fontSize={"18px"}>
+                Items
+              </Text>
               {selectedItem.items &&
                 selectedItem.items.map((item) => (
                   <HStack
@@ -322,16 +335,16 @@ const Orders = ({ orderDocs, user }) => {
   );
 };
 
-export default Orders;
+export default Vendors;
 
 export const getServerSideProps = withSessionSsr(async ({ req, res }) => {
-  const user = req.session.user ? req.session.user : null;
+  const user = req.session.user;
 
   if (!user) {
     return {
       redirect: {
         permanent: false,
-        destination: "/role/vendor/auth/login",
+        destination: "/role/admin/auth/login",
       },
     };
   }
@@ -342,9 +355,16 @@ export const getServerSideProps = withSessionSsr(async ({ req, res }) => {
     };
   }
 
-  const orderDocs = await getVendorOrders(user.docId);
+  let orderDocs = await getVendorOrders(user.docId);
+  const receivedItems = orderDocs.filter((item) => item.status === "received");
+
+  orderDocs = receivedItems;
+
+  const grandTotalProfit = orderDocs.reduce((orderSum, order) => {
+    return orderSum + order.subtotal;
+  }, 0);
 
   return {
-    props: { orderDocs, user },
+    props: { orderDocs, user, grandTotalProfit },
   };
 });

@@ -76,11 +76,11 @@ export default function Checkout({ userSession, orderCount }) {
   const [shipping, setShipping] = useState(30);
 
   useEffect(() => {
-    if (orderCount <= 10 || calculateSubtotal(vendorUID) >= 150) {
+    if (orderCount <= 10 || calculateSubtotal(vendorUID) >= 300) {
       setShipping(0);
     } else if (
-      calculateSubtotal(vendorUID) >= 100 &&
-      calculateSubtotal(vendorUID) < 150
+      calculateSubtotal(vendorUID) >= 250 &&
+      calculateSubtotal(vendorUID) < 300
     ) {
       setShipping(15);
     } else {
@@ -219,6 +219,7 @@ export default function Checkout({ userSession, orderCount }) {
                     </Box>
                     <Box display={"flex"} gap={"5px"}>
                       <Text fontWeight={"600"}>Contact Number:</Text>{" "}
+                      {selectedAddress.contactNumber != "" && "+63"}
                       {selectedAddress?.contactNumber}
                     </Box>
                   </Box>
@@ -246,7 +247,7 @@ export default function Checkout({ userSession, orderCount }) {
                             <option value={index}>
                               {address.address.no} {address.address.street},
                               {address.address.barangay}, {address.address.city}{" "}
-                              - {address.contactNumber}
+                              - +63{address.contactNumber}
                             </option>
                           ))}
                         </Select>
@@ -295,15 +296,16 @@ export default function Checkout({ userSession, orderCount }) {
                   alignItems={"end"}
                   mb={"12px"}
                 >
-                  <Text fontWeight={"600"}>Payment Method</Text>
+                  <Text fontWeight={"600"}>
+                    Payment Method: Cash on Delivery
+                  </Text>
                 </HStack>
-                <Select onChange={(e) => setPaymentMethod(e.target.value)}>
-                  <option value={"Cash on Delivery"}>Cash on Delivery</option>
-                  <option value={"Cash on Delivery"} disabled>
-                    Other - Coming out soon
-                  </option>
-                </Select>
               </FormControl>
+              <VStack textAlign={"left"} alignItems={"start"}>
+                <Text>
+                  <b>Note:</b> These Products are freshly baked by our Vendors.
+                </Text>
+              </VStack>
               <VStack textAlign={"left"} alignItems={"start"}>
                 <Text>
                   Once the seller has approved your product, there's no refund

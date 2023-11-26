@@ -23,10 +23,14 @@ import { useForm } from "react-hook-form";
 import { useState } from "react";
 import { withSessionSsr } from "@/lib/withSession";
 
+import { FaPesoSign } from "react-icons/fa6";
+import { AiFillShopping } from "react-icons/ai";
+import { BsFillCartCheckFill } from "react-icons/bs";
 const LinkItems = [
   { name: "Dashboard", icon: FiHome, link: "/role/vendor" },
-  { name: "Products", icon: FiTrendingUp, link: "/role/vendor/products" },
-  { name: "Orders", icon: FiCompass, link: "/role/vendor/orders" },
+  { name: "Products", icon: AiFillShopping, link: "/role/vendor/products" },
+  { name: "Orders", icon: BsFillCartCheckFill, link: "/role/vendor/orders" },
+  { name: "Sales Report", icon: FaPesoSign, link: "/role/vendor/sales-report" },
 ];
 
 const AddProduct = ({ user }) => {

@@ -6,8 +6,7 @@ const getSingleProduct = async (id) => {
   const response = await productsRef.doc(id).get();
 
   const product = response.data();
-
-  console.log(product);
+  product.id = id;
 
   if (response.exists) {
     const vendor = await firestore

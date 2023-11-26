@@ -48,11 +48,17 @@ import { useEffect, useState, useRef } from "react";
 import getUsers from "@/hooks/getUsers";
 import { withSessionSsr } from "@/lib/withSession";
 
+import { BiSolidShoppingBag } from "react-icons/bi";
 const LinkItems = [
   { name: "Dashboard", icon: FiHome, link: "/role/admin" },
   { name: "Vendors", icon: AiFillShop, link: "/role/admin/vendors" },
   { name: "Couriers", icon: MdDeliveryDining, link: "/role/admin/couriers" },
   { name: "Customers", icon: MdPerson, link: "/role/admin/customers" },
+  {
+    name: "Sales Report",
+    icon: BiSolidShoppingBag,
+    link: "/role/admin/sales-report",
+  },
 ];
 
 const Couriers = ({ courierDocs, user }) => {

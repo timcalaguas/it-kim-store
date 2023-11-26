@@ -39,6 +39,7 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { AiFillShopping } from "react-icons/ai";
 import { BsFillCartCheckFill } from "react-icons/bs";
+import { FaPesoSign } from "react-icons/fa6";
 
 import { withSessionSsr } from "@/lib/withSession";
 import geVendorDashboardCount from "@/hooks/vendors/getVendorDashboardCount";
@@ -47,11 +48,12 @@ import axios from "axios";
 
 const LinkItems = [
   { name: "Dashboard", icon: FiHome, link: "/role/vendor" },
-  { name: "Products", icon: FiTrendingUp, link: "/role/vendor/products" },
-  { name: "Orders", icon: FiCompass, link: "/role/vendor/orders" },
+  { name: "Products", icon: AiFillShopping, link: "/role/vendor/products" },
+  { name: "Orders", icon: BsFillCartCheckFill, link: "/role/vendor/orders" },
+  { name: "Sales Report", icon: FaPesoSign, link: "/role/vendor/sales-report" },
 ];
 
-const Dashboard = ({ userSession, productCount, orderCount }) => {
+const Dashboard = ({ userSession, productCount, orderCount, salesReport }) => {
   const storageRef = storage.ref();
   const { isOpen, onOpen, onClose } = useDisclosure();
   const toast = useToast();
@@ -309,6 +311,39 @@ const Dashboard = ({ userSession, productCount, orderCount }) => {
               </Stack>
             </CardBody>
           </Card>
+          <Card
+            minW={{ base: "100%", xl: "320px" }}
+            w={{ base: "100%", xl: "48%" }}
+            minHeight={"250px"}
+            position={"relative"}
+            overflow={"hidden"}
+            as={Link}
+            href={"/role/vendor/sales-report"}
+            _hover={{ textDecor: "none" }}
+          >
+            <CardBody p={0}>
+              <Stack
+                height={"full"}
+                alignItems={"start"}
+                flexDirection={{ base: "column", md: "row" }}
+              >
+                <Box
+                  bg={"gray.100"}
+                  height={"100%"}
+                  w={{ base: "100%", md: "auto" }}
+                  minW={{ base: "150px", md: "200px" }}
+                  display={"grid"}
+                  placeItems={"center"}
+                >
+                  <FaPesoSign fontSize={"100px"} fill="#3082CF" />
+                </Box>
+                <Box padding={"16px"}>
+                  <Heading color={"#3082CF"}>SALES REPORT</Heading>
+                  <Heading size={"4xl"}>{salesReport}</Heading>
+                </Box>
+              </Stack>
+            </CardBody>
+          </Card>
         </Flex>
         <Modal isOpen={isOpen} onClose={onClose} size={"2xl"}>
           <form onSubmit={handleSubmit(updateProfile)}>
@@ -452,11 +487,10 @@ export const getServerSideProps = withSessionSsr(async ({ req, res }) => {
     };
   }
 
-  const { productCount, orderCount } = await geVendorDashboardCount(
-    userSession.docId
-  );
+  const { productCount, orderCount, salesReport } =
+    await geVendorDashboardCount(userSession.docId);
 
   return {
-    props: { userSession, productCount, orderCount },
+    props: { userSession, productCount, orderCount, salesReport },
   };
 });

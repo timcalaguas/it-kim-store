@@ -20,6 +20,7 @@ import {
 } from "@chakra-ui/react";
 import { AiFillShop } from "react-icons/ai";
 import { MdDeliveryDining, MdPerson } from "react-icons/md";
+import { BiSolidShoppingBag } from "react-icons/bi";
 import { withSessionSsr } from "@/lib/withSession";
 import getAdminDashboardCount from "@/hooks/admin/getAdminDashboardCounts";
 import Link from "next/link";
@@ -29,10 +30,16 @@ const LinkItems = [
   { name: "Vendors", icon: AiFillShop, link: "/role/admin/vendors" },
   { name: "Couriers", icon: MdDeliveryDining, link: "/role/admin/couriers" },
   { name: "Customers", icon: MdPerson, link: "/role/admin/customers" },
+  { name: "Orders", icon: BiSolidShoppingBag, link: "/role/admin/orders" },
 ];
 
-const Dashboard = ({ user, vendorCount, courierCount, customerCount }) => {
-  const { isOpen, onOpen, onClose } = useDisclosure();
+const Dashboard = ({
+  user,
+  vendorCount,
+  courierCount,
+  customerCount,
+  orderCount,
+}) => {
   return (
     <>
       <AdminLayout
@@ -155,8 +162,41 @@ const Dashboard = ({ user, vendorCount, courierCount, customerCount }) => {
                   <MdPerson fontSize={"100px"} fill="#3082CF" />
                 </Box>
                 <Box padding={"16px"}>
-                  <Heading color={"#3082CF"}>CUSTOMER</Heading>
+                  <Heading color={"#3082CF"}>CUSTOMERS</Heading>
                   <Heading size={"4xl"}>{customerCount}</Heading>
+                </Box>
+              </Stack>
+            </CardBody>
+          </Card>
+          <Card
+            minW={{ base: "100%", xl: "320px" }}
+            w={{ base: "100%", xl: "48%" }}
+            minHeight={"250px"}
+            position={"relative"}
+            overflow={"hidden"}
+            as={Link}
+            href="/role/admin/orders"
+            _hover={{ textDecor: "none" }}
+          >
+            <CardBody p={0}>
+              <Stack
+                height={"full"}
+                alignItems={"start"}
+                flexDirection={{ base: "column", md: "row" }}
+              >
+                <Box
+                  bg={"gray.100"}
+                  height={"100%"}
+                  w={{ base: "100%", md: "auto" }}
+                  minW={{ base: "150px", md: "200px" }}
+                  display={"grid"}
+                  placeItems={"center"}
+                >
+                  <BiSolidShoppingBag fontSize={"100px"} fill="#3082CF" />
+                </Box>
+                <Box padding={"16px"}>
+                  <Heading color={"#3082CF"}>ORRDERS</Heading>
+                  <Heading size={"4xl"}>{orderCount}</Heading>
                 </Box>
               </Stack>
             </CardBody>
@@ -187,10 +227,10 @@ export const getServerSideProps = withSessionSsr(async ({ req, res }) => {
     };
   }
 
-  const { vendorCount, courierCount, customerCount } =
+  const { vendorCount, courierCount, customerCount, orderCount } =
     await getAdminDashboardCount();
 
   return {
-    props: { user, vendorCount, courierCount, customerCount },
+    props: { user, vendorCount, courierCount, customerCount, orderCount },
   };
 });

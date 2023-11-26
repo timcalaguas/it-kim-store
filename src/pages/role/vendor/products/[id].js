@@ -39,10 +39,14 @@ import getSingleProduct from "@/hooks/products/getSingleProduct";
 import ProductCard from "@/components/ProductCard";
 import StarRating from "@/components/StarRating";
 
+import { FaPesoSign } from "react-icons/fa6";
+import { AiFillShopping } from "react-icons/ai";
+import { BsFillCartCheckFill } from "react-icons/bs";
 const LinkItems = [
   { name: "Dashboard", icon: FiHome, link: "/role/vendor" },
-  { name: "Products", icon: FiTrendingUp, link: "/role/vendor/products" },
-  { name: "Orders", icon: FiCompass, link: "/role/vendor/orders" },
+  { name: "Products", icon: AiFillShopping, link: "/role/vendor/products" },
+  { name: "Orders", icon: BsFillCartCheckFill, link: "/role/vendor/orders" },
+  { name: "Sales Report", icon: FaPesoSign, link: "/role/vendor/sales-report" },
 ];
 
 const Products = ({ productDoc, user }) => {
@@ -99,7 +103,7 @@ const Products = ({ productDoc, user }) => {
               </Box>
               <Box w={{ base: "100%", "2xl": "70%" }}>
                 <Heading mb={"24px"}>Product Ratings</Heading>
-                {product.rating.length === 0 ? (
+                {product.rating.length > 0 ? (
                   <VStack alignItems={"start"} w={"100%"}>
                     {product.rating.length > 0 &&
                       product.rating.map((rating) => (
@@ -132,33 +136,6 @@ const Products = ({ productDoc, user }) => {
                           </Box>
                         </Box>
                       ))}
-                    <Box
-                      padding={"16px"}
-                      border={"1px"}
-                      borderColor={"gray.200"}
-                      w={"100%"}
-                      display={"flex"}
-                      flexDir={"column"}
-                      gap={"12px"}
-                    >
-                      <HStack>
-                        <Avatar boxSize={"50px"} src={"rating.user.image"} />
-                        <Box>
-                          <Text>rating.user.name</Text>
-                          <Text>rating.user.email</Text>
-                        </Box>
-                      </HStack>
-                      <Box>
-                        <HStack>
-                          <Text>Rating:</Text> <StarRating rating={5} />
-                        </HStack>
-                        <HStack>
-                          <Text>Comment:</Text>
-
-                          <Text>rating.comment</Text>
-                        </HStack>
-                      </Box>
-                    </Box>
                   </VStack>
                 ) : (
                   <Box>

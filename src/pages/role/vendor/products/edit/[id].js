@@ -24,12 +24,15 @@ import { useRouter } from "next/router";
 import { withSessionSsr } from "@/lib/withSession";
 import getSingleProduct from "@/hooks/products/getSingleProduct";
 
+import { FaPesoSign } from "react-icons/fa6";
+import { AiFillShopping } from "react-icons/ai";
+import { BsFillCartCheckFill } from "react-icons/bs";
 const LinkItems = [
   { name: "Dashboard", icon: FiHome, link: "/role/vendor" },
-  { name: "Products", icon: FiTrendingUp, link: "/role/vendor/products" },
-  { name: "Orders", icon: FiCompass, link: "/role/vendor/orders" },
+  { name: "Products", icon: AiFillShopping, link: "/role/vendor/products" },
+  { name: "Orders", icon: BsFillCartCheckFill, link: "/role/vendor/orders" },
+  { name: "Sales Report", icon: FaPesoSign, link: "/role/vendor/sales-report" },
 ];
-
 const EditProduct = ({ product, user }) => {
   const storageRef = storage.ref();
   const toast = useToast();

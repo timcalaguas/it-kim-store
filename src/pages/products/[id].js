@@ -40,8 +40,6 @@ import StarRating from "@/components/StarRating";
 const ProductDetails = ({ products, product, user }) => {
   const { addToCart } = useCartStore();
 
-  console.log(product, products);
-
   return (
     <>
       <Layout metaTitle={`IT Kim - ${product.productName}`} user={user}>

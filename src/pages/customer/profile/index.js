@@ -270,15 +270,14 @@ const Profile = ({ user }) => {
                 </FormControl>
                 <FormControl>
                   <FormLabel>City</FormLabel>
-
-                  <Select
-                    value={newAddress.city}
+                  <Input
                     onChange={(e) =>
                       setNewAddress({ ...newAddress, city: e.target.value })
                     }
-                  >
-                    <option value={"Angeles City"}>Angeles City</option>
-                  </Select>
+                    value={newAddress.city}
+                    disabled
+                    cursor={"pointer"}
+                  />
                 </FormControl>
               </VStack>
             ) : (
