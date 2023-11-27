@@ -356,7 +356,7 @@ export const getServerSideProps = withSessionSsr(async ({ req, res }) => {
   }
 
   let orderDocs = await getVendorOrders(user.docId);
-  const receivedItems = orderDocs.filter((item) => item.status === "received");
+  const receivedItems = orderDocs.filter((item) => item.status == "received" || item.status == "delivered");
 
   orderDocs = receivedItems;
 
