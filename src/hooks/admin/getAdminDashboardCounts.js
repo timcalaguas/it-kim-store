@@ -17,11 +17,15 @@ const getAdminDashboardCount = async () => {
     .get();
 
   const order = await firestore.collection("orders").get();
+  const filteredArray = order.docs.filter(
+    (order) =>
+      order.data().status == "delivered" || order.data().status == "received"
+  );
 
   const vendorCount = vendors.size;
   const courierCount = couriers.size;
   const customerCount = customer.size;
-  const orderCount = order.size;
+  const orderCount = filteredArray.length;
 
   return { vendorCount, courierCount, customerCount, orderCount };
 };

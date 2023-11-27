@@ -194,8 +194,8 @@ const AddProduct = ({ user }) => {
                       })}
                     />
                     <FormHelperText>
-                      Note: A 5% platform fee will be added to the product price
-                      and discounted price.
+                      Note: A 5% platform fee and 5% couriers fee will be added
+                      to the product price and discounted price.
                     </FormHelperText>
                     <FormErrorMessage>
                       {errors.costPrice && errors.costPrice.message}

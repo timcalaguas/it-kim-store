@@ -2,8 +2,9 @@ import { useRouter } from "next/router";
 import axios from "axios";
 import { signOut } from "firebase/auth";
 import { firebase, auth } from "../../../firebase-config";
-
+import { useToast } from "@chakra-ui/react";
 const AuthManager = () => {
+  const toast = useToast();
   const router = useRouter();
 
   const logout = async (role) => {
@@ -39,11 +40,21 @@ const AuthManager = () => {
       console.log(response);
 
       if (response.status == 200) {
-        if (role === "admin") redirect = "/role/admin/";
-        if (role === "courier") redirect = "/role/courier/";
-        if (role === "vendor") redirect = "/role/vendor/";
+        if (response.data.message == "Not included on Admin Emails") {
+          toast({
+            title: "Email used is not Included on the allowed Admin Emails",
+            status: "warning",
+            duration: 5000,
+            isClosable: true,
+          });
+          console.log("Not Included");
+        } else {
+          if (role === "admin") redirect = "/role/admin/";
+          if (role === "courier") redirect = "/role/courier/";
+          if (role === "vendor") redirect = "/role/vendor/";
 
-        return router.push(redirect);
+          return router.push(redirect);
+        }
       }
     } catch (error) {
       console.log(error);

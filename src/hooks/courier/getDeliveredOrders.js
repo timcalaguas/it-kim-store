@@ -1,7 +1,10 @@
 import { firestore } from "../../../firebase-config";
 
-const getDeliveredOrders = async (id) => {
-  const orderResponse = await firestore.collection("orders").get();
+const getDeliveredOrders = async (email) => {
+  const orderResponse = await firestore
+    .collection("orders")
+    .where("courier.email", "==", email)
+    .get();
 
   let orderDocs = !orderResponse.empty
     ? orderResponse.docs.map((doc) => {
@@ -12,12 +15,13 @@ const getDeliveredOrders = async (id) => {
       })
     : [];
 
+  console.log(orderResponse.empty);
+
   const filteredArray = orderDocs.filter(
-    (order) => order.status === "delivered" && order.courier.id === id
+    (order) => order.status == "delivered" || order.status == "received"
   );
 
   orderDocs = filteredArray;
-
   return orderDocs;
 };
 

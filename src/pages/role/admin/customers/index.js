@@ -49,17 +49,16 @@ import getUsers from "@/hooks/getUsers";
 import { withSessionSsr } from "@/lib/withSession";
 
 import { BiSolidShoppingBag } from "react-icons/bi";
+import { FaPesoSign } from "react-icons/fa6";
+
 const LinkItems = [
   { name: "Dashboard", icon: FiHome, link: "/role/admin" },
   { name: "Vendors", icon: AiFillShop, link: "/role/admin/vendors" },
   { name: "Couriers", icon: MdDeliveryDining, link: "/role/admin/couriers" },
   { name: "Customers", icon: MdPerson, link: "/role/admin/customers" },
-  {
-    name: "Sales Report",
-    icon: BiSolidShoppingBag,
-    link: "/role/admin/sales-report",
-  },
+  { name: "Sales Report", icon: FaPesoSign, link: "/role/admin/sales-report" },
 ];
+
 const Couriers = ({ customerDocs, user }) => {
   const toast = useToast();
 

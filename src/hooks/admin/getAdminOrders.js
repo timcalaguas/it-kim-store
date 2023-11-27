@@ -4,16 +4,21 @@ const getAdminOrders = async (role) => {
   try {
     const response = await firestore.collection("orders").get();
 
-    const orderDocs = !response.empty
+    let orderDocs = !response.empty
       ? response.docs.map((doc) => {
           const returnDoc = doc.data();
           returnDoc.id = doc.id;
-
           return returnDoc;
         })
       : [];
 
-    return orderDocs;
+    console.log(orderDocs);
+
+    const filteredArray = orderDocs.filter(
+      (order) => order.status == "delivered" || order.status == "received"
+    );
+
+    return filteredArray;
   } catch (error) {
     console.log(error);
     return [];

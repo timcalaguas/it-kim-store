@@ -24,13 +24,14 @@ import { BiSolidShoppingBag } from "react-icons/bi";
 import { withSessionSsr } from "@/lib/withSession";
 import getAdminDashboardCount from "@/hooks/admin/getAdminDashboardCounts";
 import Link from "next/link";
+import { FaPesoSign } from "react-icons/fa6";
 
 const LinkItems = [
   { name: "Dashboard", icon: FiHome, link: "/role/admin" },
   { name: "Vendors", icon: AiFillShop, link: "/role/admin/vendors" },
   { name: "Couriers", icon: MdDeliveryDining, link: "/role/admin/couriers" },
   { name: "Customers", icon: MdPerson, link: "/role/admin/customers" },
-  { name: "Orders", icon: BiSolidShoppingBag, link: "/role/admin/orders" },
+  { name: "Sales Report", icon: FaPesoSign, link: "/role/admin/sales-report" },
 ];
 
 const Dashboard = ({
@@ -175,7 +176,7 @@ const Dashboard = ({
             position={"relative"}
             overflow={"hidden"}
             as={Link}
-            href="/role/admin/orders"
+            href="/role/admin/sales-report"
             _hover={{ textDecor: "none" }}
           >
             <CardBody p={0}>
@@ -192,10 +193,10 @@ const Dashboard = ({
                   display={"grid"}
                   placeItems={"center"}
                 >
-                  <BiSolidShoppingBag fontSize={"100px"} fill="#3082CF" />
+                  <FaPesoSign fontSize={"100px"} fill="#3082CF" />
                 </Box>
                 <Box padding={"16px"}>
-                  <Heading color={"#3082CF"}>ORRDERS</Heading>
+                  <Heading color={"#3082CF"}>SALES REPORT</Heading>
                   <Heading size={"4xl"}>{orderCount}</Heading>
                 </Box>
               </Stack>

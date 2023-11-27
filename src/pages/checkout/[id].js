@@ -82,9 +82,9 @@ export default function Checkout({ userSession, orderCount }) {
       calculateSubtotal(vendorUID) >= 250 &&
       calculateSubtotal(vendorUID) < 300
     ) {
-      setShipping(15);
+      setShipping(25);
     } else {
-      setShipping(30);
+      setShipping(40);
     }
 
     console.log(shipping);
@@ -337,9 +337,9 @@ export default function Checkout({ userSession, orderCount }) {
                         <PopoverHeader>Delivery Fee Promo</PopoverHeader>
                         <PopoverCloseButton />
                         <PopoverBody>
-                          Enjoy free delivery fee on orders over 150 or when you
-                          are one of the 10 first orders. For orders between 100
-                          and 150, delivery fee is half-priced
+                          Enjoy free delivery fee on orders over 300 or when you
+                          are one of the 10 first orders. For orders between 250
+                          and 300, delivery fee is half-priced
                         </PopoverBody>
                       </PopoverContent>
                     </Popover>

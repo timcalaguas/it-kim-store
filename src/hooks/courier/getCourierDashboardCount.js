@@ -1,6 +1,6 @@
 import { firestore } from "../../../firebase-config";
 
-const getCourierDashboardCount = async (id) => {
+const getCourierDashboardCount = async (email) => {
   const availableOrders = await firestore
     .collection("orders")
     .where("status", "==", "order-accepted")
@@ -8,12 +8,12 @@ const getCourierDashboardCount = async (id) => {
 
   const finishedOrders = await firestore
     .collection("orders")
-    .where("status", "==", "completed")
+    .where("courier.email", "==", email)
     .get();
 
   const completedOrders = finishedOrders.docs.map((obj) => {
     const returnDoc = obj.data();
-    if (returnDoc.courierId == id) {
+    if (returnDoc.status == "delivered" || returnDoc.status == "received") {
       return returnDoc;
     }
   });

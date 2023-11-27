@@ -731,7 +731,7 @@ export const getServerSideProps = withSessionSsr(async ({ req, res }) => {
   }
 
   const { availableOrderCount, finishedOrderCount } =
-    await getCourierDashboardCount();
+    await getCourierDashboardCount(userSession.email);
 
   return {
     props: { userSession, availableOrderCount, finishedOrderCount, order },

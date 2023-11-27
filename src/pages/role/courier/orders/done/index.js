@@ -24,6 +24,7 @@ import {
   Modal,
   ModalBody,
   ModalCloseButton,
+  VStack,
   ModalHeader,
   ModalOverlay,
   ModalContent,
@@ -34,11 +35,18 @@ import {
   Text,
   Divider,
   Avatar,
+  Flex,
+  Card,
+  CardBody,
 } from "@chakra-ui/react";
 import { useEffect, useState, useRef } from "react";
 import moment from "moment/moment";
 import getDeliveredOrders from "@/hooks/courier/getDeliveredOrders";
 import { withSessionSsr } from "@/lib/withSession";
+import Link from "next/link";
+import { BsFillCartFill } from "react-icons/bs";
+import { BsCartCheckFill } from "react-icons/bs";
+import { FaPesoSign } from "react-icons/fa6";
 
 const LinkItems = [
   { name: "Dashboard", icon: FiHome, link: "/role/courier" },
@@ -49,7 +57,7 @@ const LinkItems = [
   },
   { name: "Finished Orders", icon: FiStar, link: "/role/courier/orders/done" },
 ];
-const Orders = ({ orderDocs, userSession }) => {
+const Orders = ({ orderDocs, userSession, grandTotalProfit }) => {
   const toast = useToast();
 
   const [orders, setOrders] = useState(orderDocs);
@@ -99,8 +107,45 @@ const Orders = ({ orderDocs, userSession }) => {
         LinkItems={LinkItems}
       >
         <HStack alignItems={"center"} justifyContent={"space-between"} mb={6}>
-          <Heading>Available Orders</Heading>
+          <Heading>Finished Orders</Heading>
         </HStack>
+
+        <Flex
+          gap={4}
+          justifyContent={"space-between"}
+          flexWrap={"wrap"}
+          mb={"24px"}
+        >
+          <Card
+            w={"100%"}
+            minHeight={"250px"}
+            position={"relative"}
+            overflow={"hidden"}
+          >
+            <CardBody p={0}>
+              <Stack
+                height={"full"}
+                alignItems={"start"}
+                flexDirection={{ base: "column", md: "row" }}
+              >
+                <Box
+                  bg={"gray.100"}
+                  height={"100%"}
+                  w={{ base: "100%", md: "auto" }}
+                  minW={{ base: "150px", md: "200px" }}
+                  display={"grid"}
+                  placeItems={"center"}
+                >
+                  <FaPesoSign fontSize={"100px"} fill="#3082CF" />
+                </Box>
+                <Box padding={"16px"}>
+                  <Heading color={"#3082CF"}>TOTAL INCOME</Heading>
+                  <Heading size={"4xl"}>{grandTotalProfit}</Heading>
+                </Box>
+              </Stack>
+            </CardBody>
+          </Card>
+        </Flex>
 
         <TableContainer
           background={"white"}
@@ -113,35 +158,51 @@ const Orders = ({ orderDocs, userSession }) => {
                 <Tr>
                   <Th>Order ID</Th>
                   <Th>Date</Th>
-                  <Th>Customer</Th>
+                  <Th>Vendor</Th>
+                  <Th>Total</Th>
+                  <Th>Delivery Fee</Th>
+                  <Th>Order Percentage</Th>
                   <Th>Status</Th>
                   <Th>Actions</Th>
                 </Tr>
               </Thead>
               <Tbody>
-                {orders.map((order) => (
-                  <Tr>
-                    <Td>{order.id}</Td>
-                    <Td>{moment(new Date()).format("MM/DD/YYYY")}</Td>
-                    <Td>{order.customer.name}</Td>
-                    <Td textTransform={"uppercase"}>
-                      <Badge>{order.status}</Badge>
-                    </Td>
-                    <Td>
-                      <Stack direction="row" spacing={2}>
-                        <Button
-                          size={"sm"}
-                          colorScheme="orange"
-                          variant={"outline"}
-                          leftIcon={<AiFillEye />}
-                          onClick={() => openModal(order)}
-                        >
-                          View Details
-                        </Button>
-                      </Stack>
-                    </Td>
-                  </Tr>
-                ))}
+                {orders.map((order) => {
+                  const totalProfit = order.items.reduce((sum, item) => {
+                    const profitPerItem =
+                      (item.discountedPrice - item.costDiscountedPrice) *
+                      item.quantity;
+                    return sum + profitPerItem;
+                  }, 0);
+
+                  const percent = totalProfit / 2;
+                  return (
+                    <Tr>
+                      <Td>{order.id}</Td>
+                      <Td>{moment(new Date()).format("MM/DD/YYYY")}</Td>
+                      <Td>{order.vendor}</Td>
+                      <Td>{order.total}</Td>
+                      <Td>{order.deliveryFee}</Td>
+                      <Td>{percent}</Td>
+                      <Td textTransform={"uppercase"}>
+                        <Badge>{order.status}</Badge>
+                      </Td>
+                      <Td>
+                        <Stack direction="row" spacing={2}>
+                          <Button
+                            size={"sm"}
+                            colorScheme="orange"
+                            variant={"outline"}
+                            leftIcon={<AiFillEye />}
+                            onClick={() => openModal(order)}
+                          >
+                            View Details
+                          </Button>
+                        </Stack>
+                      </Td>
+                    </Tr>
+                  );
+                })}
               </Tbody>
             </Table>
           ) : (
@@ -212,6 +273,18 @@ const Orders = ({ orderDocs, userSession }) => {
                   </HStack>
                 ))}
             </Box>
+            <VStack alignItems={"end"}>
+              <Text>
+                <b>Subtotal:</b> {selectedItem.subtotal}
+              </Text>
+              <Text>
+                <b>Shipping Fee:</b>{" "}
+                {selectedItem.total - selectedItem.subtotal}
+              </Text>
+              <Text>
+                <b>Total:</b> {selectedItem.total}
+              </Text>
+            </VStack>
           </ModalBody>
         </ModalContent>
       </Modal>
@@ -239,9 +312,19 @@ export const getServerSideProps = withSessionSsr(async ({ req, res }) => {
     };
   }
 
-  const orderDocs = await getDeliveredOrders(userSession.docId);
+  const orderDocs = await getDeliveredOrders(userSession.email);
+
+  const grandTotalProfit = orderDocs.reduce((orderSum, order) => {
+    const orderProfit = order.items.reduce((itemSum, item) => {
+      const profitPerItem =
+        ((item.discountedPrice - item.costDiscountedPrice) / 2) * item.quantity;
+      return itemSum + profitPerItem;
+    }, 0);
+
+    return orderSum + orderProfit + order.deliveryFee;
+  }, 0);
 
   return {
-    props: { orderDocs, userSession },
+    props: { orderDocs, userSession, grandTotalProfit },
   };
 });

@@ -53,16 +53,13 @@ import { FaPesoSign } from "react-icons/fa6";
 
 import { BiSolidShoppingBag } from "react-icons/bi";
 import getAdminOrders from "@/hooks/admin/getAdminOrders";
+
 const LinkItems = [
   { name: "Dashboard", icon: FiHome, link: "/role/admin" },
   { name: "Vendors", icon: AiFillShop, link: "/role/admin/vendors" },
   { name: "Couriers", icon: MdDeliveryDining, link: "/role/admin/couriers" },
   { name: "Customers", icon: MdPerson, link: "/role/admin/customers" },
-  {
-    name: "Sales Report",
-    icon: BiSolidShoppingBag,
-    link: "/role/admin/sales-report",
-  },
+  { name: "Sales Report", icon: FaPesoSign, link: "/role/admin/sales-report" },
 ];
 
 const Vendors = ({ orderDocs, user, grandTotalProfit }) => {
@@ -174,6 +171,7 @@ const Vendors = ({ orderDocs, user, grandTotalProfit }) => {
               <Thead>
                 <Tr>
                   <Th>Order ID</Th>
+                  <Th>Date</Th>
                   <Th>Vendor</Th>
                   <Th>Total</Th>
                   <Th>Status</Th>
@@ -185,10 +183,11 @@ const Vendors = ({ orderDocs, user, grandTotalProfit }) => {
                 {orders.map((order) => {
                   const totalProfit = order.items.reduce((sum, item) => {
                     const profitPerItem =
-                      (item.discountedPrice - item.costDiscountedPrice) *
+                      ((item.discountedPrice - item.costDiscountedPrice) / 2) *
                       item.quantity;
                     return sum + profitPerItem;
                   }, 0);
+
                   return (
                     <Tr key={order.id}>
                       <Td>
@@ -196,6 +195,7 @@ const Vendors = ({ orderDocs, user, grandTotalProfit }) => {
                           <Text>{order.id}</Text>
                         </HStack>
                       </Td>
+                      <Td>{order.completedDate}</Td>
                       <Td>{order.vendor}</Td>
                       <Td>{order.total}</Td>
                       <Td textTransform={"uppercase"}>
@@ -295,6 +295,24 @@ const Vendors = ({ orderDocs, user, grandTotalProfit }) => {
               </Text>
             </Box>
             <Divider h={"3px"} marginBlock={"12px"} />
+            <Box>
+              <Text fontWeight={"600"} fontSize={"18px"} mb={"12px"}>
+                Courier Info
+              </Text>
+              <HStack mb={"12px"}>
+                <Avatar src={selectedItem.courier?.picture} />
+                <Box>
+                  <Text>{selectedItem.courier?.name}</Text>
+                  <Text>{selectedItem.courier?.email}</Text>
+                </Box>
+              </HStack>
+
+              <Text>
+                <Text fontWeight={"500"}>Contact Number:</Text>{" "}
+                {selectedItem.courier?.phone && selectedItem.courier.phone}{" "}
+              </Text>
+            </Box>
+            <Divider h={"3px"} marginBlock={"12px"} />
 
             <Box>
               <Text fontWeight={"600"} fontSize={"18px"}>
@@ -373,7 +391,7 @@ export const getServerSideProps = withSessionSsr(async ({ req, res }) => {
   const grandTotalProfit = orderDocs.reduce((orderSum, order) => {
     const orderProfit = order.items.reduce((itemSum, item) => {
       const profitPerItem =
-        (item.discountedPrice - item.costDiscountedPrice) * item.quantity;
+        ((item.discountedPrice - item.costDiscountedPrice) / 2) * item.quantity;
       return itemSum + profitPerItem;
     }, 0);
 
