@@ -8,7 +8,7 @@ const adminEmail = [
   "lykasevilla07@gmail.com",
   "paulamaegarcia3@gmail.com",
   "gelovillapana@gmail.com",
-  "itikim.web@gmail.com,",
+  "itikim.web@gmail.com",
 ];
 
 export default withSessionRoute(createSessionRoute);

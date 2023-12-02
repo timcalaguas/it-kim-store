@@ -356,12 +356,17 @@ export const getServerSideProps = withSessionSsr(async ({ req, res }) => {
   }
 
   let orderDocs = await getVendorOrders(user.docId);
-  const receivedItems = orderDocs.filter((item) => item.status === "received");
+  const receivedItems = orderDocs.filter((item) => item.status == "received" || item.status == "delivered");
 
   orderDocs = receivedItems;
 
   const grandTotalProfit = orderDocs.reduce((orderSum, order) => {
-    return orderSum + order.subtotal;
+    const orderProfit = order.items.reduce((itemSum, item) => {
+      const profitPerItem =
+        ((item.discountedPrice - item.costDiscountedPrice)) * item.quantity;
+      return itemSum + profitPerItem;
+    }, 0);
+    return orderSum + (order.subtotal - orderProfit);
   }, 0);
 
   return {
