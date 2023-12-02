@@ -37,9 +37,10 @@ import {
   AlertDialogOverlay,
   useDisclosure,
   useToast,
+  Divider,
 } from "@chakra-ui/react";
 import { BsBagFill, BsBagCheckFill } from "react-icons/bs";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import getOrders from "@/hooks/customer/getOrders";
 import { withSessionSsr } from "@/lib/withSession";
 import RateProductModal from "@/components/RateProductModal";
@@ -48,6 +49,8 @@ import { MdDeliveryDining } from "react-icons/md";
 import { firestore } from "../../../../firebase-config";
 import getBodyForEmail from "@/hooks/getBodyForEmail";
 import axios from "axios";
+import { useDateChecker } from "@/hooks/context/DateCheckerContext";
+import updateStarRating from "@/hooks/customer/updateStarRating";
 
 const Orders = ({ user, orders }) => {
   const [result, setResult] = useState(orders);
@@ -67,60 +70,125 @@ const Orders = ({ user, orders }) => {
     setComment,
   } = RateProductModal(user);
 
+  const {
+    handleRatingChange: vendorRatingChange,
+    starRating: vendorStarRating,
+    comment: vendorComment,
+    setComment: vendorSetComment,
+  } = RateProductModal(user);
+
+  const {
+    handleRatingChange: courierRatingChange,
+    starRating: courierStarRating,
+    comment: courierComment,
+    setComment: courierSetComment,
+  } = RateProductModal(user);
+
   const cancelRef = useRef();
 
   const [selectedItem, setSelectedItem] = useState();
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [processLoading, setProcessLoading] = useState(false);
+  const [type, setType] = useState("receive");
+  const [cancelReason, setCancelReason] = useState("");
 
-  const openDialog = (order) => {
+  const openDialog = (order, type) => {
     setSelectedItem(order);
+    setType(type);
     onOpen();
   };
 
   const processOrder = async () => {
     try {
       setProcessLoading(true);
-      const indexOfObjectToUpdate = result.completed.findIndex(
-        (obj) => obj.id === selectedItem.id
-      );
 
-      const vendorResponse = await firestore
-        .collection("users")
-        .doc(selectedItem.vendorId)
-        .get();
+      if (type == "receive") {
+        const indexOfObjectToUpdate = result.completed.findIndex(
+          (obj) => obj.id === selectedItem.id
+        );
+        let status = "received";
+        const vendorResponse = await firestore
+          .collection("users")
+          .doc(selectedItem.vendorId)
+          .get();
 
-      const vendor = vendorResponse.data();
-      const bodyForEmail = await getBodyForEmail(
-        "received",
-        user,
-        vendor,
-        selectedItem.id
-      );
+        const vendor = vendorResponse.data();
+        const bodyForEmail = await getBodyForEmail(
+          "received",
+          user,
+          vendor,
+          selectedItem.id
+        );
 
-      const response = await axios.post("/api/send-mail", bodyForEmail);
+        const response = await axios.post("/api/send-mail", bodyForEmail);
 
-      let status = "received";
+        const processResponse = await firestore
+          .collection("orders")
+          .doc(selectedItem.id)
+          .update({ status: status });
 
-      const processResponse = await firestore
-        .collection("orders")
-        .doc(selectedItem.id)
-        .update({ status: status });
+        const vendorRating = await firestore.collection("ratings").doc().set({
+          starRating: vendorStarRating,
+          comment: vendorComment,
+          userEmail: vendor.email,
+        });
 
-      result.completed[indexOfObjectToUpdate].status = status;
-      setProcessLoading(false);
-      toast({
-        title: "Order Received",
-        description: "You sucessfully marked your order as Received.",
-        status: "success",
-        duration: 9000,
-        isClosable: true,
-      });
-      onClose();
+        const courierRating = await firestore.collection("ratings").doc().set({
+          starRating: courierStarRating,
+          comment: courierComment,
+          userEmail: selectedItem.courier.email,
+        });
+
+        const newStarVendor = await updateStarRating(vendor.email);
+        const newStarCourier = await updateStarRating(
+          selectedItem.courier.email
+        );
+
+        result.completed[indexOfObjectToUpdate].status = status;
+        setProcessLoading(false);
+        toast({
+          title: "Order Received",
+          description: "You sucessfully marked your order as Received.",
+          status: "success",
+          duration: 9000,
+          isClosable: true,
+        });
+        onClose();
+      } else {
+        let status = "cancelled";
+        const indexOfObjectToUpdate = result.orderPlaced.findIndex(
+          (obj) => obj.id === selectedItem.id
+        );
+
+        const processResponse = await firestore
+          .collection("orders")
+          .doc(selectedItem.id)
+          .update({ status: status, cancelReason: cancelReason });
+        setProcessLoading(false);
+
+        result.orderPlaced[indexOfObjectToUpdate].status = status;
+
+        toast({
+          title: "Order Cancelled",
+          description: "You sucessfully marked your order as Cancelled.",
+          status: "success",
+          duration: 9000,
+          isClosable: true,
+        });
+        onClose();
+      }
     } catch (error) {
       console.log(error);
     }
   };
+
+  const { items, addDateToCheck } = useDateChecker();
+
+  useEffect(() => {
+    result.orderPlaced.map((order) => {
+      addDateToCheck(order.id, order.date);
+    });
+  }, []);
 
   return (
     <Layout metaTitle={"IT Kim - Orders"} user={user}>
@@ -169,13 +237,21 @@ const Orders = ({ user, orders }) => {
               <TabPanel>
                 <VStack w={"100%"}>
                   <Accordion allowToggle w={"100%"}>
-                    {result.orderPlaced.map((order) => (
-                      <Order
-                        order={order}
-                        open={openRatingModal}
-                        openDialog={openDialog}
-                      />
-                    ))}
+                    {result.orderPlaced.map((order, index) => {
+                      console.log(items[index]);
+                      return (
+                        <Order
+                          order={order}
+                          withinTen={
+                            items.length > 0
+                              ? items[index].isWithin10Minutes
+                              : false
+                          }
+                          open={openRatingModal}
+                          openDialog={openDialog}
+                        />
+                      );
+                    })}
                   </Accordion>
                 </VStack>
               </TabPanel>
@@ -253,26 +329,94 @@ const Orders = ({ user, orders }) => {
         <AlertDialogOverlay>
           <AlertDialogContent>
             <AlertDialogHeader fontSize="lg" fontWeight="bold">
-              Receive Order?
+              {type == "receive" ? "Receive Order?" : "Cancel Order"}
             </AlertDialogHeader>
 
             <AlertDialogBody>
-              Are you sure you want to mark this order as Received? The vendor
-              will be notified that you received the order.
+              {type == "receive"
+                ? "Are you sure you want to mark this order as Received? The vendor will be notified that you received the order."
+                : "Are you sure you want to cancel this order? "}
+              {type == "receive" ? (
+                <>
+                  <Divider marginBlock={"12px"} />
+                  <Box>
+                    <Text fontWeight={"600"} fontSize={"18px"} mb={"12px"}>
+                      Vendor Rating
+                    </Text>
+                    <FormControl>
+                      <FormLabel>Rating</FormLabel>
+                      <StarRatingInput
+                        rating={vendorStarRating}
+                        onRatingChange={vendorRatingChange}
+                      />
+                    </FormControl>
+                    <FormControl>
+                      <FormLabel>Comment</FormLabel>
+                      <Textarea
+                        onChange={(e) => vendorSetComment(e.target.value)}
+                        value={vendorComment}
+                      />
+                    </FormControl>
+                  </Box>
+                  <Divider marginBlock={"12px"} />
+                  <Box>
+                    <Text fontWeight={"600"} fontSize={"18px"} mb={"12px"}>
+                      Courier Rating
+                    </Text>
+                    <FormControl>
+                      <FormLabel>Rating</FormLabel>
+                      <StarRatingInput
+                        rating={courierStarRating}
+                        onRatingChange={courierRatingChange}
+                      />
+                    </FormControl>
+                    <FormControl>
+                      <FormLabel>Comment</FormLabel>
+                      <Textarea
+                        onChange={(e) => courierSetComment(e.target.value)}
+                        value={courierComment}
+                      />
+                    </FormControl>
+                  </Box>
+                </>
+              ) : (
+                <>
+                  <Divider marginBlock={"12px"} />
+                  <FormControl>
+                    <FormLabel>Cancel Reason</FormLabel>
+                    <Textarea
+                      onChange={(e) => setCancelReason(e.target.value)}
+                      value={cancelReason}
+                    />
+                  </FormControl>
+                </>
+              )}
             </AlertDialogBody>
 
             <AlertDialogFooter>
               <Button ref={cancelRef} onClick={onClose}>
                 Cancel
               </Button>
-              <Button
-                colorScheme={"blue"}
-                onClick={() => processOrder()}
-                ml={3}
-                isLoading={processLoading}
-              >
-                Receive
-              </Button>
+              {type == "receive" ? (
+                <Button
+                  colorScheme={"blue"}
+                  onClick={() => processOrder()}
+                  ml={3}
+                  isLoading={processLoading}
+                >
+                  Receive
+                </Button>
+              ) : (
+                <Button
+                  colorScheme={"red"}
+                  onClick={() => processOrder()}
+                  ml={3}
+                  isLoading={processLoading}
+                  disabled={cancelReason == ""}
+                >
+                  Cancel Order
+                </Button>
+              )}
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialogOverlay>
@@ -281,10 +425,10 @@ const Orders = ({ user, orders }) => {
   );
 };
 
-const Order = ({ order, open, openDialog }) => {
+const Order = ({ order, withinTen, open, openDialog }) => {
   let total = 0;
   return (
-    <AccordionItem>
+    <AccordionItem key={order.id}>
       <h2>
         <AccordionButton>
           <Box as="span" flex="1" textAlign="left" fontWeight={"700"}>
@@ -292,7 +436,7 @@ const Order = ({ order, open, openDialog }) => {
               textTransform={"uppercase"}
               mr={"8px"}
               colorScheme={
-                order.status == "order-declined"
+                order.status == "order-declined" || order.status == "cancelled"
                   ? "red"
                   : order.status == "delivered" || order.status == "received"
                   ? "green"
@@ -324,6 +468,15 @@ const Order = ({ order, open, openDialog }) => {
                 onClick={() => openDialog(order)}
               >
                 Received?
+              </Button>
+            )}
+            {order.status === "order-placed" && withinTen && (
+              <Button
+                size={"sm"}
+                colorScheme="red"
+                onClick={() => openDialog(order)}
+              >
+                Cancel Order?
               </Button>
             )}
           </HStack>

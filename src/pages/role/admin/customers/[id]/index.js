@@ -1,13 +1,13 @@
 import AdminLayout from "@/components/AdminLayout";
-import { firestore } from "../../../../../firebase-config";
-import { getSession } from "next-auth/react";
+import { firestore } from "../../../../../../firebase-config";
 import { FiHome, FiTrendingUp, FiCompass, FiStar } from "react-icons/fi";
 import {
-  AiFillShop,
   AiFillDelete,
+  AiFillShop,
   AiFillEye,
   AiFillCheckCircle,
 } from "react-icons/ai";
+import { MdPerson, MdDeliveryDining } from "react-icons/md";
 import {
   TableContainer,
   Table,
@@ -42,17 +42,14 @@ import {
   AlertDialogHeader,
   AlertDialogContent,
   AlertDialogOverlay,
-  Card,
-  CardBody,
 } from "@chakra-ui/react";
 import { useEffect, useState, useRef } from "react";
-import { MdDeliveryDining, MdPerson } from "react-icons/md";
-import moment from "moment/moment";
+import getUsers from "@/hooks/getUsers";
 import { withSessionSsr } from "@/lib/withSession";
-import { FaPesoSign } from "react-icons/fa6";
-
+import Link from "next/link";
 import { BiSolidShoppingBag } from "react-icons/bi";
-import getAdminOrders from "@/hooks/admin/getAdminOrders";
+import { FaPesoSign } from "react-icons/fa6";
+import getCustomerOrders from "@/hooks/admin/getCustomerOrders";
 
 const LinkItems = [
   { name: "Dashboard", icon: FiHome, link: "/role/admin" },
@@ -62,13 +59,13 @@ const LinkItems = [
   { name: "Sales Report", icon: FaPesoSign, link: "/role/admin/sales-report" },
 ];
 
-const Vendors = ({ orderDocs, user, grandTotalProfit }) => {
+const Couriers = ({ orderDocs, user, customerDoc }) => {
   const toast = useToast();
 
   const [orders, setOrders] = useState(orderDocs);
   const [selectedId, setSelectedId] = useState("");
   const [process, setProcess] = useState("accept");
-  const [selectedItem, setSelectedItem] = useState([]);
+  const [selectedItem, setSelectedItem] = useState({});
   const [processLoading, setProcessLoading] = useState(false);
 
   const { isOpen, onOpen, onClose } = useDisclosure();
@@ -87,14 +84,14 @@ const Vendors = ({ orderDocs, user, grandTotalProfit }) => {
     onOpen();
   };
 
-  const openModal = (vendor) => {
-    setSelectedItem(vendor);
+  const openModal = (customer) => {
+    setSelectedItem(customer);
     itemOnOpen();
   };
 
-  const processVendor = async () => {
+  const processCustomer = async () => {
     setProcessLoading(true);
-    const indexOfObjectToUpdate = vendors.findIndex(
+    const indexOfObjectToUpdate = customers.findIndex(
       (obj) => obj.id === selectedItem.id
     );
     let status = process == "accept" ? "approved" : "blocked";
@@ -104,14 +101,14 @@ const Vendors = ({ orderDocs, user, grandTotalProfit }) => {
       .update({ status: status });
     selectedItem.status = status;
     setProcessLoading(false);
-    vendors[indexOfObjectToUpdate] = selectedItem;
+    customers[indexOfObjectToUpdate] = selectedItem;
 
     toast({
       title: process == "accept" ? "Approved" : "Blocked",
       description:
         process == "accept"
-          ? "The vendor is now approved."
-          : "The vendor is now blocked.",
+          ? "The courier is now approved."
+          : "The courier is now blocked.",
       status: "success",
       duration: 9000,
       isClosable: true,
@@ -122,45 +119,14 @@ const Vendors = ({ orderDocs, user, grandTotalProfit }) => {
   return (
     <>
       <AdminLayout
-        metaTitle={"Admin - Sales Report"}
+        metaTitle={"Admin - Customers"}
         pageName={"IT Kim - Admin"}
         user={user}
         LinkItems={LinkItems}
       >
         <HStack alignItems={"center"} justifyContent={"space-between"} mb={6}>
-          <Heading>Sales Report</Heading>
+          <Heading>{customerDoc.name}'s Orders</Heading>
         </HStack>
-
-        <Card
-          minHeight={"250px"}
-          position={"relative"}
-          overflow={"hidden"}
-          mb={"24px"}
-        >
-          <CardBody p={0}>
-            <Stack
-              height={"full"}
-              alignItems={"start"}
-              flexDirection={{ base: "column", md: "row" }}
-            >
-              <Box
-                bg={"gray.100"}
-                height={"100%"}
-                w={{ base: "100%", md: "20%" }}
-                minW={{ base: "150px", md: "200px" }}
-                minH={"250px"}
-                display={"grid"}
-                placeItems={"center"}
-              >
-                <FaPesoSign fontSize={"100px"} fill="#3082CF" />
-              </Box>
-              <Box padding={"16px"}>
-                <Heading color={"#3082CF"}>TOTAL PROFIT</Heading>
-                <Heading size={"4xl"}>{grandTotalProfit}</Heading>
-              </Box>
-            </Stack>
-          </CardBody>
-        </Card>
         <TableContainer
           background={"white"}
           p={{ base: 2, md: 5 }}
@@ -175,19 +141,11 @@ const Vendors = ({ orderDocs, user, grandTotalProfit }) => {
                   <Th>Vendor</Th>
                   <Th>Total</Th>
                   <Th>Status</Th>
-                  <Th>Profit</Th>
                   <Th>Actions</Th>
                 </Tr>
               </Thead>
               <Tbody>
                 {orders.map((order) => {
-                  const totalProfit = order.items.reduce((sum, item) => {
-                    const profitPerItem =
-                      (item.discountedPrice - item.costDiscountedPrice) *
-                      item.quantity;
-                    return sum + profitPerItem;
-                  }, 0);
-
                   return (
                     <Tr key={order.id}>
                       <Td>
@@ -201,7 +159,6 @@ const Vendors = ({ orderDocs, user, grandTotalProfit }) => {
                       <Td textTransform={"uppercase"}>
                         <Badge>{order.status}</Badge>
                       </Td>
-                      <Td>{totalProfit}</Td>
                       <Td>
                         <Stack direction="row" spacing={2}>
                           <Button
@@ -232,40 +189,6 @@ const Vendors = ({ orderDocs, user, grandTotalProfit }) => {
           )}
         </TableContainer>
       </AdminLayout>
-      <AlertDialog
-        isOpen={isOpen}
-        leastDestructiveRef={cancelRef}
-        onClose={onClose}
-      >
-        <AlertDialogOverlay>
-          <AlertDialogContent>
-            <AlertDialogHeader fontSize="lg" fontWeight="bold">
-              {process == "accept" ? "Approve Vendor" : "Block Vendor"}
-            </AlertDialogHeader>
-
-            <AlertDialogBody>
-              {process == "accept"
-                ? "Are you sure you want to approve this vendor? This will allow the vendor to publish their products."
-                : "Are you sure you want to block this vendor? They will no longer be allowed to use their store and sell products."}
-            </AlertDialogBody>
-
-            <AlertDialogFooter>
-              <Button ref={cancelRef} onClick={onClose}>
-                Cancel
-              </Button>
-              <Button
-                colorScheme={process == "accept" ? "blue" : "red"}
-                onClick={() => processVendor()}
-                ml={3}
-                isLoading={processLoading}
-              >
-                {process == "accept" ? "Approve" : "Block"}
-              </Button>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialogOverlay>
-      </AlertDialog>
-
       <Modal isOpen={itemIsOpen} onClose={itemOnClose}>
         <ModalOverlay />
         <ModalContent>
@@ -370,10 +293,13 @@ const Vendors = ({ orderDocs, user, grandTotalProfit }) => {
   );
 };
 
-export default Vendors;
+export default Couriers;
 
-export const getServerSideProps = withSessionSsr(async ({ req, res }) => {
+export const getServerSideProps = withSessionSsr(async (context) => {
+  const { req } = context;
   const user = req.session.user;
+
+  const { id } = context.params;
 
   if (!user) {
     return {
@@ -390,19 +316,9 @@ export const getServerSideProps = withSessionSsr(async ({ req, res }) => {
     };
   }
 
-  const orderDocs = await getAdminOrders();
-
-  const grandTotalProfit = orderDocs.reduce((orderSum, order) => {
-    const orderProfit = order.items.reduce((itemSum, item) => {
-      const profitPerItem =
-        (item.discountedPrice - item.costDiscountedPrice) * item.quantity;
-      return itemSum + profitPerItem;
-    }, 0);
-
-    return orderSum + orderProfit;
-  }, 0);
+  const { orderDocs, customerDoc } = await getCustomerOrders(id);
 
   return {
-    props: { orderDocs, user, grandTotalProfit },
+    props: { orderDocs, user, customerDoc },
   };
 });

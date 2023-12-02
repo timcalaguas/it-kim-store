@@ -14,8 +14,9 @@ const AddressModal = () => {
   const [newAddress, setNewAddress] = useState({
     no: "",
     street: "",
-    barangay: "Agapito del Rosario",
-    city: "Angeles City",
+    barangay: "",
+    city: "",
+    province: "",
     contact: "",
   });
 
@@ -41,12 +42,17 @@ const AddressModal = () => {
       if (
         newAddress.no == "" ||
         newAddress.contact == "" ||
-        newAddress.street == "" || !validPhone
+        newAddress.street == "" ||
+        !validPhone
       ) {
         setLoading(false);
-        const title = !validPhone ? "Invalid Phone number" : "Incomplete details.";
-        const message = !validPhone ? "Please enter a valid number" : "Please complete the form before submitting.";
-        
+        const title = !validPhone
+          ? "Invalid Phone number"
+          : "Incomplete details.";
+        const message = !validPhone
+          ? "Please enter a valid number"
+          : "Please complete the form before submitting.";
+
         toast({
           title: title,
           description: message,
@@ -62,6 +68,7 @@ const AddressModal = () => {
               street: newAddress.street,
               barangay: newAddress.barangay,
               city: newAddress.city,
+              province: newAddress.province,
             },
             contactNumber: newAddress.contact,
           };
@@ -94,8 +101,9 @@ const AddressModal = () => {
             setNewAddress({
               no: "",
               street: "",
-              barangay: "Agapito del Rosario",
-              city: "Angeles City",
+              barangay: "",
+              city: "",
+              province: "",
               contact: "",
             });
             onClose();
@@ -113,12 +121,17 @@ const AddressModal = () => {
       if (
         newAddress.no == "" ||
         newAddress.contact == "" ||
-        newAddress.street == "" || !validPhone
+        newAddress.street == "" ||
+        !validPhone
       ) {
         setLoading(false);
-        const title = !validPhone ? "Invalid Phone number" : "Incomplete details.";
-        const message = !validPhone ? "Please enter a valid number" : "Please complete the form before submitting.";
-        
+        const title = !validPhone
+          ? "Invalid Phone number"
+          : "Incomplete details.";
+        const message = !validPhone
+          ? "Please enter a valid number"
+          : "Please complete the form before submitting.";
+
         toast({
           title: title,
           description: message,
@@ -133,6 +146,7 @@ const AddressModal = () => {
             street: newAddress.street,
             barangay: newAddress.barangay,
             city: newAddress.city,
+            province: newAddress.province,
           },
           contactNumber: newAddress.contact,
         };
@@ -166,8 +180,9 @@ const AddressModal = () => {
           setNewAddress({
             no: "",
             street: "",
-            barangay: "Agapito del Rosario",
-            city: "Angeles City",
+            barangay: "",
+            city: "",
+            province: "",
             contact: "",
           });
           onClose();

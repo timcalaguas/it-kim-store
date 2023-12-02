@@ -143,7 +143,7 @@ const Dashboard = ({
             position={"relative"}
             overflow={"hidden"}
             as={Link}
-            href="/role/admin/couriers"
+            href="/role/admin/customers"
             _hover={{ textDecor: "none" }}
           >
             <CardBody p={0}>

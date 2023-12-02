@@ -47,7 +47,7 @@ import {
 import { useEffect, useState, useRef } from "react";
 import getUsers from "@/hooks/getUsers";
 import { withSessionSsr } from "@/lib/withSession";
-
+import Link from "next/link";
 import { BiSolidShoppingBag } from "react-icons/bi";
 import { FaPesoSign } from "react-icons/fa6";
 
@@ -167,11 +167,21 @@ const Couriers = ({ customerDocs, user }) => {
                         >
                           View Details
                         </Button>
+                        <Button
+                          size={"sm"}
+                          colorScheme="blue"
+                          variant={"outline"}
+                          leftIcon={<AiFillEye />}
+                          as={Link}
+                          href={`/role/admin/customers/${customer.id}`}
+                        >
+                          View Orders
+                        </Button>
                         {customer.status != "approved" && (
                           <>
                             <Button
                               leftIcon={<AiFillCheckCircle />}
-                              colorScheme="blue"
+                              colorScheme="green"
                               variant="outline"
                               size={"sm"}
                               onClick={() =>
@@ -279,7 +289,7 @@ const Couriers = ({ customerDocs, user }) => {
               <Text mb={"12px"}>
                 <Text fontWeight={"500"}>Contact Number:</Text>
                 {selectedItem.addresses && selectedItem.addresses.length > 0 ? (
-                  <Text>selectedItem.addresses[0].contactNumber</Text>
+                  <Text>+63{selectedItem.addresses[0].contactNumber}</Text>
                 ) : (
                   <Text>N/A</Text>
                 )}

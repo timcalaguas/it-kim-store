@@ -254,23 +254,23 @@ const Couriers = ({ courierDocs, user }) => {
           <ModalBody>
             <VStack textAlign={"center"}>
               <Avatar
-                src={selectedItem.storeLogo}
+                src={selectedItem?.storeLogo}
                 boxSize={"100px"}
                 border={"1px"}
               />
               <Text mb={"12px"}>
                 <Text fontWeight={"500"}>Courier Name:</Text>{" "}
-                {selectedItem.storeName}
+                {selectedItem?.name}
               </Text>
               <Text mb={"12px"}>
                 <Text fontWeight={"500"}>Courier Address:</Text>{" "}
-                {selectedItem.addresses &&
-                  `${selectedItem.addresses[0].address.no} ${selectedItem.addresses[0].address.street} ${selectedItem.addresses[0].address.barangay} ${selectedItem.addresses[0].address.city}`}
+                {selectedItem?.addresses.length > 0 &&
+                  `${selectedItem?.addresses[0]?.address.no} ${selectedItem.addresses[0]?.address.street} ${selectedItem.addresses[0]?.address.barangay} ${selectedItem.addresses[0]?.address.city}`}
               </Text>
               <Text mb={"12px"}>
                 <Text fontWeight={"500"}>Contact Number:</Text>{" "}
-                {selectedItem.addresses &&
-                  selectedItem.addresses[0].contactNumber}{" "}
+                {selectedItem?.addresses &&
+                  selectedItem?.addresses[0]?.contactNumber}{" "}
               </Text>
             </VStack>
           </ModalBody>

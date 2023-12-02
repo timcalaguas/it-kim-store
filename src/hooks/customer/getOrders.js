@@ -34,7 +34,8 @@ const getOrders = async (userId) => {
         if (
           status == "order-placed" ||
           status == "order-declined" ||
-          status == "order-accepted"
+          status == "order-accepted" ||
+          status == "cancelled"
         ) {
           result.orderPlaced.push(order);
         } else if (status == "in-transit" || status == "courier-accepted") {

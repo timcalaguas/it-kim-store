@@ -89,11 +89,10 @@ const Profile = ({ user }) => {
       street: address.address.street,
       barangay: address.address.barangay,
       city: address.address.city,
+      province: address.address.province ? address.address.province : "",
       contact: address.contactNumber,
     });
   };
-
-  console.log(newAddress);
 
   return (
     <Layout metaTitle={"IT Kim - Profile"} user={user}>
@@ -163,6 +162,9 @@ const Profile = ({ user }) => {
                         <Text fontWeight={"semibold"}>
                           {address.address.no} {address.address.street},{" "}
                           {address.address.barangay}, {address.address.city}
+                          {address.address.province
+                            ? `, ${address.address.province}`
+                            : ""}
                         </Text>
                         <Text>{address.contactNumber}</Text>
                       </Box>
@@ -256,17 +258,12 @@ const Profile = ({ user }) => {
                 </FormControl>
                 <FormControl>
                   <FormLabel>Barangay</FormLabel>
-
-                  <Select
-                    value={newAddress.barangay}
+                  <Input
                     onChange={(e) =>
                       setNewAddress({ ...newAddress, barangay: e.target.value })
                     }
-                  >
-                    {barangays.map((barangay) => (
-                      <option value={barangay}>{barangay}</option>
-                    ))}
-                  </Select>
+                    value={newAddress.barangay}
+                  />
                 </FormControl>
                 <FormControl>
                   <FormLabel>City</FormLabel>
@@ -275,8 +272,15 @@ const Profile = ({ user }) => {
                       setNewAddress({ ...newAddress, city: e.target.value })
                     }
                     value={newAddress.city}
-                    disabled
-                    cursor={"pointer"}
+                  />
+                </FormControl>
+                <FormControl>
+                  <FormLabel>Province</FormLabel>
+                  <Input
+                    onChange={(e) =>
+                      setNewAddress({ ...newAddress, province: e.target.value })
+                    }
+                    value={newAddress.province}
                   />
                 </FormControl>
               </VStack>

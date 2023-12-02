@@ -63,7 +63,6 @@ const Orders = ({ orderDocs, userSession, grandTotalProfit }) => {
   const [orders, setOrders] = useState(orderDocs);
   const [selectedId, setSelectedId] = useState("");
   const [selectedItem, setSelectedItem] = useState([]);
-  const [processLoading, setProcessLoading] = useState(false);
 
   const { isOpen, onOpen, onClose } = useDisclosure();
   const {
@@ -72,11 +71,6 @@ const Orders = ({ orderDocs, userSession, grandTotalProfit }) => {
     onClose: itemOnClose,
   } = useDisclosure();
   const cancelRef = useRef();
-
-  const openDeleteDialog = (id) => {
-    setSelectedId(id);
-    onOpen();
-  };
 
   const openModal = (order) => {
     setSelectedItem(order);
@@ -161,21 +155,12 @@ const Orders = ({ orderDocs, userSession, grandTotalProfit }) => {
                   <Th>Vendor</Th>
                   <Th>Total</Th>
                   <Th>Delivery Fee</Th>
-                  <Th>Order Percentage</Th>
                   <Th>Status</Th>
                   <Th>Actions</Th>
                 </Tr>
               </Thead>
               <Tbody>
                 {orders.map((order) => {
-                  const totalProfit = order.items.reduce((sum, item) => {
-                    const profitPerItem =
-                      (item.discountedPrice - item.costDiscountedPrice) *
-                      item.quantity;
-                    return sum + profitPerItem;
-                  }, 0);
-
-                  const percent = totalProfit / 2;
                   return (
                     <Tr>
                       <Td>{order.id}</Td>
@@ -183,7 +168,6 @@ const Orders = ({ orderDocs, userSession, grandTotalProfit }) => {
                       <Td>{order.vendor}</Td>
                       <Td>{order.total}</Td>
                       <Td>{order.deliveryFee}</Td>
-                      <Td>{percent}</Td>
                       <Td textTransform={"uppercase"}>
                         <Badge>{order.status}</Badge>
                       </Td>
@@ -315,13 +299,7 @@ export const getServerSideProps = withSessionSsr(async ({ req, res }) => {
   const orderDocs = await getDeliveredOrders(userSession.email);
 
   const grandTotalProfit = orderDocs.reduce((orderSum, order) => {
-    const orderProfit = order.items.reduce((itemSum, item) => {
-      const profitPerItem =
-        ((item.discountedPrice - item.costDiscountedPrice) / 2) * item.quantity;
-      return itemSum + profitPerItem;
-    }, 0);
-
-    return orderSum + orderProfit + order.deliveryFee;
+    return orderSum + order.deliveryFee;
   }, 0);
 
   return {
