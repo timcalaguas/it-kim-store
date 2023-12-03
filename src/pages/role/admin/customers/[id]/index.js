@@ -36,12 +36,15 @@ import {
   Divider,
   Avatar,
   VStack,
-  AlertDialog,
-  AlertDialogBody,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogContent,
-  AlertDialogOverlay,
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+  PopoverHeader,
+  PopoverBody,
+  PopoverFooter,
+  PopoverArrow,
+  PopoverCloseButton,
+  PopoverAnchor,
 } from "@chakra-ui/react";
 import { useEffect, useState, useRef } from "react";
 import getUsers from "@/hooks/getUsers";
@@ -50,6 +53,7 @@ import Link from "next/link";
 import { BiSolidShoppingBag } from "react-icons/bi";
 import { FaPesoSign } from "react-icons/fa6";
 import getCustomerOrders from "@/hooks/admin/getCustomerOrders";
+import { FaQuestionCircle } from "react-icons/fa";
 
 const LinkItems = [
   { name: "Dashboard", icon: FiHome, link: "/role/admin" },
@@ -153,11 +157,57 @@ const Couriers = ({ orderDocs, user, customerDoc }) => {
                           <Text>{order.id}</Text>
                         </HStack>
                       </Td>
-                      <Td>{order.completedDate}</Td>
+                      <Td>{order.date}</Td>
                       <Td>{order.vendor}</Td>
                       <Td>{order.total}</Td>
                       <Td textTransform={"uppercase"}>
-                        <Badge>{order.status}</Badge>
+                        {order.status == "cancelled" ? (
+                          <Popover>
+                            <PopoverTrigger>
+                              <Badge
+                                display={"flex"}
+                                w={"fit-content"}
+                                alignItems={"center"}
+                                gap={"6px"}
+                                cursor={"pointer"}
+                                colorScheme={
+                                  order.status == "received" ||
+                                  order.status == "delivered"
+                                    ? "green"
+                                    : order.status == "order-placed" ||
+                                      order.status == "order-accepted" ||
+                                      order.status == "in-transit"
+                                    ? "blue"
+                                    : "red"
+                                }
+                              >
+                                {order.status}{" "}
+                                <FaQuestionCircle fontSize={"10px"} />
+                              </Badge>
+                            </PopoverTrigger>
+                            <PopoverContent>
+                              <PopoverArrow />
+                              <PopoverCloseButton />
+                              <PopoverHeader>Cancel Reason</PopoverHeader>
+                              <PopoverBody>{order.cancelReason}</PopoverBody>
+                            </PopoverContent>
+                          </Popover>
+                        ) : (
+                          <Badge
+                            colorScheme={
+                              order.status == "received" ||
+                              order.status == "delivered"
+                                ? "green"
+                                : order.status == "order-placed" ||
+                                  order.status == "order-accepted" ||
+                                  order.status == "in-transit"
+                                ? "blue"
+                                : "red"
+                            }
+                          >
+                            {order.status}
+                          </Badge>
+                        )}
                       </Td>
                       <Td>
                         <Stack direction="row" spacing={2}>

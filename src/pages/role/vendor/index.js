@@ -71,13 +71,21 @@ const Dashboard = ({ userSession, productCount, orderCount, salesReport }) => {
   const [storeLogo, setStoreLogo] = useState("");
   const [previewImage, setPreviewImage] = useState("");
 
+  const [requirementImage, setRequirementImage] = useState("");
+  const [requirementPreviewImage, setRequirementPreviewImage] = useState("");
+
   const selectedFile = watch("storeLogo");
+  const requirementSelectedFile = watch("requirement");
 
   useEffect(() => {
     if (selectedFile?.length > 0) {
       setPreviewImage(selectedFile[0]);
     }
-  }, [selectedFile]);
+
+    if (requirementSelectedFile?.length > 0) {
+      setRequirementPreviewImage(requirementSelectedFile[0]);
+    }
+  }, [selectedFile, requirementSelectedFile]);
 
   useEffect(() => {
     setValue("storeName", user.storeName);
@@ -90,6 +98,8 @@ const Dashboard = ({ userSession, productCount, orderCount, salesReport }) => {
     }
     setValue("storeName", user.storeName);
     setStoreLogo(user.storeLogo);
+
+    setRequirementImage(user.requirement);
   }, [user]);
 
   async function updateProfile(values) {
@@ -107,6 +117,7 @@ const Dashboard = ({ userSession, productCount, orderCount, salesReport }) => {
       ];
 
       let downloadURL;
+      let requirementDownloadURL;
 
       if (values.storeLogo.length > 0) {
         const productImageName = values.storeLogo[0]?.name;
@@ -121,6 +132,23 @@ const Dashboard = ({ userSession, productCount, orderCount, salesReport }) => {
         downloadURL = user.storeLogo;
       }
 
+      if (values.requirement.length > 0) {
+        const productImageName = values.requirement[0]?.name;
+
+        const imageRef = storageRef.child(`images/${productImageName}`);
+        const file = values.requirement[0];
+
+        const snapshot = await imageRef.put(file);
+
+        requirementDownloadURL = await imageRef.getDownloadURL();
+      } else {
+        requirementDownloadURL = user.requirement || "";
+      }
+
+      user.addresses = addresses;
+      user.picture = downloadURL;
+      user.requirement = requirementDownloadURL;
+
       const newUser = {
         addresses: addresses,
         storeName: values.storeName,
@@ -130,6 +158,7 @@ const Dashboard = ({ userSession, productCount, orderCount, salesReport }) => {
         email: user.email,
         picture: user.picture,
         status: user.status,
+        requirement: requirementDownloadURL,
       };
 
       const response = await firestore
@@ -447,6 +476,75 @@ const Dashboard = ({ userSession, productCount, orderCount, salesReport }) => {
                   <FormLabel>City</FormLabel>
                   <Input type="text" {...register("city")} />
                 </FormControl>
+                <FormControl>
+                  <FormLabel>Province</FormLabel>
+                  <Input type="text" {...register("province")} />
+                </FormControl>
+                <Box
+                  display={"flex"}
+                  flexDirection={"start"}
+                  w={"100%"}
+                  gap={"24px"}
+                  flexWrap={"wrap"}
+                  mb="12px"
+                  mt={"24px"}
+                >
+                  {requirementPreviewImage != "" ? (
+                    <Image
+                      id="preview"
+                      src={
+                        requirementSelectedFile?.length > 0
+                          ? URL.createObjectURL(requirementSelectedFile[0])
+                          : "https://placehold.co/700x400"
+                      }
+                      boxSize={{ base: "100%" }}
+                      aspectRatio={"2 / 1"}
+                    />
+                  ) : requirementImage != "" ? (
+                    <Image
+                      id="preview"
+                      src={requirementImage}
+                      boxSize={{ base: "100%" }}
+                      aspectRatio={"2 / 1"}
+                    />
+                  ) : (
+                    <Image
+                      id="preview"
+                      src={"https://placehold.co/700x400"}
+                      boxSize={{ base: "100%" }}
+                      aspectRatio={"2 / 1"}
+                    />
+                  )}
+
+                  <FormControl w={{ base: "100%", sm: "fit-content" }}>
+                    <FormLabel htmlFor="name">Upload Business Permit</FormLabel>
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      {...register("requirement", {
+                        validate: (value) => {
+                          const types = [
+                            "image/png",
+                            "image/jpeg",
+                            "image/jpg",
+                          ];
+                          if (value.length > 0) {
+                            if (!types.includes(value[0]?.type)) {
+                              return "Invalid file format. Only JPG and PNG are allowed.";
+                            }
+
+                            if (value[0]?.size > 5242880) {
+                              return "File is too large. Upload images with a size of 5MB or below.";
+                            }
+                          }
+
+                          return true;
+                        },
+                      })}
+                    />
+                    <FormErrorMessage></FormErrorMessage>
+                  </FormControl>
+                </Box>
               </ModalBody>
 
               <ModalFooter>

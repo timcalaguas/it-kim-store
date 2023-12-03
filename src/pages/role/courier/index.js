@@ -89,13 +89,21 @@ const Courier = ({
   const [storeLogo, setStoreLogo] = useState("");
   const [previewImage, setPreviewImage] = useState("");
 
+  const [requirementImage, setRequirementImage] = useState("");
+  const [requirementPreviewImage, setRequirementPreviewImage] = useState("");
+
   const selectedFile = watch("storeLogo");
+  const requirementSelectedFile = watch("requirement");
 
   useEffect(() => {
     if (selectedFile?.length > 0) {
       setPreviewImage(selectedFile[0]);
     }
-  }, [selectedFile]);
+
+    if (requirementSelectedFile?.length > 0) {
+      setRequirementPreviewImage(requirementSelectedFile[0]);
+    }
+  }, [selectedFile, requirementSelectedFile]);
 
   useEffect(() => {
     setValue("storeLogo", "");
@@ -105,10 +113,14 @@ const Courier = ({
       setValue("barangay", user.addresses[0].address.barangay);
       setValue("city", user.addresses[0].address.city);
       setValue("contactNumber", user.addresses[0].contactNumber);
+      setValue("province", user.addresses[0].address.province);
     }
     setValue("storeName", user.storeName);
     setStoreLogo(user.picture);
+    setRequirementImage(user.requirement);
   }, [user]);
+
+  console.log(user);
 
   async function updateProfile(values) {
     try {
@@ -119,12 +131,14 @@ const Courier = ({
             street: values.street,
             barangay: values.barangay,
             city: values.city,
+            province: values.province,
           },
           contactNumber: values.contactNumber,
         },
       ];
 
       let downloadURL;
+      let requirementDownloadURL;
 
       if (values.storeLogo.length > 0) {
         const productImageName = values.storeLogo[0]?.name;
@@ -139,8 +153,22 @@ const Courier = ({
         downloadURL = user.picture;
       }
 
+      if (values.requirement.length > 0) {
+        const productImageName = values.requirement[0]?.name;
+
+        const imageRef = storageRef.child(`images/${productImageName}`);
+        const file = values.requirement[0];
+
+        const snapshot = await imageRef.put(file);
+
+        requirementDownloadURL = await imageRef.getDownloadURL();
+      } else {
+        requirementDownloadURL = user.requirement || "";
+      }
+
       user.addresses = addresses;
       user.picture = downloadURL;
+      user.requirement = requirementDownloadURL;
 
       const response = await firestore
         .collection("users")
@@ -148,6 +176,7 @@ const Courier = ({
         .update({
           addresses: addresses,
           picture: downloadURL,
+          requirement: requirementDownloadURL,
         });
 
       const updateSession = await axios.post("/api/auth", {
@@ -315,7 +344,7 @@ const Courier = ({
                     <Text fontWeight={"bold"}>Address:</Text>
                     <Text>
                       {user.addresses?.length > 0
-                        ? `${user.addresses[0].address.no} ${user.addresses[0].address.street} ${user.addresses[0].address.barangay} ${user.addresses[0].address.city}`
+                        ? `${user.addresses[0].address.no} ${user.addresses[0].address.street} ${user.addresses[0].address.barangay} ${user.addresses[0].address.city} ${user.addresses[0].address.province}`
                         : ""}
                     </Text>
                   </Box>
@@ -384,7 +413,7 @@ const Courier = ({
                       <Text mb={"12px"}>
                         <Text fontWeight={"500"}>Address:</Text>{" "}
                         {order.customer?.address &&
-                          `${order.customer.address.address.no} ${order.customer.address.address.street} ${order.customer.address.address.barangay} ${order.customer.address.address.city}`}
+                          `${order.customer.address.address.no} ${order.customer.address.address.street} ${order.customer.address.address.barangay} ${order.customer.address.address.city}  ${order.customer.address.address.province}`}
                       </Text>
                       <Text>
                         <Text fontWeight={"500"}>Contact Number:</Text>{" "}
@@ -634,6 +663,10 @@ const Courier = ({
                     <FormLabel>City</FormLabel>
                     <Input type="text" {...register("city")} />
                   </FormControl>
+                  <FormControl>
+                    <FormLabel>Province</FormLabel>
+                    <Input type="text" {...register("province")} />
+                  </FormControl>
                   <Box
                     display={"flex"}
                     flexDirection={"start"}
@@ -643,28 +676,28 @@ const Courier = ({
                     mb="12px"
                     mt={"24px"}
                   >
-                    {previewImage != "" ? (
+                    {requirementPreviewImage != "" ? (
                       <Image
                         id="preview"
                         src={
-                          selectedFile?.length > 0
-                            ? URL.createObjectURL(selectedFile[0])
+                          requirementSelectedFile?.length > 0
+                            ? URL.createObjectURL(requirementSelectedFile[0])
                             : "https://placehold.co/700x400"
                         }
                         boxSize={{ base: "100%" }}
                         aspectRatio={"2 / 1"}
                       />
-                    ) : storeLogo != "" ? (
+                    ) : requirementImage != "" ? (
                       <Image
                         id="preview"
-                        src={storeLogo}
+                        src={requirementImage}
                         boxSize={{ base: "100%" }}
                         aspectRatio={"2 / 1"}
                       />
                     ) : (
                       <Image
                         id="preview"
-                        src={"https://placehold.co/400x400"}
+                        src={"https://placehold.co/700x400"}
                         boxSize={{ base: "100%" }}
                         aspectRatio={"2 / 1"}
                       />
@@ -677,7 +710,7 @@ const Courier = ({
                       <Input
                         type="file"
                         accept="image/*"
-                        {...register("license", {
+                        {...register("requirement", {
                           validate: (value) => {
                             const types = [
                               "image/png",

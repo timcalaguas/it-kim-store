@@ -52,6 +52,8 @@ import getUsers from "@/hooks/getUsers";
 
 import { BiSolidShoppingBag } from "react-icons/bi";
 import { FaPesoSign } from "react-icons/fa6";
+import { FaStar } from "react-icons/fa";
+import Link from "next/link";
 
 const LinkItems = [
   { name: "Dashboard", icon: FiHome, link: "/role/admin" },
@@ -60,6 +62,7 @@ const LinkItems = [
   { name: "Customers", icon: MdPerson, link: "/role/admin/customers" },
   { name: "Sales Report", icon: FaPesoSign, link: "/role/admin/sales-report" },
 ];
+
 const Vendors = ({ vendorDocs, user }) => {
   const toast = useToast();
 
@@ -99,7 +102,7 @@ const Vendors = ({ vendorDocs, user }) => {
     const processResponse = await firestore
       .collection("users")
       .doc(selectedItem.id)
-      .update({ status: status });
+      .update({ status: status, adminBy: user.name });
     selectedItem.status = status;
     setProcessLoading(false);
     vendors[indexOfObjectToUpdate] = selectedItem;
@@ -139,8 +142,11 @@ const Vendors = ({ vendorDocs, user }) => {
               <Thead>
                 <Tr>
                   <Th>Name</Th>
+                  <Th>Store Name</Th>
                   <Th>Email</Th>
+                  <Th>Rating</Th>
                   <Th>Status</Th>
+                  <Th>Moderated by</Th>
                   <Th>Actions</Th>
                 </Tr>
               </Thead>
@@ -153,9 +159,28 @@ const Vendors = ({ vendorDocs, user }) => {
                         <Text>{vendor.name}</Text>
                       </HStack>
                     </Td>
+                    <Td>
+                      <HStack>
+                        <Avatar boxSize={"32px"} src={vendor.storeLogo} />
+                        <Text>{vendor.storeName}</Text>
+                      </HStack>
+                    </Td>
                     <Td>{vendor.email}</Td>
+                    <Td>
+                      {vendor.rating ? (
+                        <HStack>
+                          <Text>{vendor.rating.toFixed(2)}</Text>{" "}
+                          <FaStar color="gold" />
+                        </HStack>
+                      ) : (
+                        "N/A"
+                      )}
+                    </Td>
                     <Td textTransform={"uppercase"}>
                       <Badge>{vendor.status}</Badge>
+                    </Td>
+                    <Td>
+                      {vendor.adminBy ? <Text>{vendor.adminBy}</Text> : "N/A"}
                     </Td>
                     <Td>
                       <Stack direction="row" spacing={2}>
@@ -164,10 +189,12 @@ const Vendors = ({ vendorDocs, user }) => {
                           colorScheme="orange"
                           variant={"outline"}
                           leftIcon={<AiFillEye />}
-                          onClick={() => openModal(vendor)}
+                          as={Link}
+                          href={`/role/admin/vendors/${vendor.id}`}
                         >
                           View Details
                         </Button>
+
                         {vendor.status != "approved" && (
                           <>
                             <Button

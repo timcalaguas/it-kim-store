@@ -101,17 +101,15 @@ const Vendors = ({ vendorDocs, user }) => {
 
   const processVendor = async () => {
     setProcessLoading(true);
-    const indexOfObjectToUpdate = vendors.findIndex(
-      (obj) => obj.id === selectedItem.id
-    );
+
     let status = process == "accept" ? "approved" : "blocked";
     const processResponse = await firestore
       .collection("users")
       .doc(selectedItem.id)
-      .update({ status: status });
+      .update({ status: status, adminBy: user.name });
     selectedItem.status = status;
     setProcessLoading(false);
-    vendors[indexOfObjectToUpdate] = selectedItem;
+    setVendor(selectedItem);
 
     toast({
       title: process == "accept" ? "Approved" : "Blocked",
@@ -143,49 +141,52 @@ const Vendors = ({ vendorDocs, user }) => {
             >
               <HStack gap={"24px"} flexWrap={"wrap"}>
                 <VStack>
-                  <Avatar src={vendor.storeLogo} boxSize={"150px"} />
-                  <Tag
-                    size="md"
-                    colorScheme={
-                      user.status === "approved"
-                        ? "green"
-                        : user.status === "pending"
-                        ? "orange"
-                        : "red"
-                    }
-                    borderRadius="full"
-                    marginBlock={"12px"}
-                  >
-                    {user.status === "approved" ? (
-                      <TagLabel textTransform={"uppercase"}>
-                        {user.status}
-                      </TagLabel>
-                    ) : (
-                      <TagLabel textTransform={"uppercase"}>Pending</TagLabel>
-                    )}
-                  </Tag>
+                  <Avatar src={vendor.picture} boxSize={"150px"} />
                 </VStack>
                 <Box>
                   <Text fontSize={"24px"} fontWeight={"600"}>
-                    {vendor.storeName != "" ? vendor.storeName : vendor.name}
+                    {vendor.name}
                   </Text>
                   <HStack>
                     <AiTwotoneMail />
                     <Text>{vendor.email}</Text>
                   </HStack>
+                  {vendor.addresses?.length > 0 && (
+                    <HStack>
+                      <AiTwotoneHome />
+                      <Text>
+                        {vendor.addresses?.length > 0
+                          ? `${vendor.addresses[0].address.no} ${vendor.addresses[0].address.street} ${vendor.addresses[0].address.barangay} ${vendor.addresses[0].address.city}`
+                          : ""}
+                      </Text>
+                    </HStack>
+                  )}
+                  {vendor.addresses?.length > 0 && (
+                    <HStack>
+                      <AiTwotonePhone />
+                      <Text>{vendor.addresses[0].contactNumber}</Text>
+                    </HStack>
+                  )}
                   <HStack>
-                    <AiTwotoneHome />
-                    <Text>
-                      {vendor.addresses?.length > 0
-                        ? `${vendor.addresses[0].address.no} ${vendor.addresses[0].address.street} ${vendor.addresses[0].address.barangay} ${vendor.addresses[0].address.city}`
+                    <Tag
+                      size="md"
+                      colorScheme={
+                        vendor.status === "approved"
+                          ? "green"
+                          : vendor.status === "pending"
+                          ? "orange"
+                          : "red"
+                      }
+                      borderRadius="full"
+                      marginBlock={"12px"}
+                      textTransform={"uppercase"}
+                    >
+                      {vendor.status}{" "}
+                      {vendor.adminBy != undefined
+                        ? `by ${vendor.adminBy}`
                         : ""}
-                    </Text>
+                    </Tag>
                   </HStack>
-                  <HStack>
-                    <AiTwotonePhone />
-                    <Text>{vendor.addresses[0].contactNumber}</Text>
-                  </HStack>
-
                   <Button mt={"24px"} onClick={() => openModal(vendor)}>
                     View Requirement
                   </Button>

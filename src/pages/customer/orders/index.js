@@ -557,12 +557,18 @@ const Order = ({ order, withinTen, open, openDialog }) => {
                   justifyContent={"start"}
                   alignItems={"start"}
                 >
+                  {order.status == "cancelled" && (
+                    <Text fontSize={"md"} fontWeight={"600"}>
+                      Cancel Reason: {order.cancelReason}
+                    </Text>
+                  )}
                   <Text fontSize={"md"} fontWeight={"600"}>
                     Order Time: {order.date}
                   </Text>
                   {order.status != "order-placed" &&
                     order.status != "order-accepted" &&
-                    order.status != "order-declined" && (
+                    order.status != "order-declined" &&
+                    order.status != "cancelled" && (
                       <Text fontSize={"md"} fontWeight={"600"}>
                         Ship Time: {order.deliveryDate}
                       </Text>
@@ -570,7 +576,8 @@ const Order = ({ order, withinTen, open, openDialog }) => {
                   {order.status != "order-placed" &&
                     order.status != "order-accepted" &&
                     order.status != "order-declined" &&
-                    order.status != "in-transit" && (
+                    order.status != "in-transit" &&
+                    order.status != "cancelled" && (
                       <Text fontSize={"md"} fontWeight={"600"}>
                         Delivered Time: {order.completedDate}
                       </Text>

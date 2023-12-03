@@ -50,6 +50,7 @@ import { withSessionSsr } from "@/lib/withSession";
 
 import { BiSolidShoppingBag } from "react-icons/bi";
 import { FaPesoSign } from "react-icons/fa6";
+import Link from "next/link";
 
 const LinkItems = [
   { name: "Dashboard", icon: FiHome, link: "/role/admin" },
@@ -98,7 +99,7 @@ const Couriers = ({ courierDocs, user }) => {
     const processResponse = await firestore
       .collection("users")
       .doc(selectedItem.id)
-      .update({ status: status });
+      .update({ status: status, adminBy: user.name });
     selectedItem.status = status;
     setProcessLoading(false);
     couriers[indexOfObjectToUpdate] = selectedItem;
@@ -140,6 +141,7 @@ const Couriers = ({ courierDocs, user }) => {
                   <Th>Name</Th>
                   <Th>Email</Th>
                   <Th>Status</Th>
+                  <Th>Moderated by</Th>
                   <Th>Actions</Th>
                 </Tr>
               </Thead>
@@ -157,13 +159,17 @@ const Couriers = ({ courierDocs, user }) => {
                       <Badge>{courier.status}</Badge>
                     </Td>
                     <Td>
+                      {courier.adminBy ? <Text>{courier.adminBy}</Text> : "N/A"}
+                    </Td>
+                    <Td>
                       <Stack direction="row" spacing={2}>
                         <Button
                           size={"sm"}
                           colorScheme="orange"
                           variant={"outline"}
                           leftIcon={<AiFillEye />}
-                          onClick={() => openModal(courier)}
+                          as={Link}
+                          href={`/role/admin/couriers/${courier.id}`}
                         >
                           View Details
                         </Button>
@@ -264,7 +270,7 @@ const Couriers = ({ courierDocs, user }) => {
               </Text>
               <Text mb={"12px"}>
                 <Text fontWeight={"500"}>Courier Address:</Text>{" "}
-                {selectedItem?.addresses.length > 0 &&
+                {selectedItem?.addresses &&
                   `${selectedItem?.addresses[0]?.address.no} ${selectedItem.addresses[0]?.address.street} ${selectedItem.addresses[0]?.address.barangay} ${selectedItem.addresses[0]?.address.city}`}
               </Text>
               <Text mb={"12px"}>
