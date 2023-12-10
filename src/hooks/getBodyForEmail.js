@@ -69,6 +69,40 @@ const getBodyForEmail = (type, customer, user, order = null) => {
     };
 
     return body;
+  } else if (type == "payment-needed") {
+    const body = {
+      to: customer.email,
+      subject: `Vendor '${
+        user.storeName != "" ? user.storeName : user.name
+      }' acknowledge your Order`,
+      body: `Hello ${customer.name},
+        
+        We're thrilled to let you know that your order is currently in progress. Our vendor has acknowledge it, and preparations are underway. The next step is to pay the order's total via GCash QR Code.
+
+        We'll keep you updated on the progress, and you can monitor the order details on our website. If you have any questions, feel free to reach out to the vendor's email ${user.email} or contact number ${user.addresses[0].contactNumber}.
+        
+        Thank you for choosing our services.
+
+        Best regards,
+        IT Kim`,
+    };
+
+    return body;
+  } else if (type == "paid") {
+    const body = {
+      to: user.email,
+      subject: `Order #${order} is paid by the customer`,
+      body: `Hello ${user.name},
+        
+      We hope this message finds you well. We are pleased to inform you that the customer has successfully paid their order.
+
+      Thank you for your prompt service!
+
+      Best regards,
+      IT Kim`,
+    };
+
+    return body;
   }
 };
 

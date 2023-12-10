@@ -23,6 +23,8 @@ import { useCartStore } from "@/hooks/stores/cartStore";
 import { useEffect, useRef } from "react";
 import Cart from "./Cart";
 import AuthManager from "@/hooks/auth/AuthManager";
+import { HiBellAlert } from "react-icons/hi2";
+import Notifications from "./Notifcations";
 
 const Navbar = ({ user }) => {
   const { logout } = AuthManager();
@@ -44,6 +46,13 @@ const Navbar = ({ user }) => {
 
   const { isOpen, onOpen, onClose } = useDisclosure();
   const btnRef = useRef();
+
+  const {
+    isOpen: notifIsOpen,
+    onOpen: notifOnOpen,
+    onClose: notifOnClose,
+  } = useDisclosure();
+  const notifBtnRef = useRef();
 
   let numberOfCartItems = 0;
 
@@ -83,6 +92,16 @@ const Navbar = ({ user }) => {
           </Flex>
 
           <Flex align="center" gap={"12px"}>
+            <Box
+              p={"4px"}
+              borderRadius={"50%"}
+              border={"1px solid #86673e"}
+              cursor={"pointer"}
+              ref={notifBtnRef}
+              onClick={notifOnOpen}
+            >
+              <HiBellAlert color="#86673e" fontSize={"20px"} />
+            </Box>
             <Button
               variant={"primary"}
               size="sm"
@@ -92,6 +111,7 @@ const Navbar = ({ user }) => {
             >
               Cart - {numberOfCartItems}
             </Button>
+
             {user ? (
               <Popover placement="bottom-end">
                 <PopoverTrigger>
@@ -140,6 +160,11 @@ const Navbar = ({ user }) => {
         </Flex>
       </Flex>
       <Cart cart={cart} isOpen={isOpen} onClose={onClose} />
+      <Notifications
+        userId={user.docId}
+        isOpen={notifIsOpen}
+        onClose={notifOnClose}
+      />
     </>
   );
 };

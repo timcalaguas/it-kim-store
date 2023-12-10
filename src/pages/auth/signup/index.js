@@ -22,7 +22,7 @@ import { useState } from "react";
 import Link from "next/link";
 
 export default function Login() {
-  const { loginWithGoogle, loginWithEmailAndPassword, isLoading } =
+  const { loginWithGoogle, signUpWithEmailAndPassword, isLoading } =
     AuthManager();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -30,7 +30,7 @@ export default function Login() {
   return (
     <>
       <Head>
-        <title>{"IT Kim - Login"}</title>
+        <title>{"IT Kim - Sign up"}</title>
         <meta name="description" content="IT Kim - Kapampangan Sweet Shop" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
@@ -38,7 +38,7 @@ export default function Login() {
       <Stack minH={"100vh"} direction={{ base: "column", md: "row" }}>
         <Flex p={8} flex={1} align={"center"} justify={"center"}>
           <Stack spacing={4} w={"full"} maxW={"md"}>
-            <Heading fontSize={"2xl"}>Sign in</Heading>
+            <Heading fontSize={"2xl"}>Sign up</Heading>
             <Heading fontSize={"3xl"} color={"primary.500"}>
               IT Kim - Sweet Delicacy Store
             </Heading>
@@ -61,13 +61,13 @@ export default function Login() {
               </FormControl>
               <Button
                 onClick={() =>
-                  loginWithEmailAndPassword(email, password, "customer")
+                  signUpWithEmailAndPassword(email, password, "customer")
                 }
                 w={"100%"}
                 variant={"primary"}
                 isLoading={isLoading}
               >
-                Sign in
+                Sign up
               </Button>
             </VStack>
             <HStack>
@@ -78,17 +78,17 @@ export default function Login() {
                 onClick={() => loginWithGoogle("customer")}
                 leftIcon={<FcGoogle />}
               >
-                Sign in with Google
+                Sign up with Google
               </Button>
             </Stack>
             <Box
-              href={"/auth/signup"}
+              href={"/auth/login"}
               as={Link}
               textDecor={"underline"}
               marginInline={"auto"}
               color={"primary.500"}
             >
-              Register?
+              Login?
             </Box>
           </Stack>
         </Flex>

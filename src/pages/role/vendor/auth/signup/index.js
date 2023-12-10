@@ -1,28 +1,30 @@
 import {
   Flex,
   Box,
+  FormControl,
+  FormLabel,
+  Input,
+  Checkbox,
   Stack,
   Button,
   Heading,
-  useColorModeValue,
-  VStack,
+  Text,
   HStack,
   Divider,
-  Text,
-  FormControl,
-  Input,
+  VStack,
+  useColorModeValue,
 } from "@chakra-ui/react";
+import Head from "next/head";
 
 import { FcGoogle } from "react-icons/fc";
-import { MdDeliveryDining } from "react-icons/md";
+import { AiFillShop } from "react-icons/ai";
 import AuthManager from "@/hooks/auth/AuthManager";
-import Head from "next/head";
 import { withSessionSsr } from "@/lib/withSession";
-import Link from "next/link";
 import { useState } from "react";
+import Link from "next/link";
 
 export default function SimpleCard() {
-  const { loginWithGoogle, loginWithEmailAndPassword, isLoading } =
+  const { loginWithGoogle, signUpWithEmailAndPassword, isLoading } =
     AuthManager();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -30,7 +32,7 @@ export default function SimpleCard() {
   return (
     <>
       <Head>
-        <title>IT Kim - Courier Login</title>
+        <title>IT Kim - Vendor Sign Up</title>
         <meta name="description" content="IT Kim - Kapampangan Sweet Shop" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
@@ -67,13 +69,13 @@ export default function SimpleCard() {
               alignItems={"center"}
               justifyContent={"space-between"}
             >
-              <MdDeliveryDining fontSize={"150px"} />
+              <AiFillShop fontSize={"150px"} />
               <Heading fontSize={"xl"} textAlign={"center"}>
-                LOGIN
+                SIGN UP
               </Heading>
               <Stack align={"center"}>
                 <Heading fontSize={"4xl"} textAlign={"center"}>
-                  IT Kim - Courier
+                  IT Kim - Vendor
                 </Heading>
               </Stack>
               <VStack width={"100%"}>
@@ -95,13 +97,13 @@ export default function SimpleCard() {
                 </FormControl>
                 <Button
                   onClick={() =>
-                    loginWithEmailAndPassword(email, password, "courier")
+                    signUpWithEmailAndPassword(email, password, "vendor")
                   }
                   w={"100%"}
                   colorScheme={"blue"}
                   isLoading={isLoading}
                 >
-                  Sign in
+                  Sign up
                 </Button>
               </VStack>
               <HStack>
@@ -110,18 +112,18 @@ export default function SimpleCard() {
               <Button
                 color={"black"}
                 leftIcon={<FcGoogle />}
-                onClick={() => loginWithGoogle("courier")}
+                onClick={() => loginWithGoogle("vendor")}
               >
-                Sign in with Google
+                Sign up with Google
               </Button>
               <Box
-                href={"/role/courier/auth/signup"}
+                href={"/role/vendor/auth/login"}
                 as={Link}
                 textDecor={"underline"}
                 marginInline={"auto"}
                 color={"primary.500"}
               >
-                Register?
+                Login?
               </Box>
             </Stack>
           </Box>

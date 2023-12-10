@@ -37,7 +37,9 @@ import {
   AlertDialogOverlay,
   useDisclosure,
   useToast,
+  Input,
   Divider,
+  FormErrorMessage,
 } from "@chakra-ui/react";
 import { BsBagFill, BsBagCheckFill } from "react-icons/bs";
 import { useState, useRef, useEffect } from "react";
@@ -46,15 +48,39 @@ import { withSessionSsr } from "@/lib/withSession";
 import RateProductModal from "@/components/RateProductModal";
 import StarRatingInput from "@/components/StarRatingInput";
 import { MdDeliveryDining } from "react-icons/md";
-import { firestore } from "../../../../firebase-config";
+import { firestore, storage } from "../../../../firebase-config";
 import getBodyForEmail from "@/hooks/getBodyForEmail";
 import axios from "axios";
 import { useDateChecker } from "@/hooks/context/DateCheckerContext";
 import updateStarRating from "@/hooks/customer/updateStarRating";
+import moment from "moment";
+import { useForm } from "react-hook-form";
 
 const Orders = ({ user, orders }) => {
+  const storageRef = storage.ref();
+
   const [result, setResult] = useState(orders);
   const toast = useToast();
+
+  const {
+    handleSubmit,
+    register,
+    watch,
+    reset,
+    setValue,
+    formState: { errors, isSubmitting },
+  } = useForm();
+
+  const [qrImage, setQRImage] = useState("");
+  const [previewImage, setPreviewImage] = useState("");
+
+  const selectedFile = watch("receipt");
+
+  useEffect(() => {
+    if (selectedFile?.length > 0) {
+      setPreviewImage(selectedFile[0]);
+    }
+  }, [selectedFile]);
 
   const {
     modalOpen,
@@ -70,6 +96,7 @@ const Orders = ({ user, orders }) => {
     setComment,
   } = RateProductModal(user);
 
+  console.log(orders);
   const {
     handleRatingChange: vendorRatingChange,
     starRating: vendorStarRating,
@@ -120,6 +147,17 @@ const Orders = ({ user, orders }) => {
           selectedItem.id
         );
 
+        const createNotif = await firestore
+          .collection("notifications")
+          .doc()
+          .set({
+            id: selectedItem.vendorId,
+            orderId: selectedItem.id,
+            status: "received",
+            message: "The customer already received the order",
+            date: moment(new Date()).format("MM-DD-YYYY HH:mm"),
+          });
+
         const response = await axios.post("/api/send-mail", bodyForEmail);
 
         const processResponse = await firestore
@@ -128,12 +166,14 @@ const Orders = ({ user, orders }) => {
           .update({ status: status });
 
         const vendorRating = await firestore.collection("ratings").doc().set({
+          orderId: selectedItem.id,
           starRating: vendorStarRating,
           comment: vendorComment,
           userEmail: vendor.email,
         });
 
         const courierRating = await firestore.collection("ratings").doc().set({
+          orderId: selectedItem.id,
           starRating: courierStarRating,
           comment: courierComment,
           userEmail: selectedItem.courier.email,
@@ -179,6 +219,70 @@ const Orders = ({ user, orders }) => {
       }
     } catch (error) {
       console.log(error);
+    }
+  };
+
+  const submitPayment = async (values) => {
+    if (type == "pay") {
+      const indexOfObjectToUpdate = result.orderPlaced.findIndex(
+        (obj) => obj.id === selectedItem.id
+      );
+      let status = "paid";
+      const vendorResponse = await firestore
+        .collection("users")
+        .doc(selectedItem.vendorId)
+        .get();
+
+      const vendor = vendorResponse.data();
+
+      const bodyForEmail = await getBodyForEmail(
+        "paid",
+        user,
+        vendor,
+        selectedItem.id
+      );
+
+      let downloadURL;
+
+      if (values.receipt.length > 0) {
+        const productImageName = values.receipt[0]?.name;
+
+        const imageRef = storageRef.child(`images/${productImageName}`);
+        const file = values.receipt[0];
+
+        const snapshot = await imageRef.put(file);
+
+        downloadURL = await imageRef.getDownloadURL();
+      }
+
+      const createNotif = await firestore
+        .collection("notifications")
+        .doc()
+        .set({
+          id: selectedItem.vendorId,
+          orderId: selectedItem.id,
+          status: "paid",
+          message: "The customer paid for the order. Please confirm it",
+          date: moment(new Date()).format("MM-DD-YYYY HH:mm"),
+        });
+
+      const response = await axios.post("/api/send-mail", bodyForEmail);
+
+      const processResponse = await firestore
+        .collection("orders")
+        .doc(selectedItem.id)
+        .update({ status: status, receipt: downloadURL });
+
+      result.orderPlaced[indexOfObjectToUpdate].status = status;
+      setProcessLoading(false);
+      toast({
+        title: "Order Paid",
+        description: "You sucessfully marked your order as Paid.",
+        status: "success",
+        duration: 9000,
+        isClosable: true,
+      });
+      onClose();
     }
   };
 
@@ -329,12 +433,18 @@ const Orders = ({ user, orders }) => {
         <AlertDialogOverlay>
           <AlertDialogContent>
             <AlertDialogHeader fontSize="lg" fontWeight="bold">
-              {type == "receive" ? "Receive Order?" : "Cancel Order"}
+              {type == "receive"
+                ? "Receive Order?"
+                : type == "pay"
+                ? "Pay thru GCash QR"
+                : "Cancel Order"}
             </AlertDialogHeader>
 
             <AlertDialogBody>
               {type == "receive"
                 ? "Are you sure you want to mark this order as Received? The vendor will be notified that you received the order."
+                : type == "pay"
+                ? "Please upload your GCash Receipt so that the seller can confirm it."
                 : "Are you sure you want to cancel this order? "}
               {type == "receive" ? (
                 <>
@@ -379,6 +489,102 @@ const Orders = ({ user, orders }) => {
                     </FormControl>
                   </Box>
                 </>
+              ) : type == "pay" ? (
+                <form onSubmit={handleSubmit(submitPayment)}>
+                  <Divider marginBlock={"12px"} />
+
+                  <Image
+                    src={selectedItem.qr}
+                    width={"70%"}
+                    marginInline={"auto"}
+                    mb={"14px"}
+                  />
+                  <Text
+                    marginInline={"auto"}
+                    textAlign={"center"}
+                    mb={"24px"}
+                    fontWeight={"700"}
+                  >
+                    Total Amount: {selectedItem.total}
+                  </Text>
+                  <Box
+                    display={"flex"}
+                    flexDirection={"start"}
+                    w={"100%"}
+                    gap={"24px"}
+                    flexWrap={"wrap"}
+                    mb="12px"
+                  >
+                    {previewImage != "" ? (
+                      <Image
+                        id="preview"
+                        marginInline={"auto"}
+                        objectFit={"contain"}
+                        src={
+                          selectedFile?.length > 0
+                            ? URL.createObjectURL(selectedFile[0])
+                            : "https://placehold.co/400x400"
+                        }
+                        boxSize={{ base: "100%", sm: "200px" }}
+                      />
+                    ) : (
+                      <Image
+                        id="preview"
+                        marginInline={"auto"}
+                        objectFit={"contain"}
+                        src={"https://placehold.co/400x400"}
+                        boxSize={{ base: "100%", sm: "200px" }}
+                      />
+                    )}
+
+                    <FormControl
+                      isInvalid={errors.storeLogo}
+                      w={{ base: "100%", sm: "fit-content" }}
+                    >
+                      <FormLabel htmlFor="name">Upload GCash Receipt</FormLabel>
+                      <Input
+                        type="file"
+                        accept="image/*"
+                        {...register("receipt", {
+                          validate: (value) => {
+                            const types = [
+                              "image/png",
+                              "image/jpeg",
+                              "image/jpg",
+                            ];
+                            if (value.length > 0) {
+                              if (!types.includes(value[0]?.type)) {
+                                return "Invalid file format. Only JPG and PNG are allowed.";
+                              }
+
+                              if (value[0]?.size > 5242880) {
+                                return "File is too large. Upload images with a size of 5MB or below.";
+                              }
+                            }
+
+                            return true;
+                          },
+                        })}
+                      />
+                      <FormErrorMessage>
+                        {errors.storeLogo && errors.storeLogo.message}
+                      </FormErrorMessage>
+                    </FormControl>
+                  </Box>
+                  <HStack justifyContent={"end"} paddingBlock="16px">
+                    <Button ref={cancelRef} onClick={onClose}>
+                      Cancel
+                    </Button>
+                    <Button
+                      colorScheme={"blue"}
+                      type={"submit"}
+                      ml={3}
+                      isLoading={processLoading}
+                    >
+                      Pay
+                    </Button>
+                  </HStack>
+                </form>
               ) : (
                 <>
                   <Divider marginBlock={"12px"} />
@@ -392,32 +598,33 @@ const Orders = ({ user, orders }) => {
                 </>
               )}
             </AlertDialogBody>
-
-            <AlertDialogFooter>
-              <Button ref={cancelRef} onClick={onClose}>
-                Cancel
-              </Button>
-              {type == "receive" ? (
-                <Button
-                  colorScheme={"blue"}
-                  onClick={() => processOrder()}
-                  ml={3}
-                  isLoading={processLoading}
-                >
-                  Receive
+            {type != "pay" && (
+              <AlertDialogFooter>
+                <Button ref={cancelRef} onClick={onClose}>
+                  Cancel
                 </Button>
-              ) : (
-                <Button
-                  colorScheme={"red"}
-                  onClick={() => processOrder()}
-                  ml={3}
-                  isLoading={processLoading}
-                  disabled={cancelReason == ""}
-                >
-                  Cancel Order
-                </Button>
-              )}
-            </AlertDialogFooter>
+                {type == "receive" ? (
+                  <Button
+                    colorScheme={"blue"}
+                    onClick={() => processOrder()}
+                    ml={3}
+                    isLoading={processLoading}
+                  >
+                    Receive
+                  </Button>
+                ) : (
+                  <Button
+                    colorScheme={"red"}
+                    onClick={() => processOrder()}
+                    ml={3}
+                    isLoading={processLoading}
+                    disabled={cancelReason == ""}
+                  >
+                    Cancel Order
+                  </Button>
+                )}
+              </AlertDialogFooter>
+            )}
           </AlertDialogContent>
         </AlertDialogOverlay>
       </AlertDialog>
@@ -465,7 +672,7 @@ const Order = ({ order, withinTen, open, openDialog }) => {
               <Button
                 size={"sm"}
                 colorScheme="green"
-                onClick={() => openDialog(order)}
+                onClick={() => openDialog(order, "receive")}
               >
                 Received?
               </Button>
@@ -474,9 +681,19 @@ const Order = ({ order, withinTen, open, openDialog }) => {
               <Button
                 size={"sm"}
                 colorScheme="red"
-                onClick={() => openDialog(order)}
+                onClick={() => openDialog(order, "cancel")}
               >
                 Cancel Order?
+              </Button>
+            )}
+
+            {order.status === "payment-needed" && (
+              <Button
+                size={"sm"}
+                colorScheme="blue"
+                onClick={() => openDialog(order, "pay")}
+              >
+                Pay?
               </Button>
             )}
           </HStack>

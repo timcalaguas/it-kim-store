@@ -22,7 +22,7 @@ import Link from "next/link";
 import { useState } from "react";
 
 export default function SimpleCard() {
-  const { loginWithGoogle, loginWithEmailAndPassword, isLoading } =
+  const { loginWithGoogle, signUpWithEmailAndPassword, isLoading } =
     AuthManager();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -30,7 +30,7 @@ export default function SimpleCard() {
   return (
     <>
       <Head>
-        <title>IT Kim - Courier Login</title>
+        <title>IT Kim - Courier Sign up</title>
         <meta name="description" content="IT Kim - Kapampangan Sweet Shop" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
@@ -69,7 +69,7 @@ export default function SimpleCard() {
             >
               <MdDeliveryDining fontSize={"150px"} />
               <Heading fontSize={"xl"} textAlign={"center"}>
-                LOGIN
+                SIGN UP
               </Heading>
               <Stack align={"center"}>
                 <Heading fontSize={"4xl"} textAlign={"center"}>
@@ -95,7 +95,7 @@ export default function SimpleCard() {
                 </FormControl>
                 <Button
                   onClick={() =>
-                    loginWithEmailAndPassword(email, password, "courier")
+                    signUpWithEmailAndPassword(email, password, "courier")
                   }
                   w={"100%"}
                   colorScheme={"blue"}
@@ -115,13 +115,13 @@ export default function SimpleCard() {
                 Sign in with Google
               </Button>
               <Box
-                href={"/role/courier/auth/signup"}
+                href={"/role/courier/auth/login"}
                 as={Link}
                 textDecor={"underline"}
                 marginInline={"auto"}
                 color={"primary.500"}
               >
-                Register?
+                Login?
               </Box>
             </Stack>
           </Box>

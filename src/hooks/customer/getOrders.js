@@ -12,10 +12,20 @@ const getOrders = async (userId) => {
       .where("customer.id", "==", userId)
       .get();
 
+    const vendors = await firestore.collection("users").get();
+
     const orders = !orderResponse.empty
       ? orderResponse.docs.map((order) => {
           const orderDoc = order.data();
           orderDoc.id = order.id;
+          if (!vendors.empty) {
+            vendors.docs.map((vendor) => {
+              console.log(vendor.id, orderDoc.vendorId);
+              if (vendor.id == orderDoc.vendorId) {
+                orderDoc.qr = vendor.data().qr ? vendor.data().qr : "";
+              }
+            });
+          }
 
           return orderDoc;
         })
@@ -35,7 +45,9 @@ const getOrders = async (userId) => {
           status == "order-placed" ||
           status == "order-declined" ||
           status == "order-accepted" ||
-          status == "cancelled"
+          status == "cancelled" ||
+          status == "payment-needed" ||
+          status == "paid"
         ) {
           result.orderPlaced.push(order);
         } else if (status == "in-transit" || status == "courier-accepted") {

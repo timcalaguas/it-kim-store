@@ -11,6 +11,7 @@ import {
   Text,
   HStack,
   Divider,
+  VStack,
   useColorModeValue,
 } from "@chakra-ui/react";
 import Head from "next/head";
@@ -19,9 +20,14 @@ import { FcGoogle } from "react-icons/fc";
 import { AiFillShop } from "react-icons/ai";
 import AuthManager from "@/hooks/auth/AuthManager";
 import { withSessionSsr } from "@/lib/withSession";
+import { useState } from "react";
+import Link from "next/link";
 
 export default function SimpleCard() {
-  const { loginWithGoogle } = AuthManager();
+  const { loginWithGoogle, loginWithEmailAndPassword, isLoading } =
+    AuthManager();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
   return (
     <>
@@ -64,11 +70,45 @@ export default function SimpleCard() {
               justifyContent={"space-between"}
             >
               <AiFillShop fontSize={"150px"} />
+              <Heading fontSize={"xl"} textAlign={"center"}>
+                LOGIN
+              </Heading>
               <Stack align={"center"}>
                 <Heading fontSize={"4xl"} textAlign={"center"}>
                   IT Kim - Vendor
                 </Heading>
               </Stack>
+              <VStack width={"100%"}>
+                <FormControl>
+                  <Input
+                    type="email"
+                    placeholder="Email Address"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                  />
+                </FormControl>
+                <FormControl>
+                  <Input
+                    type="password"
+                    placeholder="Password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                  />
+                </FormControl>
+                <Button
+                  onClick={() =>
+                    loginWithEmailAndPassword(email, password, "vendor")
+                  }
+                  w={"100%"}
+                  colorScheme={"blue"}
+                  isLoading={isLoading}
+                >
+                  Sign in
+                </Button>
+              </VStack>
+              <HStack>
+                <Divider /> <Text>or</Text> <Divider />
+              </HStack>
               <Button
                 color={"black"}
                 leftIcon={<FcGoogle />}
@@ -76,6 +116,15 @@ export default function SimpleCard() {
               >
                 Sign in with Google
               </Button>
+              <Box
+                href={"/role/vendor/auth/signup"}
+                as={Link}
+                textDecor={"underline"}
+                marginInline={"auto"}
+                color={"primary.500"}
+              >
+                Register?
+              </Box>
             </Stack>
           </Box>
         </Stack>

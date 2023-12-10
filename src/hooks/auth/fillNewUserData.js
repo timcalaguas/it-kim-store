@@ -1,8 +1,10 @@
 const fillNewUserData = (user, role) => {
+  const parts = user.email.split("@");
+
   let newUser = {
-    name: user.displayName,
+    name: user.displayName != null ? user.displayName : parts[0],
     email: user.email,
-    picture: user.photoURL,
+    picture: user.photoURL != null ? user.photoURL : "",
     role: role,
     addresses: [],
     status: "approved",

@@ -74,8 +74,12 @@ const Dashboard = ({ userSession, productCount, orderCount, salesReport }) => {
   const [requirementImage, setRequirementImage] = useState("");
   const [requirementPreviewImage, setRequirementPreviewImage] = useState("");
 
+  const [qrImage, setQRImage] = useState("");
+  const [qrPreview, setQRPreview] = useState("");
+
   const selectedFile = watch("storeLogo");
   const requirementSelectedFile = watch("requirement");
+  const qrSelectedFile = watch("qr");
 
   useEffect(() => {
     if (selectedFile?.length > 0) {
@@ -85,7 +89,11 @@ const Dashboard = ({ userSession, productCount, orderCount, salesReport }) => {
     if (requirementSelectedFile?.length > 0) {
       setRequirementPreviewImage(requirementSelectedFile[0]);
     }
-  }, [selectedFile, requirementSelectedFile]);
+
+    if (qrSelectedFile?.length > 0) {
+      setQRPreview(qrSelectedFile[0]);
+    }
+  }, [selectedFile, requirementSelectedFile, qrSelectedFile]);
 
   useEffect(() => {
     setValue("storeName", user.storeName);
@@ -100,6 +108,7 @@ const Dashboard = ({ userSession, productCount, orderCount, salesReport }) => {
     setStoreLogo(user.storeLogo);
 
     setRequirementImage(user.requirement);
+    setQRImage(user.qr);
   }, [user]);
 
   async function updateProfile(values) {
@@ -118,6 +127,7 @@ const Dashboard = ({ userSession, productCount, orderCount, salesReport }) => {
 
       let downloadURL;
       let requirementDownloadURL;
+      let qrDownloadURL;
 
       if (values.storeLogo.length > 0) {
         const productImageName = values.storeLogo[0]?.name;
@@ -145,9 +155,23 @@ const Dashboard = ({ userSession, productCount, orderCount, salesReport }) => {
         requirementDownloadURL = user.requirement || "";
       }
 
+      if (values.qr.length > 0) {
+        const productImageName = values.qr[0]?.name;
+
+        const imageRef = storageRef.child(`images/${productImageName}`);
+        const file = values.qr[0];
+
+        const snapshot = await imageRef.put(file);
+
+        qrDownloadURL = await imageRef.getDownloadURL();
+      } else {
+        qrDownloadURL = user.qr || "";
+      }
+
       user.addresses = addresses;
       user.picture = downloadURL;
       user.requirement = requirementDownloadURL;
+      user.qr = qrDownloadURL;
 
       const newUser = {
         addresses: addresses,
@@ -159,6 +183,7 @@ const Dashboard = ({ userSession, productCount, orderCount, salesReport }) => {
         picture: user.picture,
         status: user.status,
         requirement: requirementDownloadURL,
+        qr: qrDownloadURL,
       };
 
       const response = await firestore
@@ -480,6 +505,71 @@ const Dashboard = ({ userSession, productCount, orderCount, salesReport }) => {
                   <FormLabel>Province</FormLabel>
                   <Input type="text" {...register("province")} />
                 </FormControl>
+                <Box
+                  display={"flex"}
+                  flexDirection={"start"}
+                  w={"100%"}
+                  gap={"24px"}
+                  flexWrap={"wrap"}
+                  mb="12px"
+                  mt={"24px"}
+                >
+                  {qrPreview != "" ? (
+                    <Image
+                      id="preview"
+                      src={
+                        qrSelectedFile?.length > 0
+                          ? URL.createObjectURL(qrSelectedFile[0])
+                          : "https://placehold.co/400x400"
+                      }
+                      boxSize={{ base: "100%" }}
+                      aspectRatio={"1 / 1"}
+                    />
+                  ) : qrImage != "" ? (
+                    <Image
+                      id="preview"
+                      src={qrImage}
+                      boxSize={{ base: "100%" }}
+                      aspectRatio={"1 / 1"}
+                    />
+                  ) : (
+                    <Image
+                      id="preview"
+                      src={"https://placehold.co/400x400"}
+                      boxSize={{ base: "100%" }}
+                      aspectRatio={"1 / 1"}
+                    />
+                  )}
+
+                  <FormControl w={{ base: "100%", sm: "fit-content" }}>
+                    <FormLabel htmlFor="name">Upload GCash QR Code</FormLabel>
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      {...register("qr", {
+                        validate: (value) => {
+                          const types = [
+                            "image/png",
+                            "image/jpeg",
+                            "image/jpg",
+                          ];
+                          if (value.length > 0) {
+                            if (!types.includes(value[0]?.type)) {
+                              return "Invalid file format. Only JPG and PNG are allowed.";
+                            }
+
+                            if (value[0]?.size > 5242880) {
+                              return "File is too large. Upload images with a size of 5MB or below.";
+                            }
+                          }
+
+                          return true;
+                        },
+                      })}
+                    />
+                    <FormErrorMessage></FormErrorMessage>
+                  </FormControl>
+                </Box>
                 <Box
                   display={"flex"}
                   flexDirection={"start"}

@@ -124,6 +124,19 @@ const Orders = ({ orderDocs, userSession }) => {
 
         let status = process == "accept" ? "in-transit" : "order-declined";
 
+        const createNotif = await firestore
+          .collection("notifications")
+          .doc()
+          .set({
+            id: selectedItem.customer.id,
+            courierId: selectedItem.id,
+            orderId: selectedItem.id,
+            status: "courier-accepted",
+            message:
+              "Your order is now in transit. It has been accepted by the courier.",
+            date: moment(new Date()).format("MM-DD-YYYY HH:mm"),
+          });
+
         const processResponse = await firestore
           .collection("orders")
           .doc(selectedItem.id)

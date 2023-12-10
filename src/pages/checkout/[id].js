@@ -44,8 +44,162 @@ import moment from "moment";
 import { BsPatchQuestion } from "react-icons/bs";
 import { FaTrash, FaPlus, FaMinus } from "react-icons/fa";
 import getOrderCount from "@/hooks/customer/getOrderCount";
+import getWorkerDetails from "@/hooks/admin/getVendorDetails";
 
-export default function Checkout({ userSession, orderCount }) {
+const philippineRegionsAndProvinces = [
+  {
+    Region: "Region I (Ilocos Region)",
+    Provinces: ["Ilocos Norte", "Ilocos Sur", "La Union", "Pangasinan"],
+  },
+  {
+    Region: "Region II (Cagayan Valley)",
+    Provinces: ["Batanes", "Cagayan", "Isabela", "Nueva Vizcaya", "Quirino"],
+  },
+  {
+    Region: "Region III (Central Luzon)",
+    Provinces: [
+      "Aurora",
+      "Bataan",
+      "Bulacan",
+      "Nueva Ecija",
+      "Pampanga",
+      "Tarlac",
+      "Zambales",
+    ],
+  },
+  {
+    Region: "Region IV-A (CALABARZON)",
+    Provinces: ["Batangas", "Cavite", "Laguna", "Quezon", "Rizal"],
+  },
+  {
+    Region: "Region IV-B (MIMAROPA)",
+    Provinces: [
+      "Marinduque",
+      "Occidental Mindoro",
+      "Oriental Mindoro",
+      "Palawan",
+      "Romblon",
+    ],
+  },
+  {
+    Region: "Region V (Bicol Region)",
+    Provinces: [
+      "Albay",
+      "Camarines Norte",
+      "Camarines Sur",
+      "Catanduanes",
+      "Masbate",
+      "Sorsogon",
+    ],
+  },
+  {
+    Region: "Region VI (Western Visayas)",
+    Provinces: [
+      "Aklan",
+      "Antique",
+      "Capiz",
+      "Guimaras",
+      "Iloilo",
+      "Negros Occidental",
+    ],
+  },
+  {
+    Region: "Region VII (Central Visayas)",
+    Provinces: ["Bohol", "Cebu", "Negros Oriental", "Siquijor"],
+  },
+  {
+    Region: "Region VIII (Eastern Visayas)",
+    Provinces: [
+      "Biliran",
+      "Eastern Samar",
+      "Leyte",
+      "Northern Samar",
+      "Samar",
+      "Southern Leyte",
+    ],
+  },
+  {
+    Region: "Region IX (Zamboanga Peninsula)",
+    Provinces: [
+      "Zamboanga del Norte",
+      "Zamboanga del Sur",
+      "Zamboanga Sibugay",
+    ],
+  },
+  {
+    Region: "Region X (Northern Mindanao)",
+    Provinces: [
+      "Bukidnon",
+      "Camiguin",
+      "Lanao del Norte",
+      "Misamis Occidental",
+      "Misamis Oriental",
+    ],
+  },
+  {
+    Region: "Region XI (Davao Region)",
+    Provinces: [
+      "Compostela Valley",
+      "Davao del Norte",
+      "Davao del Sur",
+      "Davao Occidental",
+      "Davao Oriental",
+    ],
+  },
+  {
+    Region: "Region XII (SOCCSKSARGEN)",
+    Provinces: ["Cotabato", "Sarangani", "South Cotabato", "Sultan Kudarat"],
+  },
+  {
+    Region: "National Capital Region (NCR)",
+    Provinces: [
+      "City of Manila",
+      "Caloocan",
+      "Las Piñas",
+      "Makati",
+      "Malabon",
+      "Mandaluyong",
+      "Marikina",
+      "Muntinlupa",
+      "Navotas",
+      "Parañaque",
+      "Pasay",
+      "Pasig",
+      "Pateros",
+      "Quezon City",
+      "San Juan",
+      "Taguig",
+      "Valenzuela",
+    ],
+  },
+  {
+    Region: "CAR (Cordillera Administrative Region)",
+    Provinces: [
+      "Abra",
+      "Apayao",
+      "Benguet",
+      "Ifugao",
+      "Kalinga",
+      "Mountain Province",
+    ],
+  },
+  {
+    Region: "CARAGA",
+    Provinces: [
+      "Agusan del Norte",
+      "Agusan del Sur",
+      "Dinagat Islands",
+      "Surigao del Norte",
+      "Surigao del Sur",
+    ],
+  },
+  {
+    Region: "ARMM (Autonomous Region in Muslim Mindanao)",
+    Provinces: ["Basilan", "Lanao del Sur", "Maguindanao", "Sulu", "Tawi-Tawi"],
+  },
+];
+
+export default function Checkout({ userSession, orderCount, vendor }) {
   const router = useRouter();
   const vendorUID = router.query.id;
 
@@ -76,19 +230,65 @@ export default function Checkout({ userSession, orderCount }) {
   const [shipping, setShipping] = useState(30);
 
   useEffect(() => {
-    if (orderCount <= 10 || calculateSubtotal(vendorUID) >= 300) {
+    const baseFee = compareAddresses(
+      selectedAddress,
+      vendor.addresses[0].address
+    );
+
+    if (orderCount <= 10) {
       setShipping(0);
+    } else if (calculateSubtotal(vendorUID) >= 400) {
+      setShipping(parseInt(baseFee) - 20);
     } else if (
       calculateSubtotal(vendorUID) >= 250 &&
-      calculateSubtotal(vendorUID) < 300
+      calculateSubtotal(vendorUID) < 400
     ) {
-      setShipping(25);
+      setShipping(parseInt(baseFee) - 10);
     } else {
-      setShipping(40);
+      setShipping(parseInt(baseFee));
     }
 
     console.log(shipping);
   }, [cart]);
+
+  function compareAddresses(address1, address2) {
+    const region1 = findRegion(
+      address1.province,
+      philippineRegionsAndProvinces
+    );
+
+    const region2 = findRegion(
+      address2.province,
+      philippineRegionsAndProvinces
+    );
+
+    // Check if the regions are equal
+    if (region1 !== region2) {
+      return 150;
+    }
+
+    // Check if the provinces are equal
+    if (address1.province !== address2.province) {
+      return 100;
+    }
+
+    // Check if the cities are equal
+    if (address1.city !== address2.city) {
+      return 80;
+    }
+
+    // If all criteria are met, return 50
+    return 50;
+  }
+
+  function findRegion(provinceName, regions) {
+    for (const region of regions) {
+      if (region.Provinces.includes(provinceName)) {
+        return region.Region;
+      }
+    }
+    return "Province not found in any region";
+  }
 
   const checkout = async () => {
     try {
@@ -99,61 +299,51 @@ export default function Checkout({ userSession, orderCount }) {
 
       const angelesOnly = ["angeles city", "angeles"];
       const city = selectedAddress.address.city.toLowerCase();
-      if (angelesOnly.includes(city)) {
-        if (
-          selectedAddress.contactNumber !== "" &&
-          selectedAddress.address.no &&
-          selectedAddress.address.street &&
-          selectedAddress.address.barangay &&
-          selectedAddress.address.city
-        ) {
-          const orderData = {
-            vendorId: selectedCart[0].vendorUID,
-            vendor: selectedCart[0].vendor,
-            items: selectedCart[0].items,
-            customer: {
-              id: userSession.docId,
-              name: userSession.name,
-              email: userSession.email,
-              address: selectedAddress,
-              picture: userSession.picture,
-            },
-            paymentMethod: paymentMethod,
-            status: "order-placed",
-            total: calculateSubtotal(vendorUID) + shipping,
-            subtotal: calculateSubtotal(vendorUID),
-            deliveryFee: shipping,
-            date: moment(new Date()).format("MM-DD-YYYY HH:mm"),
-          };
 
-          const order = await firestore.collection("orders").add(orderData);
+      if (
+        selectedAddress.contactNumber !== "" &&
+        selectedAddress.address.no &&
+        selectedAddress.address.street &&
+        selectedAddress.address.barangay &&
+        selectedAddress.address.city
+      ) {
+        const orderData = {
+          vendorId: selectedCart[0].vendorUID,
+          vendor: selectedCart[0].vendor,
+          items: selectedCart[0].items,
+          customer: {
+            id: userSession.docId,
+            name: userSession.name,
+            email: userSession.email,
+            address: selectedAddress,
+            picture: userSession.picture,
+          },
+          paymentMethod: paymentMethod,
+          status: "order-placed",
+          total: calculateSubtotal(vendorUID) + shipping,
+          subtotal: calculateSubtotal(vendorUID),
+          deliveryFee: shipping,
+          date: moment(new Date()).format("MM-DD-YYYY HH:mm"),
+        };
 
-          if (order) {
-            removeItemsByVendorId(vendorUID);
-            // Success
-            toast({
-              title: "Checkout successful.",
-              status: "success",
-              duration: 5000,
-              isClosable: true,
-            });
-            setLoading(false);
-            router.push("/");
-          }
-        } else {
-          setLoading(false);
+        const order = await firestore.collection("orders").add(orderData);
+
+        if (order) {
+          removeItemsByVendorId(vendorUID);
+          // Success
           toast({
-            title: "Please fill up your address correctly.",
-            status: "warning",
+            title: "Checkout successful.",
+            status: "success",
             duration: 5000,
             isClosable: true,
           });
+          setLoading(false);
+          router.push("/");
         }
       } else {
         setLoading(false);
         toast({
-          title:
-            "This service is only currently available around Angeles City.",
+          title: "Please fill up your address correctly.",
           status: "warning",
           duration: 5000,
           isClosable: true,
@@ -216,6 +406,8 @@ export default function Checkout({ userSession, orderCount }) {
                       {selectedAddress?.address.barangay}
                       {", "}
                       {selectedAddress?.address.city}
+                      {", "}
+                      {selectedAddress?.address.province}
                     </Box>
                     <Box display={"flex"} gap={"5px"}>
                       <Text fontWeight={"600"}>Contact Number:</Text>{" "}
@@ -246,8 +438,10 @@ export default function Checkout({ userSession, orderCount }) {
                           {userSession.addresses.map((address, index) => (
                             <option value={index}>
                               {address.address.no} {address.address.street},
-                              {address.address.barangay}, {address.address.city}{" "}
-                              - +63{address.contactNumber}
+                              {address.address.barangay}, {address.address.city}
+                              {", "}
+                              {address.address.province} - +63
+                              {address.contactNumber}
                             </option>
                           ))}
                         </Select>
@@ -296,10 +490,12 @@ export default function Checkout({ userSession, orderCount }) {
                   alignItems={"end"}
                   mb={"12px"}
                 >
-                  <Text fontWeight={"600"}>
-                    Payment Method: Cash on Delivery
-                  </Text>
+                  <Text fontWeight={"600"}>Payment Method</Text>
                 </HStack>
+                <Select onChange={(e) => setPaymentMethod(e.target.value)}>
+                  <option value={"Cash on Delivery"}>Cash on Delivery</option>
+                  <option value={"GCash"}>GCash QR Code</option>
+                </Select>
               </FormControl>
               <VStack textAlign={"left"} alignItems={"start"}>
                 <Text>
@@ -337,9 +533,10 @@ export default function Checkout({ userSession, orderCount }) {
                         <PopoverHeader>Delivery Fee Promo</PopoverHeader>
                         <PopoverCloseButton />
                         <PopoverBody>
-                          Enjoy free delivery fee on orders over 300 or when you
-                          are one of the 10 first orders. For orders between 250
-                          and 300, delivery fee is half-priced
+                          Enjoy free delivery fee on the first 10 orders. For
+                          orders between 250 and 400, delivery fee is will be
+                          reduced by 10 pesos and for orders higher than 400
+                          pesos it will be reduced by 20 pesos.
                         </PopoverBody>
                       </PopoverContent>
                     </Popover>
@@ -358,9 +555,10 @@ export default function Checkout({ userSession, orderCount }) {
                         <PopoverHeader>Delivery Fee Promo</PopoverHeader>
                         <PopoverCloseButton />
                         <PopoverBody>
-                          Enjoy free delivery fee on orders over 150 or when you
-                          are one of the 10 first orders. For orders between 100
-                          and 150, delivery fee is half-priced
+                          Enjoy free delivery fee on the first 10 orders. For
+                          orders between 250 and 400, delivery fee is will be
+                          reduced by 10 pesos and for orders higher than 400
+                          pesos it will be reduced by 20 pesos.
                         </PopoverBody>
                       </PopoverContent>
                     </Popover>
@@ -479,13 +677,17 @@ const Items = ({ items }) => {
   );
 };
 
-export const getServerSideProps = withSessionSsr(async ({ req, res }) => {
+export const getServerSideProps = withSessionSsr(async (context) => {
+  const { req } = context;
+  const { id } = context.params;
+
   const userSession = req.session.user ? req.session.user : null;
+
   const orderCount = await getOrderCount();
 
-  console.log(orderCount);
+  const vendor = await getWorkerDetails(id);
 
   return {
-    props: { userSession, orderCount },
+    props: { userSession, orderCount, vendor },
   };
 });

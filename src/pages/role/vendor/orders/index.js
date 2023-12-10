@@ -43,6 +43,13 @@ import {
   Divider,
   Avatar,
   VStack,
+  Popover,
+  PopoverTrigger,
+  PopoverBody,
+  PopoverContent,
+  PopoverArrow,
+  PopoverCloseButton,
+  PopoverHeader,
 } from "@chakra-ui/react";
 import { useEffect, useState, useRef } from "react";
 import moment from "moment/moment";
@@ -50,6 +57,7 @@ import getVendorOrders from "@/hooks/vendors/getVendorOrders";
 import { withSessionSsr } from "@/lib/withSession";
 import axios from "axios";
 import getBodyForEmail from "@/hooks/getBodyForEmail";
+import { FaQuestionCircle } from "react-icons/fa";
 
 import { FaPesoSign } from "react-icons/fa6";
 import { AiFillShopping } from "react-icons/ai";
@@ -96,7 +104,12 @@ const Orders = ({ orderDocs, user }) => {
       (obj) => obj.id === selectedItem.id
     );
 
-    let status = process == "accept" ? "order-accepted" : "order-declined";
+    let status =
+      process == "accept"
+        ? "order-accepted"
+        : process == "accept-gcash"
+        ? "payment-needed"
+        : "order-declined";
 
     const bodyForEmail = await getBodyForEmail(
       status,
@@ -105,6 +118,25 @@ const Orders = ({ orderDocs, user }) => {
     );
 
     const response = await axios.post("/api/send-mail", bodyForEmail);
+
+    let message =
+      process == "accept"
+        ? "Your order is accepted by the vendor. Please wait till a courier accept your order."
+        : process == "accept-gcash"
+        ? "Your order is acknowledge by the vendor. Please pay the order's total via GCash QR."
+        : "Your order has been declined by the vendor. This is because your order cannot be processed by the vendor.";
+
+    const createNotif = await firestore
+      .collection("notifications")
+      .doc()
+      .set({
+        id: selectedItem.customer.id,
+        courierId: selectedItem.id,
+        orderId: selectedItem.id,
+        status: status,
+        message: message,
+        date: moment(new Date()).format("MM-DD-YYYY HH:mm"),
+      });
 
     const processResponse = await firestore
       .collection("orders")
@@ -115,10 +147,17 @@ const Orders = ({ orderDocs, user }) => {
     onClose();
     orders[indexOfObjectToUpdate] = selectedItem;
     toast({
-      title: process == "accept" ? "Order Accepted" : "Order Declined",
+      title:
+        process == "accept"
+          ? "Order Accepted"
+          : process == "accept-gcash"
+          ? "Order Acknowledge"
+          : "Order Declined",
       description:
         process == "accept"
           ? "The order is now accepted."
+          : process == "accept-gcash"
+          ? "The order is now acknowldge."
           : "The order is now declined.",
       status: "success",
       duration: 9000,
@@ -150,6 +189,7 @@ const Orders = ({ orderDocs, user }) => {
                   <Th>Order ID</Th>
                   <Th>Date</Th>
                   <Th>Customer</Th>
+                  <Th>Payment Method</Th>
                   <Th>Status</Th>
                   <Th>Actions</Th>
                 </Tr>
@@ -160,6 +200,7 @@ const Orders = ({ orderDocs, user }) => {
                     <Td>{order.id}</Td>
                     <Td>{moment(new Date()).format("MM/DD/YYYY")}</Td>
                     <Td>{order.customer.name}</Td>
+                    <Td>{order.paymentMethod}</Td>
                     <Td textTransform={"uppercase"}>
                       {order.status == "cancelled" ? (
                         <Popover>
@@ -221,7 +262,8 @@ const Orders = ({ orderDocs, user }) => {
                           View Details
                         </Button>
                         {order.status == "order-placed" &&
-                          order.status != "cancelled" && (
+                          order.status != "cancelled" &&
+                          order.paymentMethod == "Cash on Delivery" && (
                             <>
                               <Button
                                 leftIcon={<AiFillCheckCircle />}
@@ -247,6 +289,59 @@ const Orders = ({ orderDocs, user }) => {
                               </Button>
                             </>
                           )}
+                        {order.status == "order-placed" &&
+                        order.status != "cancelled" &&
+                        order.paymentMethod == "GCash" ? (
+                          <>
+                            <Button
+                              leftIcon={<AiFillCheckCircle />}
+                              colorScheme="blue"
+                              variant="outline"
+                              size={"sm"}
+                              onClick={() =>
+                                openDeleteDialog(order, "accept-gcash")
+                              }
+                            >
+                              Accept
+                            </Button>
+                            <Button
+                              leftIcon={<AiFillDelete />}
+                              colorScheme="red"
+                              size={"sm"}
+                              variant="outline"
+                              onClick={() => openDeleteDialog(order, "decline")}
+                            >
+                              Decline
+                            </Button>
+                          </>
+                        ) : (
+                          order.paymentMethod == "GCash" && (
+                            <>
+                              <Button
+                                leftIcon={<AiFillCheckCircle />}
+                                colorScheme="blue"
+                                variant="outline"
+                                size={"sm"}
+                                onClick={() =>
+                                  openDeleteDialog(order, "accept")
+                                }
+                              >
+                                Accept
+                              </Button>
+                              <Button
+                                leftIcon={<AiFillDelete />}
+                                colorScheme="red"
+                                size={"sm"}
+                                variant="outline"
+                                onClick={() =>
+                                  openDeleteDialog(order, "decline")
+                                }
+                              >
+                                Decline
+                              </Button>
+                            </>
+                          )
+                        )}
                       </Stack>
                     </Td>
                   </Tr>
@@ -273,12 +368,26 @@ const Orders = ({ orderDocs, user }) => {
         <AlertDialogOverlay>
           <AlertDialogContent>
             <AlertDialogHeader fontSize="lg" fontWeight="bold">
-              {process == "accept" ? "Accept Order" : "Decline Order"}
+              {process == "accept"
+                ? "Accept Order"
+                : process == "accept-gcash"
+                ? "Acknowledge Order"
+                : "Decline Order"}
             </AlertDialogHeader>
 
             <AlertDialogBody>
+              {selectedItem.status == "paid" && (
+                <>
+                  <Text fontWeight={"600"} mb="12px">
+                    Receipt:
+                  </Text>
+                  <Image src={selectedItem.receipt} mb={"24px"} />
+                </>
+              )}
               {process == "accept"
                 ? "Are you sure you want to accept this order? After accepting this order will be available to all couriers."
+                : process == "accept-gcash"
+                ? "Are you sure you want to acknowldge this order? The QR Code of your GCash will be shown to the customer."
                 : "Are you sure you want to decline this order? After declining the order will be cancelled and the customer will be notified."}
             </AlertDialogBody>
 
@@ -287,12 +396,18 @@ const Orders = ({ orderDocs, user }) => {
                 Cancel
               </Button>
               <Button
-                colorScheme={process == "accept" ? "blue" : "red"}
+                colorScheme={
+                  process == "accept" || process == "accept-gcash"
+                    ? "blue"
+                    : "red"
+                }
                 onClick={() => processOrder()}
                 ml={3}
                 isLoading={processLoading}
               >
-                {process == "accept" ? "Accept" : "Decline"}
+                {process == "accept" || process == "accept-gcash"
+                  ? "Accept"
+                  : "Decline"}
               </Button>
             </AlertDialogFooter>
           </AlertDialogContent>
