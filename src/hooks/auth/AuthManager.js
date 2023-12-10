@@ -130,7 +130,7 @@ const AuthManager = () => {
     }
   };
 
-  const signUpWithEmailAndPassword = async (email, password, role) => {
+  const signUpWithEmailAndPassword = async (name, email, password, role) => {
     try {
       setIsLoading(true);
       let redirect = "/";
@@ -140,6 +140,7 @@ const AuthManager = () => {
       const user = result.user;
 
       console.log(result);
+      user.displayName = name;
 
       const response = await axios.post("/api/auth", {
         user: user,

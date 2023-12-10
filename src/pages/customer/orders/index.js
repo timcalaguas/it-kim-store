@@ -224,6 +224,7 @@ const Orders = ({ user, orders }) => {
 
   const submitPayment = async (values) => {
     if (type == "pay") {
+      setProcessLoading(true);
       const indexOfObjectToUpdate = result.orderPlaced.findIndex(
         (obj) => obj.id === selectedItem.id
       );
@@ -538,7 +539,7 @@ const Orders = ({ user, orders }) => {
                     )}
 
                     <FormControl
-                      isInvalid={errors.storeLogo}
+                      isInvalid={errors.receipt}
                       w={{ base: "100%", sm: "fit-content" }}
                     >
                       <FormLabel htmlFor="name">Upload GCash Receipt</FormLabel>
@@ -567,7 +568,7 @@ const Orders = ({ user, orders }) => {
                         })}
                       />
                       <FormErrorMessage>
-                        {errors.storeLogo && errors.storeLogo.message}
+                        {errors.receipt && errors.receipt.message}
                       </FormErrorMessage>
                     </FormControl>
                   </Box>

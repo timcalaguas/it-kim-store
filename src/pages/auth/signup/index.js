@@ -24,6 +24,7 @@ import Link from "next/link";
 export default function Login() {
   const { loginWithGoogle, signUpWithEmailAndPassword, isLoading } =
     AuthManager();
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
@@ -45,6 +46,14 @@ export default function Login() {
             <VStack>
               <FormControl>
                 <Input
+                  type="text"
+                  placeholder="Name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                />
+              </FormControl>
+              <FormControl>
+                <Input
                   type="email"
                   placeholder="Email Address"
                   value={email}
@@ -61,7 +70,7 @@ export default function Login() {
               </FormControl>
               <Button
                 onClick={() =>
-                  signUpWithEmailAndPassword(email, password, "customer")
+                  signUpWithEmailAndPassword(name, email, password, "customer")
                 }
                 w={"100%"}
                 variant={"primary"}
