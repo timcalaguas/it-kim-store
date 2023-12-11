@@ -189,7 +189,7 @@ const Dashboard = ({ userSession, productCount, orderCount, salesReport }) => {
       const response = await firestore
         .collection("users")
         .doc(user.docId)
-        .set({
+        .update({
           ...newUser,
         });
 
