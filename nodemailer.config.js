@@ -3,7 +3,7 @@ module.exports = {
   port: 587,
   secureConnection: false,
   auth: {
-    user: "itkimsweetshop@gmail.com",
+    user: "itkimsweetstore@gmail.com",
     pass: "Xr2jNTdIgLD0EBAS",
   },
   tls: {
