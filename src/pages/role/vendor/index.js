@@ -102,7 +102,7 @@ const Dashboard = ({ userSession, productCount, orderCount, salesReport }) => {
       setValue("street", user.addresses[0].address.street);
       setValue("barangay", user.addresses[0].address.barangay);
       setValue("city", user.addresses[0].address.city);
-      setValue("contactNumber", user.addresses[0].contactNumber);
+   setValue("province", user.addresses[0].address.province);      setValue("contactNumber", user.addresses[0].contactNumber);
     }
     setValue("storeName", user.storeName);
     setStoreLogo(user.storeLogo);
@@ -120,6 +120,7 @@ const Dashboard = ({ userSession, productCount, orderCount, salesReport }) => {
             street: values.street,
             barangay: values.barangay,
             city: values.city,
+province: values.province,
           },
           contactNumber: values.contactNumber,
         },
