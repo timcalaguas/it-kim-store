@@ -272,6 +272,8 @@ console.log(address1, address2);
       return 150;
     }
 
+console.log(region1, region2)
+
     // Check if the provinces are equal
     if (address1.province.toLowerCase() !== address2.province.toLowerCase()) {
       return 100;
