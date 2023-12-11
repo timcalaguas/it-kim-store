@@ -230,11 +230,12 @@ export default function Checkout({ userSession, orderCount, vendor }) {
   const [shipping, setShipping] = useState(30);
 
   useEffect(() => {
+if (userSession.addresses.length > 0) {
     const baseFee = compareAddresses(
       selectedAddress,
       vendor.addresses[0].address
     );
-
+}
     if (orderCount <= 10) {
       setShipping(0);
     } else if (calculateSubtotal(vendorUID) >= 400) {
