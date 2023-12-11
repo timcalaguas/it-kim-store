@@ -234,7 +234,7 @@ export default function Checkout({ userSession, orderCount, vendor }) {
 
 if (userSession.addresses.length > 0) {
     baseFee = compareAddresses(
-      selectedAddress,
+      selectedAddress.address,
       vendor.addresses[0].address
     );
 }
