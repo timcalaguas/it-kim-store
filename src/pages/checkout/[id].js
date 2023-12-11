@@ -252,18 +252,18 @@ if (userSession.addresses.length > 0) {
     }
 
     console.log(shipping);
-  }, [cart]);
+  }, [cart, selectedAddress]);
 
   function compareAddresses(address1, address2) {
     const region1 = findRegion(
-      address1.province,
+      address1.province.toLowerCase(),
       philippineRegionsAndProvinces
     );
 
 console.log(address1, address2);
 
     const region2 = findRegion(
-      address2.province,
+      address2.province.toLowerCase(),
       philippineRegionsAndProvinces
     );
 
@@ -290,9 +290,10 @@ console.log(region1, region2)
 
   function findRegion(provinceName, regions) {
     for (const region of regions) {
-      if (region.Provinces.includes(provinceName)) {
-        return region.Region;
-      }
+      if (region.Provinces.map(p => p.toLowerCase()).includes(provinceName.toLowerCase())) {
+  return region.Region;
+}
+
     }
     return "Province not found in any region";
   }
