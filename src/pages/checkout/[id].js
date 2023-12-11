@@ -275,8 +275,17 @@ if (userSession.addresses.length > 0) {
       return 100;
     }
 
+
+
+If you want to remove "City" or "city" along with any spaces that follow them when they appear after a word in a string, you can modify the previous code like this:
+
+javascript
+Copy code
+let inputString = "The city is beautiful. City after a word. Another city here.";
+let stringWithoutCities = inputString.replace(/\b(?:City|city)\b\s*/gi, '');
+
     // Check if the cities are equal
-    if (address1.city !== address2.city) {
+    if (address1.city.toLowerCase().replace(/\b(?:City|city)\b\s*/gi, '') !== address2.city.toLowerCase().replace(/\b(?:City|city)\b\s*/gi, '')) {
       return 80;
     }
 
