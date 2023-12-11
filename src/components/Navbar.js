@@ -100,9 +100,9 @@ const Navbar = ({ user }) => {
               cursor={"pointer"}
               ref={notifBtnRef}
               onClick={notifOnOpen}
-            > )}
+            > 
               <HiBellAlert color="#86673e" fontSize={"20px"} />
-            </Box>
+            </Box> )}
 
             <Button
               variant={"primary"}
