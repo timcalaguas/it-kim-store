@@ -273,7 +273,7 @@ console.log(address1, address2);
     }
 
     // Check if the provinces are equal
-    if (address1.province !== address2.province) {
+    if (address1.province.toLowerCase() !== address2.province.toLowerCase()) {
       return 100;
     }
 
