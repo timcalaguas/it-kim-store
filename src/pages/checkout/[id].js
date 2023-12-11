@@ -411,7 +411,7 @@ export default function Checkout({ userSession, orderCount, vendor }) {
                     </Box>
                     <Box display={"flex"} gap={"5px"}>
                       <Text fontWeight={"600"}>Contact Number:</Text>{" "}
-                      {selectedAddress.contactNumber != "" && "+63"}
+                      {selectedAddress?.contactNumber != "" && "+63"}
                       {selectedAddress?.contactNumber}
                     </Box>
                   </Box>
