@@ -5,6 +5,7 @@ export default async (req, res) => {
     const { to, subject, body } = req.body;
     try {
       const info = await sendEmail(to, subject, body);
+console.log(info)
       res.status(200).json({ message: "Email sent successfully", info });
     } catch (error) {
       console.log(error);
