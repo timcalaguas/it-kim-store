@@ -147,6 +147,8 @@ const Orders = ({ user, orders }) => {
           selectedItem.id
         );
 
+console.log(bodyForEmail);
+
         const createNotif = await firestore
           .collection("notifications")
           .doc()
