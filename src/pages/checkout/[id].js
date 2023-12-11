@@ -260,6 +260,8 @@ if (userSession.addresses.length > 0) {
       philippineRegionsAndProvinces
     );
 
+console.log(address1, address2);
+
     const region2 = findRegion(
       address2.province,
       philippineRegionsAndProvinces
