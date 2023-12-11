@@ -161,7 +161,7 @@ const Navbar = ({ user }) => {
       </Flex>
       <Cart cart={cart} isOpen={isOpen} onClose={onClose} />
       <Notifications
-        userId={user.docId}
+        userId={user.docId || ''}
         isOpen={notifIsOpen}
         onClose={notifOnClose}
       />
