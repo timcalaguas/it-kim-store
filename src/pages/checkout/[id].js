@@ -230,8 +230,10 @@ export default function Checkout({ userSession, orderCount, vendor }) {
   const [shipping, setShipping] = useState(30);
 
   useEffect(() => {
+ let baseFee = 50
+
 if (userSession.addresses.length > 0) {
-    const baseFee = compareAddresses(
+    baseFee = compareAddresses(
       selectedAddress,
       vendor.addresses[0].address
     );
