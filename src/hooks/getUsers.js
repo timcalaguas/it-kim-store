@@ -12,7 +12,8 @@ const getUsers = async (role) => {
           const returnDoc = doc.data();
           returnDoc.id = doc.id;
 if (returnDoc.status == "approved") {
-          return returnDoc;}
+          return returnDoc;
+}
         })
       : [];
 
