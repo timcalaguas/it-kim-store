@@ -283,7 +283,7 @@ const city1 = address1.city.toLowerCase().replace(/\b(?:City|city)\b\s*/gi, '');
 const city2 = address2.city.toLowerCase().replace(/\b(?:City|city)\b\s*/gi, '');
 
     // Check if the cities are equal
-    if (city1 !== city2) {
+    if (city1 != city2) {
       return 80;
     }
 
