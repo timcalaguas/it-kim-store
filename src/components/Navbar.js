@@ -92,16 +92,18 @@ const Navbar = ({ user }) => {
           </Flex>
 
           <Flex align="center" gap={"12px"}>
-            <Box
+
+{ user && (            <Box
               p={"4px"}
               borderRadius={"50%"}
               border={"1px solid #86673e"}
               cursor={"pointer"}
               ref={notifBtnRef}
               onClick={notifOnOpen}
-            >
+            > )}
               <HiBellAlert color="#86673e" fontSize={"20px"} />
             </Box>
+
             <Button
               variant={"primary"}
               size="sm"
@@ -160,11 +162,12 @@ const Navbar = ({ user }) => {
         </Flex>
       </Flex>
       <Cart cart={cart} isOpen={isOpen} onClose={onClose} />
+{ user && (
       <Notifications
-        userId={user.docId || ''}
+        userId={user.docId}
         isOpen={notifIsOpen}
         onClose={notifOnClose}
-      />
+      /> )}
     </>
   );
 };
