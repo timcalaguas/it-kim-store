@@ -7,7 +7,7 @@ const getUsers = async (role) => {
       .where("role", "==", role)
       .get();
 
-    const userDocs = !response.empty
+    let userDocs = !response.empty
       ? response.docs.map((doc) => {
           const returnDoc = doc.data();
           returnDoc.id = doc.id;
@@ -15,6 +15,9 @@ console.log(returnDoc)
 return returnDoc;
         })
       : [];
+
+
+userDocs = userDocs.filter((obj) => obj.status == "approved");
 
     return userDocs;
   } catch (error) {
