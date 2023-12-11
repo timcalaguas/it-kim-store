@@ -46,8 +46,8 @@ const Vendor = ({ productDocs, user, vendor }) => {
                     <AiTwotoneHome />
                     <Text>
                       {vendor.addresses?.length > 0
-                        ? `${vendor.addresses[0].address.no} ${vendor.addresses[0].address.street} ${vendor.addresses[0].address.barangay} ${vendor.addresses[0].address.city}`
-                        : ""}
+                        ? `${vendor.addresses[0].address.no} ${vendor.addresses[0].address.street} ${vendor.addresses[0].address.barangay} ${vendor.addresses[0].address.city} 
+${vendor.addresses[0].address.province}`                        : ""}
                     </Text>
                   </HStack>
                   <HStack>
