@@ -147,7 +147,7 @@ const Orders = ({ user, orders }) => {
           selectedItem.id
         );
 
-console.log(bodyForEmail);
+        console.log(bodyForEmail);
 
         const createNotif = await firestore
           .collection("notifications")
@@ -169,6 +169,7 @@ console.log(bodyForEmail);
 
         const vendorRating = await firestore.collection("ratings").doc().set({
           orderId: selectedItem.id,
+          commentor: user.name,
           starRating: vendorStarRating,
           comment: vendorComment,
           userEmail: vendor.email,
@@ -176,6 +177,7 @@ console.log(bodyForEmail);
 
         const courierRating = await firestore.collection("ratings").doc().set({
           orderId: selectedItem.id,
+          commentor: user.name,
           starRating: courierStarRating,
           comment: courierComment,
           userEmail: selectedItem.courier.email,
@@ -439,7 +441,9 @@ console.log(bodyForEmail);
               {type == "receive"
                 ? "Receive Order?"
                 : type == "pay"
-                ? "Pay thru GCash QR"
+                ? selectedItem.paymentMethod == "GCash"
+                  ? "Pay thru GCash QR"
+                  : "Pay using Bank Transfer"
                 : "Cancel Order"}
             </AlertDialogHeader>
 
@@ -447,7 +451,9 @@ console.log(bodyForEmail);
               {type == "receive"
                 ? "Are you sure you want to mark this order as Received? The vendor will be notified that you received the order."
                 : type == "pay"
-                ? "Please upload your GCash Receipt so that the seller can confirm it."
+                ? selectedItem.paymentMethod == "GCash"
+                  ? "Please upload your GCash Receipt so that the seller can confirm it."
+                  : "Please upload your Bank Transfer Receipt so that the seller can confirm it."
                 : "Are you sure you want to cancel this order? "}
               {type == "receive" ? (
                 <>
@@ -495,13 +501,24 @@ console.log(bodyForEmail);
               ) : type == "pay" ? (
                 <form onSubmit={handleSubmit(submitPayment)}>
                   <Divider marginBlock={"12px"} />
-
-                  <Image
-                    src={selectedItem.qr}
-                    width={"70%"}
-                    marginInline={"auto"}
-                    mb={"14px"}
-                  />
+                  {selectedItem.paymentMethod == "Gcash" && (
+                    <Image
+                      src={selectedItem.qr}
+                      width={"70%"}
+                      marginInline={"auto"}
+                      mb={"14px"}
+                    />
+                  )}
+                  {selectedItem.paymentMethod == "Bank Transfer" && (
+                    <Text
+                      marginInline={"auto"}
+                      textAlign={"center"}
+                      mb={"24px"}
+                      fontWeight={"700"}
+                    >
+                      Bank Number: {selectedItem.bankNumber}
+                    </Text>
+                  )}
                   <Text
                     marginInline={"auto"}
                     textAlign={"center"}
@@ -544,7 +561,7 @@ console.log(bodyForEmail);
                       isInvalid={errors.receipt}
                       w={{ base: "100%", sm: "fit-content" }}
                     >
-                      <FormLabel htmlFor="name">Upload GCash Receipt</FormLabel>
+                      <FormLabel htmlFor="name">Upload Receipt</FormLabel>
                       <Input
                         type="file"
                         accept="image/*"

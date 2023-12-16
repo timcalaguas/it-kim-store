@@ -230,14 +230,14 @@ export default function Checkout({ userSession, orderCount, vendor }) {
   const [shipping, setShipping] = useState(30);
 
   useEffect(() => {
- let baseFee = 50
+    let baseFee = 50;
 
-if (userSession.addresses.length > 0) {
-    baseFee = compareAddresses(
-      selectedAddress.address,
-      vendor.addresses[0].address
-    );
-}
+    if (userSession.addresses.length > 0) {
+      baseFee = compareAddresses(
+        selectedAddress.address,
+        vendor.addresses[0].address
+      );
+    }
     if (orderCount <= 10) {
       setShipping(0);
     } else if (calculateSubtotal(vendorUID) >= 400) {
@@ -260,7 +260,7 @@ if (userSession.addresses.length > 0) {
       philippineRegionsAndProvinces
     );
 
-console.log(address1, address2);
+    console.log(address1, address2);
 
     const region2 = findRegion(
       address2.province.toLowerCase(),
@@ -272,15 +272,19 @@ console.log(address1, address2);
       return 150;
     }
 
-console.log(region1, region2)
+    console.log(region1, region2);
 
     // Check if the provinces are equal
     if (address1.province.toLowerCase() !== address2.province.toLowerCase()) {
       return 100;
     }
 
-const city1 = address1.city.toLowerCase().replace(/\b(?:City|city)\b\s*/gi, '');
-const city2 = address2.city.toLowerCase().replace(/\b(?:City|city)\b\s*/gi, '');
+    const city1 = address1.city
+      .toLowerCase()
+      .replace(/\b(?:City|city)\b\s*/gi, "");
+    const city2 = address2.city
+      .toLowerCase()
+      .replace(/\b(?:City|city)\b\s*/gi, "");
 
     // Check if the cities are equal
     if (city1 != city2) {
@@ -293,10 +297,13 @@ const city2 = address2.city.toLowerCase().replace(/\b(?:City|city)\b\s*/gi, '');
 
   function findRegion(provinceName, regions) {
     for (const region of regions) {
-      if (region.Provinces.map(p => p.toLowerCase()).includes(provinceName.toLowerCase())) {
-  return region.Region;
-}
-
+      if (
+        region.Provinces.map((p) => p.toLowerCase()).includes(
+          provinceName.toLowerCase()
+        )
+      ) {
+        return region.Region;
+      }
     }
     return "Province not found in any region";
   }
@@ -408,24 +415,27 @@ const city2 = address2.city.toLowerCase().replace(/\b(?:City|city)\b\s*/gi, '');
                     </Box>
                     <Box display={"flex"} gap={"5px"}>
                       <Text fontWeight={"600"}>Email:</Text> {userSession.email}
-                    </Box> 
-{ userSession.addresses.length > 0 && ( <>
-                    <Box display={"flex"} gap={"5px"}>
-                      <Text fontWeight={"600"}>Address:</Text>{" "}
-                      {selectedAddress?.address.no}{" "}
-                      {selectedAddress?.address.street}
-                      {", "}
-                      {selectedAddress?.address.barangay}
-                      {", "}
-                      {selectedAddress?.address.city}
-                      {", "}
-                      {selectedAddress?.address.province}
                     </Box>
-                    <Box display={"flex"} gap={"5px"}>
-                      <Text fontWeight={"600"}>Contact Number:</Text>{" "}
-                      {selectedAddress?.contactNumber != "" && "+63"}
-                      {selectedAddress?.contactNumber}
-                    </Box></>) }
+                    {userSession.addresses.length > 0 && (
+                      <>
+                        <Box display={"flex"} gap={"5px"}>
+                          <Text fontWeight={"600"}>Address:</Text>{" "}
+                          {selectedAddress?.address.no}{" "}
+                          {selectedAddress?.address.street}
+                          {", "}
+                          {selectedAddress?.address.barangay}
+                          {", "}
+                          {selectedAddress?.address.city}
+                          {", "}
+                          {selectedAddress?.address.province}
+                        </Box>
+                        <Box display={"flex"} gap={"5px"}>
+                          <Text fontWeight={"600"}>Contact Number:</Text>{" "}
+                          {selectedAddress?.contactNumber != "" && "+63"}
+                          {selectedAddress?.contactNumber}
+                        </Box>
+                      </>
+                    )}
                   </Box>
 
                   <Stack>
@@ -507,6 +517,7 @@ const city2 = address2.city.toLowerCase().replace(/\b(?:City|city)\b\s*/gi, '');
                 <Select onChange={(e) => setPaymentMethod(e.target.value)}>
                   <option value={"Cash on Delivery"}>Cash on Delivery</option>
                   <option value={"GCash"}>GCash QR Code</option>
+                  <option value={"Bank Transfer"}>Bank Transfer</option>
                 </Select>
               </FormControl>
               <VStack textAlign={"left"} alignItems={"start"}>

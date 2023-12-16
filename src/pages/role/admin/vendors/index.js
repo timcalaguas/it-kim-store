@@ -98,7 +98,14 @@ const Vendors = ({ vendorDocs, user }) => {
     const indexOfObjectToUpdate = vendors.findIndex(
       (obj) => obj.id === selectedItem.id
     );
-    let status = process == "accept" ? "approved" : "blocked";
+
+    let status =
+      process == "accept"
+        ? "approved"
+        : process == "decline"
+        ? "declined"
+        : "blocked";
+
     const processResponse = await firestore
       .collection("users")
       .doc(selectedItem.id)
@@ -108,10 +115,17 @@ const Vendors = ({ vendorDocs, user }) => {
     vendors[indexOfObjectToUpdate] = selectedItem;
 
     toast({
-      title: process == "accept" ? "Approved" : "Blocked",
+      title:
+        process == "accept"
+          ? "Approved"
+          : process == "decline"
+          ? "Declined"
+          : "Blocked",
       description:
         process == "accept"
           ? "The vendor is now approved."
+          : process == "decline"
+          ? "The vendor is now declined."
           : "The vendor is now blocked.",
       status: "success",
       duration: 9000,
@@ -210,7 +224,7 @@ const Vendors = ({ vendorDocs, user }) => {
                             </Button>
                           </>
                         )}
-                        {vendor.status != "blocked" && (
+                        {vendor.status == "pending" && (
                           <Button
                             leftIcon={<AiFillDelete />}
                             colorScheme="red"
@@ -218,9 +232,21 @@ const Vendors = ({ vendorDocs, user }) => {
                             variant="outline"
                             onClick={() => openProcessDialog(vendor, "decline")}
                           >
-                            Block
+                            Decline
                           </Button>
                         )}
+                        {vendor.status != "blocked" &&
+                          vendor.status != "pending" && (
+                            <Button
+                              leftIcon={<AiFillDelete />}
+                              colorScheme="red"
+                              size={"sm"}
+                              variant="outline"
+                              onClick={() => openProcessDialog(vendor, "block")}
+                            >
+                              Block
+                            </Button>
+                          )}
                       </Stack>
                     </Td>
                   </Tr>
@@ -247,13 +273,19 @@ const Vendors = ({ vendorDocs, user }) => {
         <AlertDialogOverlay>
           <AlertDialogContent>
             <AlertDialogHeader fontSize="lg" fontWeight="bold">
-              {process == "accept" ? "Approve Vendor" : "Block Vendor"}
+              {process == "accept"
+                ? "Approve Vendor"
+                : process == "decline"
+                ? "Decline Vendor"
+                : "Block Vendor"}
             </AlertDialogHeader>
 
             <AlertDialogBody>
               {process == "accept"
                 ? "Are you sure you want to approve this vendor? This will allow the vendor to publish their products."
-                : "Are you sure you want to block this vendor? They will no longer be allowed to use their store and sell products."}
+                : process == "decline"
+                ? "Are you sure you want to decline this vendor? They have to update their info to verify again"
+                : "Are you sure you want to block this vendor? This will block the vendor on using the system."}
             </AlertDialogBody>
 
             <AlertDialogFooter>
@@ -266,7 +298,11 @@ const Vendors = ({ vendorDocs, user }) => {
                 ml={3}
                 isLoading={processLoading}
               >
-                {process == "accept" ? "Approve" : "Block"}
+                {process == "accept"
+                  ? "Approve"
+                  : process == "decline"
+                  ? "Decline"
+                  : "Block"}
               </Button>
             </AlertDialogFooter>
           </AlertDialogContent>

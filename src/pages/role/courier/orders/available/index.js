@@ -204,6 +204,7 @@ const Orders = ({ orderDocs, userSession }) => {
                   <Th>Order ID</Th>
                   <Th>Date</Th>
                   <Th>Customer</Th>
+                  <Th>Payment Method</Th>
                   <Th>Status</Th>
                   <Th>Actions</Th>
                 </Tr>
@@ -214,6 +215,7 @@ const Orders = ({ orderDocs, userSession }) => {
                     <Td>{order.id}</Td>
                     <Td>{moment(new Date()).format("MM/DD/YYYY")}</Td>
                     <Td>{order.customer.name}</Td>
+                    <Td>{order.paymentMethod}</Td>
                     <Td textTransform={"uppercase"}>
                       <Badge>{order.status}</Badge>
                     </Td>

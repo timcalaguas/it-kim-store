@@ -23,6 +23,9 @@ const getOrders = async (userId) => {
               console.log(vendor.id, orderDoc.vendorId);
               if (vendor.id == orderDoc.vendorId) {
                 orderDoc.qr = vendor.data().qr ? vendor.data().qr : "";
+                orderDoc.bankNumber = vendor.data().bankNumber
+                  ? vendor.data().bankNumber
+                  : "";
               }
             });
           }

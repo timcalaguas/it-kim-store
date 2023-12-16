@@ -11,13 +11,10 @@ const getUsers = async (role) => {
       ? response.docs.map((doc) => {
           const returnDoc = doc.data();
           returnDoc.id = doc.id;
-console.log(returnDoc)
-return returnDoc;
+          console.log(returnDoc);
+          return returnDoc;
         })
       : [];
-
-
-userDocs = userDocs.filter((obj) => obj.status == "approved");
 
     return userDocs;
   } catch (error) {

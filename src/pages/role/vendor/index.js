@@ -77,9 +77,12 @@ const Dashboard = ({ userSession, productCount, orderCount, salesReport }) => {
   const [qrImage, setQRImage] = useState("");
   const [qrPreview, setQRPreview] = useState("");
 
+  const [resume, setResume] = useState("");
+
   const selectedFile = watch("storeLogo");
   const requirementSelectedFile = watch("requirement");
   const qrSelectedFile = watch("qr");
+  const resumeSelectedFile = watch("resume");
 
   useEffect(() => {
     if (selectedFile?.length > 0) {
@@ -93,7 +96,16 @@ const Dashboard = ({ userSession, productCount, orderCount, salesReport }) => {
     if (qrSelectedFile?.length > 0) {
       setQRPreview(qrSelectedFile[0]);
     }
-  }, [selectedFile, requirementSelectedFile, qrSelectedFile]);
+
+    if (resumeSelectedFile?.length > 0) {
+      setResume(resumeSelectedFile[0]);
+    }
+  }, [
+    selectedFile,
+    requirementSelectedFile,
+    qrSelectedFile,
+    resumeSelectedFile,
+  ]);
 
   useEffect(() => {
     setValue("storeName", user.storeName);
@@ -102,7 +114,8 @@ const Dashboard = ({ userSession, productCount, orderCount, salesReport }) => {
       setValue("street", user.addresses[0].address.street);
       setValue("barangay", user.addresses[0].address.barangay);
       setValue("city", user.addresses[0].address.city);
-   setValue("province", user.addresses[0].address.province);      setValue("contactNumber", user.addresses[0].contactNumber);
+      setValue("province", user.addresses[0].address.province);
+      setValue("contactNumber", user.addresses[0].contactNumber);
     }
     setValue("storeName", user.storeName);
     setStoreLogo(user.storeLogo);
@@ -120,7 +133,7 @@ const Dashboard = ({ userSession, productCount, orderCount, salesReport }) => {
             street: values.street,
             barangay: values.barangay,
             city: values.city,
-province: values.province,
+            province: values.province,
           },
           contactNumber: values.contactNumber,
         },
@@ -129,6 +142,7 @@ province: values.province,
       let downloadURL;
       let requirementDownloadURL;
       let qrDownloadURL;
+      let resumeDownloadURL;
 
       if (values.storeLogo.length > 0) {
         const productImageName = values.storeLogo[0]?.name;
@@ -169,10 +183,24 @@ province: values.province,
         qrDownloadURL = user.qr || "";
       }
 
+      if (values.resume.length > 0) {
+        const productImageName = values.resume[0]?.name;
+
+        const imageRef = storageRef.child(`pdf/${productImageName}`);
+        const file = values.resume[0];
+
+        const snapshot = await imageRef.put(file);
+
+        resumeDownloadURL = await imageRef.getDownloadURL();
+      } else {
+        resumeDownloadURL = user.resume || "";
+      }
+
       user.addresses = addresses;
       user.picture = downloadURL;
       user.requirement = requirementDownloadURL;
       user.qr = qrDownloadURL;
+      user.resume = resumeDownloadURL;
 
       const newUser = {
         addresses: addresses,
@@ -185,6 +213,7 @@ province: values.province,
         status: user.status,
         requirement: requirementDownloadURL,
         qr: qrDownloadURL,
+        resume: resumeDownloadURL,
       };
 
       const response = await firestore
@@ -215,6 +244,8 @@ province: values.province,
     }
   }
 
+  console.log(resume, qrPreview);
+
   return (
     <>
       <AdminLayout
@@ -223,6 +254,29 @@ province: values.province,
         user={user}
         LinkItems={LinkItems}
       >
+        {user.status == "declined" && (
+          <Alert status="warning" mb={"20px"}>
+            <AlertIcon />
+            <HStack
+              marginLeft={"12px"}
+              justifyContent={"space-between"}
+              w={"100%"}
+              flexWrap={"wrap"}
+            >
+              <Text>
+                Your application is decline. Please update your details again to
+                verify your identity
+              </Text>
+              <Button
+                variant={"primary"}
+                size={"sm"}
+                onClick={() => openModal("update", {})}
+              >
+                Update Profile
+              </Button>
+            </HStack>
+          </Alert>
+        )}{" "}
         {(user.storeName == "" || user.addresses?.length == 0) && (
           <Alert status="warning" mb={"20px"}>
             <AlertIcon />
@@ -634,6 +688,45 @@ province: values.province,
                       })}
                     />
                     <FormErrorMessage></FormErrorMessage>
+                  </FormControl>
+                </Box>
+                <Box
+                  display={"flex"}
+                  flexDirection={"start"}
+                  w={"100%"}
+                  gap={"24px"}
+                  flexWrap={"wrap"}
+                  mb="12px"
+                  mt={"24px"}
+                >
+                  <FormControl
+                    isInvalid={errors.resume}
+                    w={{ base: "100%", sm: "fit-content" }}
+                  >
+                    <FormLabel htmlFor="name">Upload Resume</FormLabel>
+                    <Input
+                      type="file"
+                      accept="application/pdf"
+                      {...register("resume", {
+                        validate: (value) => {
+                          const types = ["application/pdf"];
+                          if (value.length > 0) {
+                            if (!types.includes(value[0]?.type)) {
+                              return "Invalid file format. Only PDF is allowed.";
+                            }
+
+                            if (value[0]?.size > 5242880) {
+                              return "File is too large. Upload images with a size of 5MB or below.";
+                            }
+                          }
+
+                          return true;
+                        },
+                      })}
+                    />
+                    <FormErrorMessage>
+                      {errors.resume && errors.resume.message}
+                    </FormErrorMessage>
                   </FormControl>
                 </Box>
               </ModalBody>

@@ -154,6 +154,7 @@ const Orders = ({ orderDocs, userSession, grandTotalProfit }) => {
                   <Th>Date</Th>
                   <Th>Vendor</Th>
                   <Th>Total</Th>
+                  <Th>Payment Method</Th>
                   <Th>Delivery Fee</Th>
                   <Th>Status</Th>
                   <Th>Actions</Th>
@@ -167,6 +168,7 @@ const Orders = ({ orderDocs, userSession, grandTotalProfit }) => {
                       <Td>{moment(new Date()).format("MM/DD/YYYY")}</Td>
                       <Td>{order.vendor}</Td>
                       <Td>{order.total}</Td>
+                      <Td>{order.paymentMethod}</Td>
                       <Td>{order.deliveryFee}</Td>
                       <Td textTransform={"uppercase"}>
                         <Badge>{order.status}</Badge>

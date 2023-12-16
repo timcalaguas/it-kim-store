@@ -51,6 +51,7 @@ import { withSessionSsr } from "@/lib/withSession";
 import { BiSolidShoppingBag } from "react-icons/bi";
 import { FaPesoSign } from "react-icons/fa6";
 import Link from "next/link";
+import { FaStar } from "react-icons/fa";
 
 const LinkItems = [
   { name: "Dashboard", icon: FiHome, link: "/role/admin" },
@@ -95,21 +96,35 @@ const Couriers = ({ courierDocs, user }) => {
     const indexOfObjectToUpdate = couriers.findIndex(
       (obj) => obj.id === selectedItem.id
     );
-    let status = process == "accept" ? "approved" : "blocked";
+
+    let status =
+      process == "accept"
+        ? "approved"
+        : process == "decline"
+        ? "declined"
+        : "blocked";
+
     const processResponse = await firestore
       .collection("users")
       .doc(selectedItem.id)
       .update({ status: status, adminBy: user.name });
     selectedItem.status = status;
     setProcessLoading(false);
-    couriers[indexOfObjectToUpdate] = selectedItem;
+    vendors[indexOfObjectToUpdate] = selectedItem;
 
     toast({
-      title: process == "accept" ? "Approved" : "Blocked",
+      title:
+        process == "accept"
+          ? "Approved"
+          : process == "decline"
+          ? "Declined"
+          : "Blocked",
       description:
         process == "accept"
-          ? "The courier is now approved."
-          : "The courier is now blocked.",
+          ? "The vendor is now approved."
+          : process == "decline"
+          ? "The vendor is now declined."
+          : "The vendor is now blocked.",
       status: "success",
       duration: 9000,
       isClosable: true,
@@ -140,6 +155,7 @@ const Couriers = ({ courierDocs, user }) => {
                 <Tr>
                   <Th>Name</Th>
                   <Th>Email</Th>
+                  <Th>Rating</Th>
                   <Th>Status</Th>
                   <Th>Moderated by</Th>
                   <Th>Actions</Th>
@@ -155,6 +171,16 @@ const Couriers = ({ courierDocs, user }) => {
                       </HStack>
                     </Td>
                     <Td>{courier.email}</Td>
+                    <Td>
+                      {courier.rating ? (
+                        <HStack>
+                          <Text>{courier.rating.toFixed(2)}</Text>{" "}
+                          <FaStar color="gold" />
+                        </HStack>
+                      ) : (
+                        "N/A"
+                      )}
+                    </Td>
                     <Td textTransform={"uppercase"}>
                       <Badge>{courier.status}</Badge>
                     </Td>
@@ -188,7 +214,7 @@ const Couriers = ({ courierDocs, user }) => {
                             </Button>
                           </>
                         )}
-                        {courier.status != "blocked" && (
+                        {courier.status == "pending" && (
                           <Button
                             leftIcon={<AiFillDelete />}
                             colorScheme="red"
@@ -198,9 +224,23 @@ const Couriers = ({ courierDocs, user }) => {
                               openProcessDialog(courier, "decline")
                             }
                           >
-                            Block
+                            Decline
                           </Button>
                         )}
+                        {courier.status != "pending" &&
+                          courier.status != "blocked" && (
+                            <Button
+                              leftIcon={<AiFillDelete />}
+                              colorScheme="red"
+                              size={"sm"}
+                              variant="outline"
+                              onClick={() =>
+                                openProcessDialog(courier, "block")
+                              }
+                            >
+                              Block
+                            </Button>
+                          )}
                       </Stack>
                     </Td>
                   </Tr>
@@ -227,13 +267,19 @@ const Couriers = ({ courierDocs, user }) => {
         <AlertDialogOverlay>
           <AlertDialogContent>
             <AlertDialogHeader fontSize="lg" fontWeight="bold">
-              {process == "accept" ? "Approve Courier" : "Block Courier"}
+              {process == "accept"
+                ? "Approve Courier"
+                : process == "decline"
+                ? "Decline Courier"
+                : "Block Courier"}
             </AlertDialogHeader>
 
             <AlertDialogBody>
               {process == "accept"
                 ? "Are you sure you want to approve this courier? This will allow the courier to accept and deliver orders."
-                : "Are you sure you want to block this courier? They will no longer be allowed to use website to accept orders."}
+                : process == "accept"
+                ? "Are you sure you want to decline this courier? They will have to update their info in order to verify again."
+                : "Are you sure you want to block this courier? They will block the courier to use the system."}
             </AlertDialogBody>
 
             <AlertDialogFooter>
@@ -246,7 +292,11 @@ const Couriers = ({ courierDocs, user }) => {
                 ml={3}
                 isLoading={processLoading}
               >
-                {process == "accept" ? "Approve" : "Block"}
+                {process == "accept"
+                  ? "Approve"
+                  : process == "decline"
+                  ? "Decline"
+                  : "Block"}
               </Button>
             </AlertDialogFooter>
           </AlertDialogContent>

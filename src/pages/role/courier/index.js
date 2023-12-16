@@ -92,8 +92,11 @@ const Courier = ({
   const [requirementImage, setRequirementImage] = useState("");
   const [requirementPreviewImage, setRequirementPreviewImage] = useState("");
 
+  const [resume, setResume] = useState("");
+
   const selectedFile = watch("storeLogo");
   const requirementSelectedFile = watch("requirement");
+  const resumeSelectedFile = watch("resume");
 
   useEffect(() => {
     if (selectedFile?.length > 0) {
@@ -103,7 +106,11 @@ const Courier = ({
     if (requirementSelectedFile?.length > 0) {
       setRequirementPreviewImage(requirementSelectedFile[0]);
     }
-  }, [selectedFile, requirementSelectedFile]);
+
+    if (resumeSelectedFile?.length > 0) {
+      setRequirementPreviewImage(resumeSelectedFile[0]);
+    }
+  }, [selectedFile, requirementSelectedFile, resumeSelectedFile]);
 
   useEffect(() => {
     setValue("storeLogo", "");
@@ -118,6 +125,7 @@ const Courier = ({
     setValue("storeName", user.storeName);
     setStoreLogo(user.picture);
     setRequirementImage(user.requirement);
+    setResume(user.resume);
   }, [user]);
 
   console.log(user);
@@ -139,6 +147,7 @@ const Courier = ({
 
       let downloadURL;
       let requirementDownloadURL;
+      let resumeDownloadURL;
 
       if (values.storeLogo.length > 0) {
         const productImageName = values.storeLogo[0]?.name;
@@ -166,9 +175,23 @@ const Courier = ({
         requirementDownloadURL = user.requirement || "";
       }
 
+      if (values.resume.length > 0) {
+        const productImageName = values.resume[0]?.name;
+
+        const imageRef = storageRef.child(`pdf/${productImageName}`);
+        const file = values.resume[0];
+
+        const snapshot = await imageRef.put(file);
+
+        resumeDownloadURL = await imageRef.getDownloadURL();
+      } else {
+        resumeDownloadURL = user.resume || "";
+      }
+
       user.addresses = addresses;
       user.picture = downloadURL;
       user.requirement = requirementDownloadURL;
+      user.resume = resumeDownloadURL;
 
       const response = await firestore
         .collection("users")
@@ -177,6 +200,7 @@ const Courier = ({
           addresses: addresses,
           picture: downloadURL,
           requirement: requirementDownloadURL,
+          resume: resumeDownloadURL,
         });
 
       const updateSession = await axios.post("/api/auth", {
@@ -273,6 +297,29 @@ const Courier = ({
       LinkItems={LinkItems}
     >
       <Box>
+        {user.status == "declined" && (
+          <Alert status="warning" mb={"20px"}>
+            <AlertIcon />
+            <HStack
+              marginLeft={"12px"}
+              justifyContent={"space-between"}
+              w={"100%"}
+              flexWrap={"wrap"}
+            >
+              <Text>
+                Your application is decline. Please update your details again to
+                verify your identity
+              </Text>
+              <Button
+                variant={"primary"}
+                size={"sm"}
+                onClick={() => openModal("update", {})}
+              >
+                Update Profile
+              </Button>
+            </HStack>
+          </Alert>
+        )}{" "}
         {user.addresses == null && (
           <Alert status="warning" mb={"20px"}>
             <AlertIcon />
@@ -282,7 +329,7 @@ const Courier = ({
               w={"100%"}
               flexWrap={"wrap"}
             >
-              <Text>Please provide your store details</Text>
+              <Text>Please provide your details</Text>
               <Button
                 variant={"primary"}
                 size={"sm"}
@@ -325,7 +372,9 @@ const Courier = ({
                         {user.status}
                       </TagLabel>
                     ) : (
-                      <TagLabel textTransform={"uppercase"}>Pending</TagLabel>
+                      <TagLabel textTransform={"uppercase"}>
+                        {user.status}
+                      </TagLabel>
                     )}
                   </Tag>
                   <Button
@@ -734,6 +783,40 @@ const Courier = ({
                       <FormErrorMessage></FormErrorMessage>
                     </FormControl>
                   </Box>
+                  <Box
+                    display={"flex"}
+                    flexDirection={"start"}
+                    w={"100%"}
+                    gap={"24px"}
+                    flexWrap={"wrap"}
+                    mb="12px"
+                    mt={"24px"}
+                  >
+                    <FormControl w={{ base: "100%", sm: "fit-content" }}>
+                      <FormLabel htmlFor="name">Upload Resume</FormLabel>
+                      <Input
+                        type="file"
+                        accept="application/pdf"
+                        {...register("resume", {
+                          validate: (value) => {
+                            const types = ["application/pdf"];
+                            if (value.length > 0) {
+                              if (!types.includes(value[0]?.type)) {
+                                return "Invalid file format. Only PDF is allowed.";
+                              }
+
+                              if (value[0]?.size > 5242880) {
+                                return "File is too large. Upload images with a size of 5MB or below.";
+                              }
+                            }
+
+                            return true;
+                          },
+                        })}
+                      />
+                      <FormErrorMessage></FormErrorMessage>
+                    </FormControl>
+                  </Box>
                 </>
               ) : (
                 <>
@@ -772,6 +855,9 @@ const Courier = ({
                   </Box>
                   <VStack alignItems={"end"}>
                     <Text>
+                      <b>Payment Method:</b> {selectedItem.paymentMethod}
+                    </Text>
+                    <Text>
                       <b>Subtotal:</b> {selectedItem.subtotal}
                     </Text>
                     <Text>
@@ -790,7 +876,7 @@ const Courier = ({
                 <Button
                   colorScheme="blue"
                   mr={3}
-                  isLoading={isSubmitting}
+                  isLoading={setProcessLoading}
                   type="submit"
                 >
                   Update

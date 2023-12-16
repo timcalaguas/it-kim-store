@@ -291,7 +291,8 @@ const Orders = ({ orderDocs, user }) => {
                           )}
                         {order.status == "order-placed" &&
                         order.status != "cancelled" &&
-                        order.paymentMethod == "GCash" ? (
+                        (order.paymentMethod == "GCash" ||
+                          order.paymentMethod == "Bank Transfer") ? (
                           <>
                             <Button
                               leftIcon={<AiFillCheckCircle />}
@@ -387,7 +388,9 @@ const Orders = ({ orderDocs, user }) => {
               {process == "accept"
                 ? "Are you sure you want to accept this order? After accepting this order will be available to all couriers."
                 : process == "accept-gcash"
-                ? "Are you sure you want to acknowldge this order? The QR Code of your GCash will be shown to the customer."
+                ? selectedItem.paymentMethod == "GCash"
+                  ? "Are you sure you want to acknowldge this order? The QR Code of your GCash will be shown to the customer."
+                  : "Are you sure you want to acknowldge this order? Your bank number will be shown to the customer."
                 : "Are you sure you want to decline this order? After declining the order will be cancelled and the customer will be notified."}
             </AlertDialogBody>
 

@@ -102,20 +102,32 @@ const Vendors = ({ vendorDocs, user }) => {
   const processVendor = async () => {
     setProcessLoading(true);
 
-    let status = process == "accept" ? "approved" : "blocked";
+    let status =
+      process == "accept"
+        ? "approved"
+        : process == "decline"
+        ? "declined"
+        : "blocked";
+
     const processResponse = await firestore
       .collection("users")
       .doc(selectedItem.id)
       .update({ status: status, adminBy: user.name });
     selectedItem.status = status;
     setProcessLoading(false);
-    setVendor(selectedItem);
 
     toast({
-      title: process == "accept" ? "Approved" : "Blocked",
+      title:
+        process == "accept"
+          ? "Approved"
+          : process == "decline"
+          ? "Declined"
+          : "Blocked",
       description:
         process == "accept"
           ? "The vendor is now approved."
+          : process == "decline"
+          ? "The vendor is now declined."
           : "The vendor is now blocked.",
       status: "success",
       duration: 9000,
@@ -198,7 +210,15 @@ const Vendors = ({ vendorDocs, user }) => {
                     Approve
                   </Button>
                 )}
-                {vendor.status != "blocked" && (
+                {vendor.status == "pending" && (
+                  <Button
+                    colorScheme="red"
+                    onClick={() => openProcessDialog(vendor, "decline")}
+                  >
+                    Decline
+                  </Button>
+                )}
+                {vendor.status != "blocked" && vendor.status != "pending" && (
                   <Button
                     colorScheme="red"
                     onClick={() => openProcessDialog(vendor, "block")}
@@ -224,6 +244,7 @@ const Vendors = ({ vendorDocs, user }) => {
             <Table variant="simple">
               <Thead>
                 <Tr>
+                  <Th>Order ID</Th>
                   <Th>Name</Th>
                   <Th>Rating</Th>
                   <Th>Comment</Th>
@@ -232,6 +253,7 @@ const Vendors = ({ vendorDocs, user }) => {
               <Tbody>
                 {vendor.ratings.map((rating) => (
                   <Tr>
+                    <Td>{rating.orderId}</Td>
                     <Td>{rating.commentor}</Td>
                     <Td>
                       <HStack>
@@ -296,13 +318,30 @@ const Vendors = ({ vendorDocs, user }) => {
           <ModalHeader>Requirement</ModalHeader>
           <ModalCloseButton />
           <ModalBody>
-            <Image
-              src={
-                selectedItem.requirement
-                  ? selectedItem.requirement
-                  : "https://placehold.co/700x400"
-              }
-            />
+            <Box mb={"24px"}>
+              <Text fontSize={"18px"} fontWeight="600" mb={"12px"}>
+                Businesss Permit
+              </Text>
+              <Image
+                src={
+                  selectedItem.requirement
+                    ? selectedItem.requirement
+                    : "https://placehold.co/700x400"
+                }
+              />
+            </Box>
+            <Box mb={"24px"}>
+              <Text fontSize={"18px"} fontWeight="600" mb={"12px"}>
+                Resume
+              </Text>
+              <embed
+                src={selectedItem.resume}
+                type="application/pdf"
+                width="100%"
+                height="500px"
+                controls="false"
+              />
+            </Box>
           </ModalBody>
         </ModalContent>
       </Modal>
