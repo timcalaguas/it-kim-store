@@ -320,7 +320,7 @@ const Courier = ({
             </HStack>
           </Alert>
         )}{" "}
-        {user.addresses == null && (
+        {user.addresses.length > 0 && (
           <Alert status="warning" mb={"20px"}>
             <AlertIcon />
             <HStack
