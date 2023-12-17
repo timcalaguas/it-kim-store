@@ -214,6 +214,7 @@ const Dashboard = ({ userSession, productCount, orderCount, salesReport }) => {
         requirement: requirementDownloadURL,
         qr: qrDownloadURL,
         resume: resumeDownloadURL,
+        bankNumber: values.bankNumber,
       };
 
       const response = await firestore
@@ -243,8 +244,6 @@ const Dashboard = ({ userSession, productCount, orderCount, salesReport }) => {
       console.error("Error:", error);
     }
   }
-
-  console.log(resume, qrPreview);
 
   return (
     <>
@@ -559,6 +558,10 @@ const Dashboard = ({ userSession, productCount, orderCount, salesReport }) => {
                 <FormControl>
                   <FormLabel>Province</FormLabel>
                   <Input type="text" {...register("province")} />
+                </FormControl>
+ <FormControl>
+                  <FormLabel>Bank Number</FormLabel>
+                  <Input type="text" {...register("bankNumber")} />
                 </FormControl>
                 <Box
                   display={"flex"}
