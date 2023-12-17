@@ -323,7 +323,7 @@ const Vendors = ({ vendorDocs, user }) => {
           <ModalBody>
             <Box mb={"24px"}>
               <Text fontSize={"18px"} fontWeight="600" mb={"12px"}>
-                Businesss Permit
+                Driver's License
               </Text>
               <Image
                 src={
