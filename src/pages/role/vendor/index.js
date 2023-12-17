@@ -298,7 +298,7 @@ const Dashboard = ({ userSession, productCount, orderCount, salesReport }) => {
               <VStack marginInline={{ base: "auto", md: "0" }}>
                 <Avatar
                   src={user.storeLogo}
-                  name={user.storeName}
+                  
                   boxSize={"200px"}
                 />
                 <Tag
