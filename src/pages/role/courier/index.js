@@ -356,7 +356,7 @@ const Courier = ({
                 <VStack marginInline={{ base: "auto", md: "0" }}>
                   <Avatar
                     src={user.picture}
-                    name={user.name}
+                    
                     boxSize={"200px"}
                   />
                   <Tag
