@@ -561,7 +561,7 @@ const Dashboard = ({ userSession, productCount, orderCount, salesReport }) => {
                 </FormControl>
  <FormControl>
                   <FormLabel>Bank Number</FormLabel>
-                  <Input type="text" {...register("bankNumber")} />
+                  <Input placeholder="BDO - 1234 5678 765 432" type="text" {...register("bankNumber")} />
                 </FormControl>
                 <Box
                   display={"flex"}
