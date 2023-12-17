@@ -248,7 +248,7 @@ const Vendors = ({ vendorDocs, user }) => {
               <Thead>
                 <Tr>
                   <Th>Order ID</Th>
-                  <Th>Name</Th>
+                  
                   <Th>Rating</Th>
                   <Th>Comment</Th>
                 </Tr>
@@ -257,7 +257,7 @@ const Vendors = ({ vendorDocs, user }) => {
                 {vendor.ratings.map((rating) => (
                   <Tr>
                     <Td>{rating.orderId}</Td>
-                    <Td>{rating.commentor}</Td>
+                    
                     <Td>
                       <HStack>
                         <Text>{rating.starRating} </Text>
